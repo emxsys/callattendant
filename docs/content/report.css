@@ -1,0 +1,466 @@
+.ProjectName{
+	font-family: arial;
+	font-size: 20px;
+	font-weight: bold;
+	color: #000000;
+}
+
+.HeaderLine1{
+	background-color: #B71837;
+	height: 4px;
+	width: 100%;
+}
+
+.HeaderLine2{
+	background-color: #FFFFFF;
+	height: 1px;
+	width: 100%;
+}
+
+.HeaderLine3{
+	background-color: #808080;
+	height: 1px;
+	width: 100%;
+}
+
+.TabLine{
+	background-color: #404040;
+	height: 1px;
+}
+
+.SelectedTabColor{
+	background-color: #F5F5F5;
+	height: 24px;
+	width: 32px;
+}
+
+.DeselectedTabColor{
+	background-color: #B2B2B2;
+	height: 24px;
+	width: 32px;
+}
+
+.TabLine{
+	background-color: #404040;
+	height: 1px;
+	width: 5px;
+}
+
+.SelectedTabColor{
+	background-color: #F5F5F5;
+	height: 1px;
+}
+
+.TableHeader{
+	background-color: #1569BC;
+	height: 20px;
+}
+.DecisionTableHeader {
+	background: #E3DA4B;
+	height: 20px;
+}
+.ZachmanDiagramHorizontalHeader {
+	background: #639DC9;
+	/* top/bottom headers */
+	height: 50px;
+}
+.ZachmanDiagramVerticalHeader {
+	background: #639DC9;
+	/* left/right headers */
+	height: 80px;
+}
+
+.SubtableHeader{
+	background-color: #198FD8;
+	height: 20px;
+}
+
+.TableHeaderShadow{
+	background-color: #808080;
+	height: 1px;
+}
+
+.TableHeaderText{
+	color: #FFFFFF;
+	font-family: arial;
+	font-size: 12px;
+	font-weight: bold;	
+}
+.DecisionTableHeaderText {
+	color: #808080;
+	font-family: arial;
+	font-size: 12px;
+	font-weight: bold;
+}
+.DecisionTableRuleHeaderText {
+	color: black;
+	font-family: arial;
+	font-size: 12px;
+}
+.DecisionTableConditionActionHeaderText {
+	color: #C0C0C0;
+	font-family: arial;
+	font-size: 12px;
+}
+.ZachmanDiagramHeaderText {
+	color: white;
+	font-family: arial;
+	/*font size to be 10px (smaller), because if the header text longer than cell width, the cells' width become ugly*/
+	font-size: 10px;
+	font-weight: bold;
+}
+
+.TableCellSpaceHolder5Px{
+	width: 5px;
+}
+
+.TableCellSpaceHolder10Px{
+	width: 10px;
+}
+
+.TableCellSpaceHolder14Px{
+	width: 14px;
+}
+
+.TableCellSpaceHolder18Px{
+	width: 18px;
+}
+
+.TableCellSpaceHolder20Px{
+	width: 20px;
+}
+
+.TableCellSpaceHolder25Percent{
+	width: 25%;
+}
+
+.TableCellSpaceHolder40Percent{
+	width: 40%;
+}
+
+.TableCellSpaceHolder5PxTall{
+	height: 5px;
+}
+
+.TableCellSpaceHolder1PxTall{
+	height: 1px;
+	width: 100%;
+}
+
+.CategoryItemLink{
+	color: #1C346B;
+	font-family: arial;
+	font-size: 12px;
+	font-weight: bold;	
+}
+
+.TableRow1{
+	background-color: #FFFFFF;
+	height: 22px;
+}
+
+.TableRow2{
+	background-color: #F0F0F0;
+	height: 22px;
+}
+
+.TableFooter{
+	background-color: #808080;
+	height: 1px;
+}
+
+.TableHeaderLine{
+	background-color: #404040;
+	height: 1px;
+}
+
+.TableHeaderLine1{
+	background-color: #FFFFFF;
+	height: 1px;
+}
+
+.TableHeaderLine2{
+	background-color: #808080;
+	height: 1px;
+}
+
+.TableContent, 
+.TableContent table, 
+.MatrixVerticalColumnHeader_Span {
+	color: #000000;
+	font-family: arial;
+	font-size: 12px;
+}
+.TableContent table, .TableContent table td {
+	border: 1px solid black;
+}
+
+/*
+ * Don't set font-size and font-family. Otherwise, the link will be different than other text
+ * 
+	HTML report not generate links for glossary if it contain non-Eng char (DUC-901-93090)
+	https://earth.space/#issueId=72268
+*/
+.ItemLink{
+	color: #1C346B;
+	/*font-family: arial;
+	font-size: 12px;*/
+}
+
+.HeaderText{
+	color: #000000;
+	font-family: arial;
+	font-weight: bold;	
+	font-size: 14px;
+}
+
+.PageTitle{
+	color: #000000;
+	font-family: arial;
+	font-weight: bold;
+	font-size: 22px;
+}
+
+.PageTitleLink{
+	color: #1C346B;
+	font-family: arial;
+	font-weight: bold;
+	font-size: 22px;
+}
+
+.Image{
+	border: 1px solid #000000;
+	padding: 5px, 5px, 5px, 5px;
+}
+
+.Category {
+	color: #000000;
+	font-family: arial;
+	font-size: 18px;
+	font-weight: bold;
+}
+.Category_Level2 {
+	color: #000000;
+	font-family: arial;
+	font-size: 16px;
+	font-weight: bold;
+}
+.Category_Level3 {
+	color: #000000;
+	font-family: arial;
+	font-size: 14px;
+	font-weight: bold;
+}
+
+.FooterLine{
+	background-color: #808080;
+	height: 1px;
+}
+
+.PageParentTitle{
+	color: #1C346B;
+	font-family: arial;
+	font-size: 14px;
+	font-weight: bold;
+}
+
+.TabIcon{
+	border: none;
+	margin-top: 3px;
+}
+
+.ProjectTitle1{
+	font-family: arial;
+	font-size: 28px;
+	font-weight: bold;
+}
+
+.FoeIndex{
+	color: #808080;
+}
+.FoeControl{
+	color: #00B200;
+}
+.FoeControlSystem{
+	color: #CA6400;
+}
+.UseCaseNoteIndex{
+	color: #2E6AAF;
+}
+
+
+/**/
+#header {
+	position: relative;
+	height: 32px;
+	width: 150px;
+}
+
+#header ul {
+	margin: 0px;
+	padding-left: 5px;
+	position: absolute;
+	bottom: -1px;
+	width: 150px;
+}
+
+#header ul li{
+	display: inline;
+	list-style: none;
+}
+
+#header ul a, #header ul span {
+	border: 1px solid #404040;
+	width: 32px;
+	height: 24px;
+	float: left;
+	margin: 0px 0px 0px 0px;
+	text-align: center;
+	margin-left: -1px;
+}
+
+#header ul a {
+	background-color: #B2B2B2;
+}
+
+#header ul span {
+	border-bottom: 1px solid #F5F5F5;
+	background-color: #F5F5F5;
+}
+
+/**/
+.PopupMenuRowSelected{
+	color: #FFFFFF;
+	background-color: #1569bc;
+	height: 22px;
+	font-family: arial;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.PopupMenuRowDeselected{
+	color: #000000;
+	background-color: #FFFFFF;
+	height: 22px;
+	font-family: arial;
+	font-size: 12px;
+  cursor: pointer;
+}
+
+.PopupMenuRowNonSelectable{
+	color: #000000;
+	background-color: #FFFFFF;
+	height: 22px;
+	font-family: arial;
+	font-size: 12px;
+}
+
+.PopupMenuHeaderRow{
+	color: white;
+	background-color: #808080;
+	height: 22px;
+	font-family: arial;
+	font-size: 12px;
+	text-align: center;
+}
+
+
+/* for tooltip */
+body div#toolTip { overflow: auto;position:absolute;min-width:200px;max-height:300px;background:#fff;border:3px double #1569BC;padding:3px;min-height:1em}
+body div#toolTipConnector { overflow: auto;position:absolute;width:4px;border-left:1px solid #1569BC;border-right:1px solid #1569BC;}
+body div#toolTipPin { overflow: auto;position:absolute;min-width:10px;height:3px;border-bottom:3px double #1569BC;border-left:3px double #1569BC;border-right:3px double #1569BC;}
+body div#shadowArea { position:absolute;visibility:visible}
+
+
+/*
+	MatrixVerticalColumnHeader's structure:
+	 Cell > Div > Span > {Icon + Anchor}
+*/
+.MatrixVerticalColumnHeader_Div {
+	/*float: right;*/
+	position: relative;
+	vertical-align: middle;
+	/*width: 22px;*/
+	/*border: 1px solid red;*/
+}
+.MatrixVerticalColumnHeader_Span {
+	transform: rotate(-90deg);
+	-ms-transform: rotate(-90deg);
+	-webkit-transform: rotate(-90deg); 
+	-moz-transform: rotate(-90deg); 
+	filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3); 
+	display: block;
+	
+	/* IE can't rotate if no position:absolute*/  
+		position: absolute;
+	
+	bottom: 1px; 
+	right: -1px; 
+}
+.MatrixHorizontalRowHeader_Anchor {
+	overflow: hidden; 
+	position: absolute; 
+	white-space: nowrap;
+}
+.MatrixVerticalColumnHeader_Anchor {
+	overflow: hidden; 
+	position: absolute; 
+	white-space: nowrap; 
+	
+	background: white; /* IE using BasicImage makes text anti-aliasing that makes appearance blur, setting white background looks better */
+	left: 22;
+	top: 0;
+}
+
+.Documentation p {
+  margin: 0;
+}
+
+ul.MinimizeBullet {
+	padding-left: 0;
+	margin: 0;
+}
+ul.MinimizeBullet li {
+	list-style-position: inside;
+}
+
+/* Supports numbering in different level */
+.Documentation OL {
+	counter-reset: item;
+	list-style-type: none;
+}
+.Documentation LI .InlineP {
+	display: inline;
+}
+.Documentation OL.decimal>LI:before {
+	content: counters(item, ".", decimal) ". ";
+	counter-increment: item;
+}
+.Documentation OL.lower_alpha>LI:before {
+	content: counters(item, ".", lower-alpha) ". ";
+	counter-increment: item;
+}
+.Documentation OL.upper_alpha>LI:before {
+	content: counters(item, ".", upper-alpha) ". ";
+	counter-increment: item;
+}
+.Documentation OL.lower_roman>LI:before {
+	content: counters(item, ".", lower-roman) ". ";
+	counter-increment: item;
+}
+.Documentation OL.upper_roman>LI:before {
+	content: counters(item, ".", upper-roman) ". ";
+	counter-increment: item;
+}
+.Documentation UL.disc>LI:before {
+	content: counters(item, ".", disc) " ";
+	counter-increment: item;
+}
+.Documentation UL.circle>LI:before {
+	content: counters(item, ".", circle) " ";
+	counter-increment: item;
+}
+.Documentation UL.square>LI:before {
+	content: counters(item, ".", square) " ";
+	counter-increment: item;
+}
