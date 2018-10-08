@@ -1,0 +1,210 @@
+<html>
+<head>
+	<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<link rel="stylesheet" href="report.css" type="text/css"/>
+	<title>Package Diagram - RUP 4+1 View</title>
+	<META name="Description" content="4+1 is a view model for "describing the architecture of software-intensive systems, based on the use of multiple, concurrent views". The views are used to describe the system from the viewpoint of different stakeholders, such as end-users, developers and project managers. The four views of the model are logical, development, process and physical view. In addition selected use cases or or scenarios are utilized to illustrate the architecture serving as the 'plus one' view. Hence the model contains 4+1 views. Optionally, a data view may be included."/>
+	<script type="text/javascript" src="report.js"></script>
+	<script type="text/javascript" src="link_popup.js"></script>
+	<script type="text/javascript" src="tooltip.js"></script>
+</head>
+<body style="margin-left: 10px; margin-right: 10px; margin-top: 10px; margin-bottom: 10px;" onload="initPage();initDiagram();initGridDiagram();">
+	<div style="position:absolute; z-index:2; visibility:hidden;border-top: 2px #FF0000 solid;" id="spotlight_top">
+	</div>
+	<div style="position:absolute; z-index:2; visibility:hidden;border-top: 2px #FF0000 solid;" id="spotlight_bottom">
+	</div>
+	<div style="position:absolute; z-index:2; visibility:hidden;border-left: 2px #FF0000 solid;" id="spotlight_left">
+	</div>
+	<div style="position:absolute; z-index:2; visibility:hidden;border-left: 2px #FF0000 solid;" id="spotlight_right">
+	</div>
+	<canvas width="100" style="position:absolute; z-index:2; visibility:hidden" id="spotlight_c" height="100">
+	</canvas>
+	<div style="position:absolute; width:100px; height:100px; z-index:1; visibility:hidden" id="spotLightResourcesTop">
+		<table border="0" cellpadding="0" cellspacing="0">
+			<tr>
+				<td>
+<a href="#top"><img style="border:none" src="../images/icons/BackToTop.gif" alt="Back to top"/></a>				</td>
+				<td>
+<a href="javascript:clearSpotLightFromOpenSpecButton();"><img style="border:none" src="../images/icons/OpenSpecification.gif" alt="Open specification"/></a>				</td>
+			</tr>
+		</table>
+	</div>
+	<div style="position:absolute; width:100px; height:100px; z-index:1; visibility:hidden" id="spotLightResourcesRight">
+		<table border="0" cellpadding="0" cellspacing="0">
+			<tr>
+				<td>
+<a href="#top"><img style="border:none" src="../images/icons/BackToTop.gif" alt="Back to top"/></a>				</td>
+			</tr>
+			<tr>
+				<td>
+<a href="javascript:clearSpotLightFromOpenSpecButton();"><img style="border:none" src="../images/icons/OpenSpecification.gif" alt="Open specification"/></a>				</td>
+			</tr>
+		</table>
+	</div>
+	<div style="position:absolute;z-index:4;visibility:hidden" id="linkPopupMenuLayer">
+		<table border="0" width="100%" style="border-style:solid; border-width:1px; border-color:#000000; background:#FFFFFF; width:250px" id="linkPopupMenuTable">
+		</table>
+	</div>
+	<div style="position:absolute; z-index:1; visibility:hidden; " id="referenceIconLayer">
+		<table border="0" cellpadding="3" cellspacing="0" style="font-size:1;">
+			<tr>
+				<td>
+					<img src="../images/icons/Ref.gif" style="border:none" onclick="movePopupPositionToReferenceIconPosition();resetPopupForReference();switchPopupShowHideStatus();" />				</td>
+			</tr>
+		</table>
+	</div>
+	<div style="position:absolute; z-index:1; visibility:hidden; " id="subdiagramIconLayer">
+		<table border="0" cellpadding="3" cellspacing="0" style="font-size:1;">
+			<tr>
+				<td>
+					<img src="../images/icons/Subdiagram.gif" style="border:none" onclick="movePopupPositionToSubdiagramIconPosition();resetPopupForSubdiagram();switchPopupShowHideStatus();" />				</td>
+			</tr>
+		</table>
+	</div>
+	<div style="position:absolute; z-index:1; visibility:hidden; " id="transitorIconLayer">
+		<table border="0" cellpadding="3" cellspacing="0" style="font-size:1;">
+			<tr>
+				<td>
+					<img src="../images/icons/Transitor.gif" style="border:none" onclick="movePopupPositionToTransitorIconPosition();resetPopupForTransitor();switchPopupShowHideStatus();" />				</td>
+			</tr>
+		</table>
+	</div>
+	<div style="position:absolute; z-index:1; visibility:hidden; " id="documentationIconLayer">
+		<table border="0" cellpadding="3" cellspacing="0" style="font-size:1;">
+			<tr>
+				<td>
+					<img src="../images/icons/Documentation.png" style="border:none" />				</td>
+			</tr>
+		</table>
+	</div>
+	<div class="HeaderText">
+		callattendent	</div>
+	<table border="0" cellpadding="0" width="100%" cellspacing="0">
+		<tr>
+			<td class="HeaderLine1">
+			</td>
+		</tr>
+		<tr>
+			<td class="HeaderLine2">
+			</td>
+		</tr>
+		<tr>
+			<td class="HeaderLine3">
+			</td>
+		</tr>
+	</table>
+	<div style="position:absolute; z-index:21; visibility:hidden" id="referencedBys">
+		<table border="0" width="100%" style="border-style:solid; border-width:1px; border-color:#000000; background:#FFFFFF; width:250px" id="referencedBysTable">
+		</table>
+	</div>
+	<div style="position:absolute; z-index:21; visibility:hidden" id="vplink">
+		<table border="1" cellpadding="0" cellspacing="0" bordercolor="#A9BFD3">
+			<tr>
+				<td>
+					<table border="0" cellpadding="0" width="100%" cellspacing="0">
+						<tr style="background:#DDDDDD">
+							<td style="font-size: 12px;" align="left">
+								<select onchange="vpLinkToggleName()" id="vplink-linkType">
+	<option value="Project Link">Project Link</option>
+	<option value="Page URL">Page URL</option>
+</select>
+							</td>
+							<td style="font-size: 12px;" align="right">
+								<input onclick="javascript: vpLinkToggleName()" id="vplink-checkbox" type="checkbox" />
+								<label for="vplink-checkbox">with Name</label>							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<textarea id="vplink-text" style="width: 348px; height: 60px; border-color: #7EADD9; outline: none;"></textarea>				</td>
+			</tr>
+		</table>
+	</div>
+	<p>
+<a href="Package_FpoxmJKGAqACrElZ.html" class="PageParentTitle">RUP 4+1 : Package</a>	</p>
+	<p class="PageTitle">
+		<span id="PageTitleText">
+			Package Diagram - RUP 4+1 View		</span>
+<a onclick="javascript: showVpLink('callattendent.vpp://diagram/fJAxmJKGAqACrElM', 'RUP 4+1 View\ncallattendent.vpp://diagram/fJAxmJKGAqACrElM', 'RUP 4+1 View', this); return false;" style="padding-left: 16px; font-size: 12px" href="#"><img src="../images/icons/link.png" border="0"> link</a>	</p>
+	<div style="position: relative; padding-bottom: 20px;">
+		<table border="0" cellpadding="0" width="100%" cellspacing="0" style="position: absolute; top: 0; left: 0; z-index: 20;" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),hideLinkPopup(),hideReferencedBys();">
+			<tr>
+				<td>
+<span class="TableContent">Jump to:</span>					<select id="SelectShape" class="TableContent" onChange="scrollWin('diagram', this.value);hideLinkPopup();showSpotLight('diagram', this.value)">
+<option value="">Please select a model element</option>
+<option value="shape|326.0|267.0|132.0|31.0|ShapeEditorShape_Uy4xmJKGAqACrEpb.html|ShapeEditorShape_Uy4xmJKGAqACrEpb.html|ay4xmJKGAqACrEpe" id="optionay4xmJKGAqACrEpe">PHYSICAL : Freehand Shape</option>
+<option value="shape|66.0|267.0|132.0|31.0|ShapeEditorShape_Uy4xmJKGAqACrEpb.html|ShapeEditorShape_Uy4xmJKGAqACrEpb.html|ky4xmJKGAqACrEpZ" id="optionky4xmJKGAqACrEpZ">PHYSICAL : Freehand Shape</option>
+<option value="shape|162.0|102.0|150.0|80.0|UseCase_5S4xmJKGAqACrEpN.html|UseCase_5S4xmJKGAqACrEpN.html|ZS4xmJKGAqACrEpL" id="optionZS4xmJKGAqACrEpL">Use Case View : Use Case</option>
+<option value="shape|22.0|167.0|190.0|100.0|Package_iS4xmJKGAqACrEpI.html|Package_iS4xmJKGAqACrEpI.html|CS4xmJKGAqACrEpG" id="optionCS4xmJKGAqACrEpG">Process View : Package</option>
+<option value="shape|272.0|22.0|190.0|100.0|Package__i4xmJKGAqACrEpD.html|Package__i4xmJKGAqACrEpD.html|fi4xmJKGAqACrEpB" id="optionfi4xmJKGAqACrEpB">Implementation View : Package</option>
+<option value="shape|272.0|167.0|190.0|100.0|Package_Ni4xmJKGAqACrEo_.html|Package_Ni4xmJKGAqACrEo_.html|Ni4xmJKGAqACrEo8" id="optionNi4xmJKGAqACrEo8">Deployment View : Package</option>
+<option value="shape|152.0|312.0|180.0|100.0|Package_6i4xmJKGAqACrEo5.html|Package_6i4xmJKGAqACrEo5.html|ai4xmJKGAqACrEo3" id="optionai4xmJKGAqACrEo3">Data View : Package</option>
+<option value="shape|22.0|22.0|190.0|100.0|Package_vC4xmJKGAqACrEo0.html|Package_vC4xmJKGAqACrEo0.html|vC4xmJKGAqACrEoy" id="optionvC4xmJKGAqACrEoy">Logical View : Package</option>
+<option value="shape|252.0|2.0|230.0|300.0|Rectangle_xC4xmJKGAqACrEop.html|Rectangle_xC4xmJKGAqACrEop.html|DC4xmJKGAqACrEot" id="optionDC4xmJKGAqACrEot">Unnamed Rectangle : Rectangle</option>
+<option value="shape|2.0|2.0|230.0|300.0|Rectangle_xC4xmJKGAqACrEop.html|Rectangle_xC4xmJKGAqACrEop.html|qC4xmJKGAqACrEn." id="optionqC4xmJKGAqACrEn.">Unnamed Rectangle : Rectangle</option>
+</select>				</td>
+			</tr>
+		</table>
+		<table border="0" cellpadding="0" width="100%" cellspacing="0" style="position: relative; top: 24;">
+			<tr>
+				<td>
+					<img id="diagram" src="../images/RUP_41_View.png" usemap="#diagram_map" class="Image" width="486" height="416"/>
+					<map name="diagram_map">
+<area imageId="diagram" coords="361.0, 122.0, 361.0, 167.0, 375.0, 167.0, 375.0, 122.0" coords2="361.0, 122.0, 361.0, 167.0, 375.0, 167.0, 375.0, 122.0" shape="poly" alt=":Generic Connector" id="areadiagram_map_CVuMeJKGAqACrJ1u" href="GenericConnector_FluMeJKGAqACrJ1m.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="114.0, 122.0, 114.0, 167.0, 128.0, 167.0, 128.0, 122.0" coords2="114.0, 122.0, 114.0, 167.0, 128.0, 167.0, 128.0, 122.0" shape="poly" alt=":Generic Connector" id="areadiagram_map_wKhMeJKGAqACrJ4U" href="GenericConnector_ZyhMeJKGAqACrJ4T.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="212.0, 65.0, 212.0, 79.0, 272.0, 79.0, 272.0, 65.0" coords2="212.0, 65.0, 212.0, 79.0, 272.0, 79.0, 272.0, 65.0" shape="poly" alt=":Generic Connector" id="areadiagram_map_nAxMeJKGAqACrJ6a" href="GenericConnector_hAxMeJKGAqACrJ6Z.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="212.0, 209.0, 212.0, 223.0, 272.0, 223.0, 272.0, 209.0" coords2="212.0, 209.0, 212.0, 223.0, 272.0, 223.0, 272.0, 209.0" shape="poly" alt=":Generic Connector" id="areadiagram_map_hwJMeJKGAqACrJ8Q" href="GenericConnector_EwJMeJKGAqACrJ8P.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="326, 267, 458, 298" coords2="326, 267, 458, 298" shape="rect" alt="PHYSICAL:Freehand Shape" id="areadiagram_map_ay4xmJKGAqACrEpe" href="ShapeEditorShape_Uy4xmJKGAqACrEpb.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="66, 267, 198, 298" coords2="66, 267, 198, 298" shape="rect" alt="PHYSICAL:Freehand Shape" id="areadiagram_map_ky4xmJKGAqACrEpZ" href="ShapeEditorShape_Uy4xmJKGAqACrEpb.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="162, 102, 312, 182" coords2="162, 102, 312, 182" shape="rect" alt="Use Case View:Use Case" id="areadiagram_map_ZS4xmJKGAqACrEpL" href="UseCase_5S4xmJKGAqACrEpN.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="22, 167, 212, 267" coords2="22, 167, 212, 267" shape="rect" alt="Process View:Package" id="areadiagram_map_CS4xmJKGAqACrEpG" href="Package_iS4xmJKGAqACrEpI.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="272, 22, 462, 122" coords2="272, 22, 462, 122" shape="rect" alt="Implementation View:Package" id="areadiagram_map_fi4xmJKGAqACrEpB" href="Package__i4xmJKGAqACrEpD.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="272, 167, 462, 267" coords2="272, 167, 462, 267" shape="rect" alt="Deployment View:Package" id="areadiagram_map_Ni4xmJKGAqACrEo8" href="Package_Ni4xmJKGAqACrEo_.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="152, 312, 332, 412" coords2="152, 312, 332, 412" shape="rect" alt="Data View:Package" id="areadiagram_map_ai4xmJKGAqACrEo3" href="Package_6i4xmJKGAqACrEo5.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="22, 22, 212, 122" coords2="22, 22, 212, 122" shape="rect" alt="Logical View:Package" id="areadiagram_map_vC4xmJKGAqACrEoy" href="Package_vC4xmJKGAqACrEo0.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="252, 2, 482, 302" coords2="252, 2, 482, 302" shape="rect" alt=":Rectangle" id="areadiagram_map_DC4xmJKGAqACrEot" href="Rectangle_xC4xmJKGAqACrEop.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="2, 2, 232, 302" coords2="2, 2, 232, 302" shape="rect" alt=":Rectangle" id="areadiagram_map_qC4xmJKGAqACrEn." href="Rectangle_xC4xmJKGAqACrEop.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+</map>
+				</td>
+			</tr>
+		</table>
+		<p>
+		</p>
+	</div>
+	<p>
+		<table border="0" cellpadding="0" width="100%" cellspacing="0">
+			<tr>
+				<td>
+<span class="TableContent Documentation"><head>
+    
+  </head>
+  <body style="margin-left:0;margin-right:0;color:#000000;font-weight:normal;font-size:11px;font-family:Verdana;">
+    <p style="margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;">
+      4+1&nbsp;is a&nbsp;view model for &quot;describing the architecture of 
+      software-intensive systems, based on the use of multiple, concurrent 
+      views&quot;. The views are used to describe the system from the viewpoint of 
+      different stakeholders, such as end-users, developers and project 
+      managers. The four views of the model are logical, development, process 
+      and physical view. In addition selected&nbsp;use cases or or scenarios are 
+      utilized to illustrate the architecture serving as the 'plus one' view. 
+      Hence the model contains 4+1 views. Optionally, a data view may be 
+      included.
+    </p>
+  </body></span>				</td>
+			</tr>
+		</table>
+	</p>
+	<div style="height: 20px">
+	</div>
+	<table border="0" cellpadding="0" width="100%" cellspacing="0">
+		<tr>
+			<td class="FooterLine">
+			</td>
+		</tr>
+	</table>
+	<div class="HeaderText">
+		callattendent	</div>
+</body>
+</html>

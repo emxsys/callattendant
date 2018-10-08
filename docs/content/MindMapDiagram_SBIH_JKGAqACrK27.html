@@ -1,0 +1,721 @@
+<html>
+<head>
+	<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<link rel="stylesheet" href="report.css" type="text/css"/>
+	<title>Mind Mapping Diagram - Vision and Scope</title>
+	<script type="text/javascript" src="report.js"></script>
+	<script type="text/javascript" src="link_popup.js"></script>
+	<script type="text/javascript" src="tooltip.js"></script>
+</head>
+<body style="margin-left: 10px; margin-right: 10px; margin-top: 10px; margin-bottom: 10px;" onload="initPage();initDiagram();initGridDiagram();">
+	<div style="position:absolute; z-index:2; visibility:hidden;border-top: 2px #FF0000 solid;" id="spotlight_top">
+	</div>
+	<div style="position:absolute; z-index:2; visibility:hidden;border-top: 2px #FF0000 solid;" id="spotlight_bottom">
+	</div>
+	<div style="position:absolute; z-index:2; visibility:hidden;border-left: 2px #FF0000 solid;" id="spotlight_left">
+	</div>
+	<div style="position:absolute; z-index:2; visibility:hidden;border-left: 2px #FF0000 solid;" id="spotlight_right">
+	</div>
+	<canvas width="100" style="position:absolute; z-index:2; visibility:hidden" id="spotlight_c" height="100">
+	</canvas>
+	<div style="position:absolute; width:100px; height:100px; z-index:1; visibility:hidden" id="spotLightResourcesTop">
+		<table border="0" cellpadding="0" cellspacing="0">
+			<tr>
+				<td>
+<a href="#top"><img style="border:none" src="../images/icons/BackToTop.gif" alt="Back to top"/></a>				</td>
+				<td>
+<a href="javascript:clearSpotLightFromOpenSpecButton();"><img style="border:none" src="../images/icons/OpenSpecification.gif" alt="Open specification"/></a>				</td>
+			</tr>
+		</table>
+	</div>
+	<div style="position:absolute; width:100px; height:100px; z-index:1; visibility:hidden" id="spotLightResourcesRight">
+		<table border="0" cellpadding="0" cellspacing="0">
+			<tr>
+				<td>
+<a href="#top"><img style="border:none" src="../images/icons/BackToTop.gif" alt="Back to top"/></a>				</td>
+			</tr>
+			<tr>
+				<td>
+<a href="javascript:clearSpotLightFromOpenSpecButton();"><img style="border:none" src="../images/icons/OpenSpecification.gif" alt="Open specification"/></a>				</td>
+			</tr>
+		</table>
+	</div>
+	<div style="position:absolute;z-index:4;visibility:hidden" id="linkPopupMenuLayer">
+		<table border="0" width="100%" style="border-style:solid; border-width:1px; border-color:#000000; background:#FFFFFF; width:250px" id="linkPopupMenuTable">
+		</table>
+	</div>
+	<div style="position:absolute; z-index:1; visibility:hidden; " id="referenceIconLayer">
+		<table border="0" cellpadding="3" cellspacing="0" style="font-size:1;">
+			<tr>
+				<td>
+					<img src="../images/icons/Ref.gif" style="border:none" onclick="movePopupPositionToReferenceIconPosition();resetPopupForReference();switchPopupShowHideStatus();" />				</td>
+			</tr>
+		</table>
+	</div>
+	<div style="position:absolute; z-index:1; visibility:hidden; " id="subdiagramIconLayer">
+		<table border="0" cellpadding="3" cellspacing="0" style="font-size:1;">
+			<tr>
+				<td>
+					<img src="../images/icons/Subdiagram.gif" style="border:none" onclick="movePopupPositionToSubdiagramIconPosition();resetPopupForSubdiagram();switchPopupShowHideStatus();" />				</td>
+			</tr>
+		</table>
+	</div>
+	<div style="position:absolute; z-index:1; visibility:hidden; " id="transitorIconLayer">
+		<table border="0" cellpadding="3" cellspacing="0" style="font-size:1;">
+			<tr>
+				<td>
+					<img src="../images/icons/Transitor.gif" style="border:none" onclick="movePopupPositionToTransitorIconPosition();resetPopupForTransitor();switchPopupShowHideStatus();" />				</td>
+			</tr>
+		</table>
+	</div>
+	<div style="position:absolute; z-index:1; visibility:hidden; " id="documentationIconLayer">
+		<table border="0" cellpadding="3" cellspacing="0" style="font-size:1;">
+			<tr>
+				<td>
+					<img src="../images/icons/Documentation.png" style="border:none" />				</td>
+			</tr>
+		</table>
+	</div>
+	<div class="HeaderText">
+		callattendent	</div>
+	<table border="0" cellpadding="0" width="100%" cellspacing="0">
+		<tr>
+			<td class="HeaderLine1">
+			</td>
+		</tr>
+		<tr>
+			<td class="HeaderLine2">
+			</td>
+		</tr>
+		<tr>
+			<td class="HeaderLine3">
+			</td>
+		</tr>
+	</table>
+	<div style="position:absolute; z-index:21; visibility:hidden" id="referencedBys">
+		<table border="0" width="100%" style="border-style:solid; border-width:1px; border-color:#000000; background:#FFFFFF; width:250px" id="referencedBysTable">
+		</table>
+	</div>
+	<div style="position:absolute; z-index:21; visibility:hidden" id="vplink">
+		<table border="1" cellpadding="0" cellspacing="0" bordercolor="#A9BFD3">
+			<tr>
+				<td>
+					<table border="0" cellpadding="0" width="100%" cellspacing="0">
+						<tr style="background:#DDDDDD">
+							<td style="font-size: 12px;" align="left">
+								<select onchange="vpLinkToggleName()" id="vplink-linkType">
+	<option value="Project Link">Project Link</option>
+	<option value="Page URL">Page URL</option>
+</select>
+							</td>
+							<td style="font-size: 12px;" align="right">
+								<input onclick="javascript: vpLinkToggleName()" id="vplink-checkbox" type="checkbox" />
+								<label for="vplink-checkbox">with Name</label>							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<textarea id="vplink-text" style="width: 348px; height: 60px; border-color: #7EADD9; outline: none;"></textarea>				</td>
+			</tr>
+		</table>
+	</div>
+	<p class="PageTitle">
+		<span id="PageTitleText">
+			Mind Mapping Diagram - Vision and Scope		</span>
+<a onclick="javascript: showVpLink('callattendent.vpp://diagram/SBIH.JKGAqACrK27', 'Vision and Scope\ncallattendent.vpp://diagram/SBIH.JKGAqACrK27', 'Vision and Scope', this); return false;" style="padding-left: 16px; font-size: 12px" href="#"><img src="../images/icons/link.png" border="0"> link</a>	</p>
+	<div style="position: relative; padding-bottom: 20px;">
+		<table border="0" cellpadding="0" width="100%" cellspacing="0" style="position: absolute; top: 0; left: 0; z-index: 20;" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),hideLinkPopup(),hideReferencedBys();">
+			<tr>
+				<td>
+<span class="TableContent">Jump to:</span>					<select id="SelectShape" class="TableContent" onChange="scrollWin('diagram', this.value);hideLinkPopup();showSpotLight('diagram', this.value)">
+<option value="">Please select a model element</option>
+<option value="shape|172.0|4.0|88.0|20.0|MindMapNode_0h1b_JKGAqACrKnb.html|MindMapNode_0h1b_JKGAqACrKnb.html|XFoH.JKGAqACrK4V" id="optionXFoH.JKGAqACrK4V">Background : Node</option>
+<option value="shape|826.0|342.0|151.0|20.0|MindMapNode_sSmb_JKGAqACrKnD.html|MindMapNode_sSmb_JKGAqACrKnD.html|1FoH.JKGAqACrK4R" id="option1FoH.JKGAqACrK4R">Operating Environment : Node</option>
+<option value="shape|826.0|292.0|114.0|20.0|MindMapNode_Pudr_JKGAqACrKmV.html|MindMapNode_Pudr_JKGAqACrKmV.html|OFoH.JKGAqACrK4N" id="optionOFoH.JKGAqACrK4N">Project Priorities : Node</option>
+<option value="shape|826.0|242.0|134.0|20.0|MindMapNode_3r_r_JKGAqACrKlj.html|MindMapNode_3r_r_JKGAqACrKlj.html|0FoH.JKGAqACrK4J" id="option0FoH.JKGAqACrK4J">Stakeholder Profiles : Node</option>
+<option value="shape|688.0|292.0|119.0|20.0|MindMapNode_nFXyeJKGAqACrKgq.html|MindMapNode_nFXyeJKGAqACrKgq.html|35oH.JKGAqACrK4F" id="option35oH.JKGAqACrK4F">Business Context : Node</option>
+<option value="shape|854.0|162.0|173.0|20.0|MindMapNode_gNbyeJKGAqACrKgc.html|MindMapNode_gNbyeJKGAqACrKgc.html|N5oH.JKGAqACrK4B" id="optionN5oH.JKGAqACrK4B">Limitations and Exclusions : Node</option>
+<option value="shape|854.0|112.0|196.0|20.0|MindMapNode_XrjyeJKGAqACrKgI.html|MindMapNode_XrjyeJKGAqACrKgI.html|e5oH.JKGAqACrK39" id="optione5oH.JKGAqACrK39">Scope of Subsequent Releases : Node</option>
+<option value="shape|854.0|62.0|152.0|20.0|MindMapNode_EftyeJKGAqACrKf6.html|MindMapNode_EftyeJKGAqACrKf6.html|i5oH.JKGAqACrK35" id="optioni5oH.JKGAqACrK35">Scope of Initial Release : Node</option>
+<option value="shape|688.0|112.0|146.0|20.0|MindMapNode_k3FyeJKGAqACrKfs.html|MindMapNode_k3FyeJKGAqACrKfs.html|Q5oH.JKGAqACrK31" id="optionQ5oH.JKGAqACrK31">Scope and Limitations : Node</option>
+<option value="shape|65.0|372.0|203.0|20.0|MindMapNode_q4RyeJKGAqACrKfc.html|MindMapNode_q4RyeJKGAqACrKfc.html|LZoH.JKGAqACrK3x" id="optionLZoH.JKGAqACrK3x">Assumptions and Dependencies : Node</option>
+<option value="shape|165.0|322.0|103.0|20.0|MindMapNode_0S_yeJKGAqACrKfO.html|MindMapNode_0S_yeJKGAqACrKfO.html|ZZoH.JKGAqACrK3t" id="optionZZoH.JKGAqACrK3t">Major Features : Node</option>
+<option value="shape|153.0|272.0|115.0|20.0|MindMapNode_2FuyeJKGAqACrKfC.html|MindMapNode_2FuyeJKGAqACrKfC.html|GZoH.JKGAqACrK3p" id="optionGZoH.JKGAqACrK3p">Vision Statement : Node</option>
+<option value="shape|287.0|322.0|141.0|20.0|MindMapNode_UzayeJKGAqACrKe0.html|MindMapNode_UzayeJKGAqACrKe0.html|kZoH.JKGAqACrK3l" id="optionkZoH.JKGAqACrK3l">Vision of the Solution : Node</option>
+<option value="shape|154.0|204.0|106.0|20.0|MindMapNode_QPCyeJKGAqACrKea.html|MindMapNode_QPCyeJKGAqACrKea.html|3poH.JKGAqACrK3h" id="option3poH.JKGAqACrK3h">Business Risks : Node</option>
+<option value="shape|90.0|154.0|170.0|20.0|MindMapNode_uiIyeJKGAqACrKd_.html|MindMapNode_uiIyeJKGAqACrKd_.html|mpoH.JKGAqACrK3d" id="optionmpoH.JKGAqACrK3d">Customer or Market Needs : Node</option>
+<option value="shape|4.0|104.0|257.0|20.0|MindMapNode_BFXSeJKGAqACrKdM.html|MindMapNode_BFXSeJKGAqACrKdM.html|UpoH.JKGAqACrK3Z" id="optionUpoH.JKGAqACrK3Z">Business Objectives and Success Criteria : Node</option>
+<option value="shape|118.0|54.0|143.0|20.0|MindMapNode_fMRSeJKGAqACrKcg.html|MindMapNode_fMRSeJKGAqACrKcg.html|XJoH.JKGAqACrK3V" id="optionXJoH.JKGAqACrK3V">Business Opportunity : Node</option>
+<option value="shape|280.0|104.0|154.0|20.0|MindMapNode_DS2SeJKGAqACrKcO.html|MindMapNode_DS2SeJKGAqACrKcO.html|VJoH.JKGAqACrK3R" id="optionVJoH.JKGAqACrK3R">Business Requirements : Node</option>
+<option value="shape|478.0|192.0|161.0|40.0|MindMapNode_fxIH_JKGAqACrK3F.html|MindMapNode_fxIH_JKGAqACrK3F.html|fxIH.JKGAqACrK3E" id="optionfxIH.JKGAqACrK3E">Vision and Scope : Node</option>
+</select>				</td>
+			</tr>
+		</table>
+		<table border="0" cellpadding="0" width="100%" cellspacing="0" style="position: relative; top: 24;">
+			<tr>
+				<td>
+					<img id="diagram" src="../images/Vision_and_Scope.png" usemap="#diagram_map" class="Image" width="1056" height="398"/>
+					<map name="diagram_map">
+<area imageId="diagram" coords="440.0, 102.0, 435.9091, 107.0, 434.0, 107.0, 434.0, 121.0, 440.5111, 121.0, 524.92224, 192.0, 547.0, 192.0, 454.0, 113.7757, 454.0, 107.0, 445.94446, 107.0, 440.0, 102.0" coords2="440.0, 102.0, 435.9091, 107.0, 434.0, 107.0, 434.0, 121.0, 440.5111, 121.0, 524.92224, 192.0, 547.0, 192.0, 454.0, 113.7757, 454.0, 107.0, 445.94446, 107.0, 440.0, 102.0" shape="poly" alt=":Branch" id="areadiagram_map_UloH.JKGAqACrK4Z" href="MindConnector_Yy2SeJKGAqACrKcR.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="264.0, 54.0, 263.95715, 57.0, 261.0, 57.0, 261.0, 71.0, 263.75714, 71.0, 263.24286, 107.0, 260.0, 107.0, 260.0, 121.0, 263.04285, 121.0, 263.0, 124.0, 277.0, 124.0, 277.04285, 121.0, 280.0, 121.0, 280.0, 107.0, 277.24286, 107.0, 277.75714, 71.0, 281.0, 71.0, 281.0, 57.0, 277.95715, 57.0, 278.0, 54.0" coords2="264.0, 54.0, 263.95715, 57.0, 261.0, 57.0, 261.0, 71.0, 263.75714, 71.0, 263.24286, 107.0, 260.0, 107.0, 260.0, 121.0, 263.04285, 121.0, 263.0, 124.0, 277.0, 124.0, 277.04285, 121.0, 280.0, 121.0, 280.0, 107.0, 277.24286, 107.0, 277.75714, 71.0, 281.0, 71.0, 281.0, 57.0, 277.95715, 57.0, 278.0, 54.0" shape="poly" alt=":Branch" id="areadiagram_map_yloH.JKGAqACrK4d" href="MindConnector_SsRSeJKGAqACrKcj.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="261.0, 107.0, 261.0, 121.0, 280.0, 121.0, 280.0, 107.0" coords2="261.0, 107.0, 261.0, 121.0, 280.0, 121.0, 280.0, 107.0" shape="poly" alt=":Branch" id="areadiagram_map_uloH.JKGAqACrK4h" href="MindConnector_bFXSeJKGAqACrKdP.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="263.0, 104.0, 263.0, 107.0, 260.0, 107.0, 260.0, 121.0, 263.0, 121.0, 263.0, 157.0, 260.0, 157.0, 260.0, 171.0, 263.0, 171.0, 263.0, 174.0, 277.0, 174.0, 277.0, 171.0, 280.0, 171.0, 280.0, 157.0, 277.0, 157.0, 277.0, 121.0, 280.0, 121.0, 280.0, 107.0, 277.0, 107.0, 277.0, 104.0" coords2="263.0, 104.0, 263.0, 107.0, 260.0, 107.0, 260.0, 121.0, 263.0, 121.0, 263.0, 157.0, 260.0, 157.0, 260.0, 171.0, 263.0, 171.0, 263.0, 174.0, 277.0, 174.0, 277.0, 171.0, 280.0, 171.0, 280.0, 157.0, 277.0, 157.0, 277.0, 121.0, 280.0, 121.0, 280.0, 107.0, 277.0, 107.0, 277.0, 104.0" shape="poly" alt=":Branch" id="areadiagram_map_ZloH.JKGAqACrK4l" href="MindConnector_DiIyeJKGAqACrKeB.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="263.0, 104.0, 263.0, 107.0, 260.0, 107.0, 260.0, 121.0, 263.0, 121.0, 263.0, 207.0, 260.0, 207.0, 260.0, 221.0, 263.0, 221.0, 263.0, 224.0, 277.0, 224.0, 277.0, 221.0, 280.0, 221.0, 280.0, 207.0, 277.0, 207.0, 277.0, 121.0, 280.0, 121.0, 280.0, 107.0, 277.0, 107.0, 277.0, 104.0" coords2="263.0, 104.0, 263.0, 107.0, 260.0, 107.0, 260.0, 121.0, 263.0, 121.0, 263.0, 207.0, 260.0, 207.0, 260.0, 221.0, 263.0, 221.0, 263.0, 224.0, 277.0, 224.0, 277.0, 221.0, 280.0, 221.0, 280.0, 207.0, 277.0, 207.0, 277.0, 121.0, 280.0, 121.0, 280.0, 107.0, 277.0, 107.0, 277.0, 104.0" shape="poly" alt=":Branch" id="areadiagram_map_9loH.JKGAqACrK4p" href="MindConnector_6PCyeJKGAqACrKed.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="527.8938, 232.0, 434.0708, 325.0, 428.0, 325.0, 428.0, 339.0, 432.0, 339.0, 436.0, 343.0, 440.0354, 339.0, 448.0, 339.0, 448.0, 331.10526, 547.9823, 232.0" coords2="527.8938, 232.0, 434.0708, 325.0, 428.0, 325.0, 428.0, 339.0, 432.0, 339.0, 436.0, 343.0, 440.0354, 339.0, 448.0, 339.0, 448.0, 331.10526, 547.9823, 232.0" shape="poly" alt=":Branch" id="areadiagram_map_nloH.JKGAqACrK4t" href="MindConnector_uzayeJKGAqACrKe3.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="271.0, 272.0, 270.95715, 275.0, 268.0, 275.0, 268.0, 289.0, 270.75714, 289.0, 270.24286, 325.0, 267.0, 325.0, 267.0, 339.0, 270.04285, 339.0, 270.0, 342.0, 284.0, 342.0, 284.04285, 339.0, 287.0, 339.0, 287.0, 325.0, 284.24286, 325.0, 284.75714, 289.0, 288.0, 289.0, 288.0, 275.0, 284.95715, 275.0, 285.0, 272.0" coords2="271.0, 272.0, 270.95715, 275.0, 268.0, 275.0, 268.0, 289.0, 270.75714, 289.0, 270.24286, 325.0, 267.0, 325.0, 267.0, 339.0, 270.04285, 339.0, 270.0, 342.0, 284.0, 342.0, 284.04285, 339.0, 287.0, 339.0, 287.0, 325.0, 284.24286, 325.0, 284.75714, 289.0, 288.0, 289.0, 288.0, 275.0, 284.95715, 275.0, 285.0, 272.0" shape="poly" alt=":Branch" id="areadiagram_map_QVoH.JKGAqACrK4x" href="MindConnector_TFuyeJKGAqACrKfF.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="268.0, 325.0, 268.0, 339.0, 287.0, 339.0, 287.0, 325.0" coords2="268.0, 325.0, 268.0, 339.0, 287.0, 339.0, 287.0, 325.0" shape="poly" alt=":Branch" id="areadiagram_map_sVoH.JKGAqACrK41" href="MindConnector_BS_yeJKGAqACrKfR.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="270.0, 322.0, 270.04285, 325.0, 267.0, 325.0, 267.0, 339.0, 270.24286, 339.0, 270.75714, 375.0, 268.0, 375.0, 268.0, 389.0, 270.95715, 389.0, 271.0, 392.0, 285.0, 392.0, 284.95715, 389.0, 288.0, 389.0, 288.0, 375.0, 284.75714, 375.0, 284.24286, 339.0, 287.0, 339.0, 287.0, 325.0, 284.04285, 325.0, 284.0, 322.0" coords2="270.0, 322.0, 270.04285, 325.0, 267.0, 325.0, 267.0, 339.0, 270.24286, 339.0, 270.75714, 375.0, 268.0, 375.0, 268.0, 389.0, 270.95715, 389.0, 271.0, 392.0, 285.0, 392.0, 284.95715, 389.0, 288.0, 389.0, 288.0, 375.0, 284.75714, 375.0, 284.24286, 339.0, 287.0, 339.0, 287.0, 325.0, 284.04285, 325.0, 284.0, 322.0" shape="poly" alt=":Branch" id="areadiagram_map_6VoH.JKGAqACrK45" href="MindConnector_N4RyeJKGAqACrKff.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="681.0, 111.0, 675.6, 115.0, 668.0, 115.0, 668.0, 120.62963, 573.0, 191.0, 573.7273, 192.0, 594.5, 192.0, 679.55, 129.0, 688.0, 129.0, 688.0, 115.0, 683.9091, 115.0, 681.0, 111.0" coords2="681.0, 111.0, 675.6, 115.0, 668.0, 115.0, 668.0, 120.62963, 573.0, 191.0, 573.7273, 192.0, 594.5, 192.0, 679.55, 129.0, 688.0, 129.0, 688.0, 115.0, 683.9091, 115.0, 681.0, 111.0" shape="poly" alt=":Branch" id="areadiagram_map_hVoH.JKGAqACrK49" href="MindConnector_h3FyeJKGAqACrKfv.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="837.0, 62.0, 837.0, 65.0, 834.0, 65.0, 834.0, 79.0, 837.0, 79.0, 837.0, 115.0, 834.0, 115.0, 834.0, 129.0, 837.0, 129.0, 837.0, 132.0, 851.0, 132.0, 851.0, 129.0, 854.0, 129.0, 854.0, 115.0, 851.0, 115.0, 851.0, 79.0, 854.0, 79.0, 854.0, 65.0, 851.0, 65.0, 851.0, 62.0" coords2="837.0, 62.0, 837.0, 65.0, 834.0, 65.0, 834.0, 79.0, 837.0, 79.0, 837.0, 115.0, 834.0, 115.0, 834.0, 129.0, 837.0, 129.0, 837.0, 132.0, 851.0, 132.0, 851.0, 129.0, 854.0, 129.0, 854.0, 115.0, 851.0, 115.0, 851.0, 79.0, 854.0, 79.0, 854.0, 65.0, 851.0, 65.0, 851.0, 62.0" shape="poly" alt=":Branch" id="areadiagram_map_1VoH.JKGAqACrK5B" href="MindConnector_JftyeJKGAqACrKf9.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="834.0, 115.0, 834.0, 129.0, 854.0, 129.0, 854.0, 115.0" coords2="834.0, 115.0, 834.0, 129.0, 854.0, 129.0, 854.0, 115.0" shape="poly" alt=":Branch" id="areadiagram_map_rVoH.JKGAqACrK5F" href="MindConnector_ybjyeJKGAqACrKgL.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="837.0, 112.0, 837.0, 115.0, 834.0, 115.0, 834.0, 129.0, 837.0, 129.0, 837.0, 165.0, 834.0, 165.0, 834.0, 179.0, 837.0, 179.0, 837.0, 182.0, 851.0, 182.0, 851.0, 179.0, 854.0, 179.0, 854.0, 165.0, 851.0, 165.0, 851.0, 129.0, 854.0, 129.0, 854.0, 115.0, 851.0, 115.0, 851.0, 112.0" coords2="837.0, 112.0, 837.0, 115.0, 834.0, 115.0, 834.0, 129.0, 837.0, 129.0, 837.0, 165.0, 834.0, 165.0, 834.0, 179.0, 837.0, 179.0, 837.0, 182.0, 851.0, 182.0, 851.0, 179.0, 854.0, 179.0, 854.0, 165.0, 851.0, 165.0, 851.0, 129.0, 854.0, 129.0, 854.0, 115.0, 851.0, 115.0, 851.0, 112.0" shape="poly" alt=":Branch" id="areadiagram_map_fVoH.JKGAqACrK5J" href="MindConnector_GNbyeJKGAqACrKgf.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="573.0, 232.0, 668.0, 302.37036, 668.0, 309.0, 676.95, 309.0, 681.0, 312.0, 683.1818, 309.0, 688.0, 309.0, 688.0, 295.0, 680.9, 295.0, 595.85, 232.0" coords2="573.0, 232.0, 668.0, 302.37036, 668.0, 309.0, 676.95, 309.0, 681.0, 312.0, 683.1818, 309.0, 688.0, 309.0, 688.0, 295.0, 680.9, 295.0, 595.85, 232.0" shape="poly" alt=":Branch" id="areadiagram_map_E1oH.JKGAqACrK5N" href="MindConnector_KlXyeJKGAqACrKgt.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="809.0, 242.0, 809.04285, 245.0, 806.0, 245.0, 806.0, 259.0, 809.24286, 259.0, 809.75714, 295.0, 807.0, 295.0, 807.0, 309.0, 809.95715, 309.0, 810.0, 312.0, 824.0, 312.0, 823.95715, 309.0, 827.0, 309.0, 827.0, 295.0, 823.75714, 295.0, 823.24286, 259.0, 826.0, 259.0, 826.0, 245.0, 823.04285, 245.0, 823.0, 242.0" coords2="809.0, 242.0, 809.04285, 245.0, 806.0, 245.0, 806.0, 259.0, 809.24286, 259.0, 809.75714, 295.0, 807.0, 295.0, 807.0, 309.0, 809.95715, 309.0, 810.0, 312.0, 824.0, 312.0, 823.95715, 309.0, 827.0, 309.0, 827.0, 295.0, 823.75714, 295.0, 823.24286, 259.0, 826.0, 259.0, 826.0, 245.0, 823.04285, 245.0, 823.0, 242.0" shape="poly" alt=":Branch" id="areadiagram_map_i1oH.JKGAqACrK5R" href="MindConnector_ab_r_JKGAqACrKlm.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="807.0, 295.0, 807.0, 309.0, 826.0, 309.0, 826.0, 295.0" coords2="807.0, 295.0, 807.0, 309.0, 826.0, 309.0, 826.0, 295.0" shape="poly" alt=":Branch" id="areadiagram_map_21oH.JKGAqACrK5V" href="MindConnector_aedr_JKGAqACrKmY.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="810.0, 292.0, 809.95715, 295.0, 807.0, 295.0, 807.0, 309.0, 809.75714, 309.0, 809.24286, 345.0, 806.0, 345.0, 806.0, 359.0, 809.04285, 359.0, 809.0, 362.0, 823.0, 362.0, 823.04285, 359.0, 826.0, 359.0, 826.0, 345.0, 823.24286, 345.0, 823.75714, 309.0, 827.0, 309.0, 827.0, 295.0, 823.95715, 295.0, 824.0, 292.0" coords2="810.0, 292.0, 809.95715, 295.0, 807.0, 295.0, 807.0, 309.0, 809.75714, 309.0, 809.24286, 345.0, 806.0, 345.0, 806.0, 359.0, 809.04285, 359.0, 809.0, 362.0, 823.0, 362.0, 823.04285, 359.0, 826.0, 359.0, 826.0, 345.0, 823.24286, 345.0, 823.75714, 309.0, 827.0, 309.0, 827.0, 295.0, 823.95715, 295.0, 824.0, 292.0" shape="poly" alt=":Branch" id="areadiagram_map_J1oH.JKGAqACrK5Z" href="MindConnector_FSmb_JKGAqACrKnG.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="263.0, 4.0, 263.0, 7.0, 260.0, 7.0, 260.0, 21.0, 263.0, 21.0, 263.0, 107.0, 260.0, 107.0, 260.0, 121.0, 263.0, 121.0, 263.0, 124.0, 277.0, 124.0, 277.0, 121.0, 280.0, 121.0, 280.0, 107.0, 277.0, 107.0, 277.0, 21.0, 280.0, 21.0, 280.0, 7.0, 277.0, 7.0, 277.0, 4.0" coords2="263.0, 4.0, 263.0, 7.0, 260.0, 7.0, 260.0, 21.0, 263.0, 21.0, 263.0, 107.0, 260.0, 107.0, 260.0, 121.0, 263.0, 121.0, 263.0, 124.0, 277.0, 124.0, 277.0, 121.0, 280.0, 121.0, 280.0, 107.0, 277.0, 107.0, 277.0, 21.0, 280.0, 21.0, 280.0, 7.0, 277.0, 7.0, 277.0, 4.0" shape="poly" alt=":Branch" id="areadiagram_map_91oH.JKGAqACrK5d" href="MindConnector_lh1b_JKGAqACrKne.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-left:0;margin-right:0;color:#000000;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      This section summarizes the rationale for the new product. Provide a 
+      general description of the history or situation that leads to the 
+      recognition that this product should be built.
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="172, 4, 260, 24" coords2="172, 4, 260, 24" shape="rect" alt="Background:Node" id="areadiagram_map_XFoH.JKGAqACrK4V" href="MindMapNode_0h1b_JKGAqACrKnb.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-left:0;margin-right:0;color:#000000;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      Describe the environment in which the system will be used and define the 
+      major availability, reliability, performance, and integrity 
+      requirements. This information will significantly influence the 
+      definition of the system&amp;#8217;s architecture. Consider questions such as:
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      &amp;#183;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; Are the users widely distributed geographically or located 
+      close to each other? How many time zones are they in?
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      &amp;#183;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; When do the users in various locations need to access the 
+      system?
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      &amp;#183;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; Where is the data generated and used? How far apart are these 
+      locations? Does the data from multiple locations need to be combined?
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      &amp;#183;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; Are specific maximum response times known for accessing data 
+      that might be stored remotely?
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      &amp;#183;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; Can the users tolerate service interruptions or is continuous 
+      access to the system critical for the operation of their business?
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      &amp;#183;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; What access security controls and data protection requirements 
+      are needed?
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="826, 342, 977, 362" coords2="826, 342, 977, 362" shape="rect" alt="Operating Environment:Node" id="areadiagram_map_1FoH.JKGAqACrK4R" href="MindMapNode_sSmb_JKGAqACrKnD.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-left:0;margin-right:0;color:#000000;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      Describe the priorities among the project&amp;#8217;s requirements, schedule, and 
+      budget. The table below may be helpful in identifying the parameters 
+      around the project&amp;#8217;s key drivers (top priority objectives), constraints 
+      to work within, and dimensions that can be balanced against each other 
+      to achieve the drivers within the known constraints. For more 
+      information, see chapter 2 of Creating a Software Engineering Culture by 
+      Karl E. Wiegers (Dorset House, 1996). Examples:
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      
+    &amp;lt;/p&amp;gt;
+    &amp;lt;table border=&amp;quot;1&amp;quot; border-spacing=&amp;quot;0px&amp;quot; cellpadding=&amp;quot;0&amp;quot; cellspacing=&amp;quot;0&amp;quot; class=&amp;quot;MsoNormalTable&amp;quot; style=&amp;quot;border-right-style:none;border-top-width:medium;border-bottom-color:#888888;border-left-style:none;border-right-width:medium;border-bottom-width:medium;border-left-color:#888888;border-top-color:#888888;border-bottom-style:none;border-right-color:#888888;border-left-width:medium;border-top-style:none;&amp;quot;&amp;gt;
+      &amp;lt;tr style=&amp;quot;text-align:left;&amp;quot;&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:1.5pt;border-bottom-color:#888888;border-right-width:1.0pt;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:1.5pt;border-top-style:solid;border-left-style:solid;padding-left:5.4pt;border-bottom-width:4.5pt;border-top-color:#888888;padding-top:0in;border-bottom-style:double;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;139&amp;quot;&amp;gt;
+          &amp;lt;p align=&amp;quot;center&amp;quot; class=&amp;quot;MsoBodyText&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;text-align:center;&amp;quot;&amp;gt;
+            &amp;lt;b&amp;gt;Dimension&amp;lt;o p=&amp;quot;#DEFAULT&amp;quot; style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/o style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/b&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-bottom-color:#888888;border-top-width:1px;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:solid;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;150&amp;quot;&amp;gt;
+          &amp;lt;p align=&amp;quot;center&amp;quot; class=&amp;quot;MsoBodyText&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;text-align:center;&amp;quot;&amp;gt;
+            &amp;lt;b&amp;gt;Driver&amp;lt;br style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;(state objective)&amp;lt;o p=&amp;quot;#DEFAULT&amp;quot; style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/o style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/b&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-bottom-color:#888888;border-top-width:1px;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:solid;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;156&amp;quot;&amp;gt;
+          &amp;lt;p align=&amp;quot;center&amp;quot; class=&amp;quot;MsoBodyText&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;text-align:center;&amp;quot;&amp;gt;
+            &amp;lt;b&amp;gt;Constraint&amp;lt;br style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;(state limits)&amp;lt;o p=&amp;quot;#DEFAULT&amp;quot; style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/o style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/b&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-bottom-color:#888888;border-top-width:1px;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:solid;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;193&amp;quot;&amp;gt;
+          &amp;lt;p align=&amp;quot;center&amp;quot; class=&amp;quot;MsoBodyText&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;text-align:center;&amp;quot;&amp;gt;
+            &amp;lt;b&amp;gt;Degree of Freedom&amp;lt;br style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;(state allowable 
+            range)&amp;lt;o p=&amp;quot;#DEFAULT&amp;quot; style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/o style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/b&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+      &amp;lt;/tr&amp;gt;
+      &amp;lt;tr style=&amp;quot;text-align:left;&amp;quot;&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:1px;border-top-style:none;border-left-style:solid;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;139&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            Schedule
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;150&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            release 1.0 to be available by 10/1, release 1.1 by 12/1
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;156&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            &amp;lt;o p=&amp;quot;#DEFAULT&amp;quot;&amp;gt;
+            &amp;nbsp;&amp;lt;/o&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;193&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            &amp;lt;o p=&amp;quot;#DEFAULT&amp;quot;&amp;gt;
+            &amp;nbsp;&amp;lt;/o&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+      &amp;lt;/tr&amp;gt;
+      &amp;lt;tr style=&amp;quot;text-align:left;&amp;quot;&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:1px;border-top-style:none;border-left-style:solid;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;139&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            Features
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;150&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            &amp;lt;o p=&amp;quot;#DEFAULT&amp;quot;&amp;gt;
+            &amp;nbsp;&amp;lt;/o&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;156&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            &amp;lt;o p=&amp;quot;#DEFAULT&amp;quot;&amp;gt;
+            &amp;nbsp;&amp;lt;/o&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;193&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            70-80% of high priority features must be included in release 1.0
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+      &amp;lt;/tr&amp;gt;
+      &amp;lt;tr style=&amp;quot;text-align:left;&amp;quot;&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:1px;border-top-style:none;border-left-style:solid;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;139&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            Quality
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;150&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            &amp;lt;o p=&amp;quot;#DEFAULT&amp;quot;&amp;gt;
+            &amp;nbsp;&amp;lt;/o&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;156&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            &amp;lt;o p=&amp;quot;#DEFAULT&amp;quot;&amp;gt;
+            &amp;nbsp;&amp;lt;/o&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;193&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            90-95% of user acceptance tests must pass for release 1.0, 95-98% 
+            for release 1.1
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+      &amp;lt;/tr&amp;gt;
+      &amp;lt;tr style=&amp;quot;text-align:left;&amp;quot;&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:1px;border-top-style:none;border-left-style:solid;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;139&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            Staff
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;150&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            &amp;lt;o p=&amp;quot;#DEFAULT&amp;quot;&amp;gt;
+            &amp;nbsp;&amp;lt;/o&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;156&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            maximum team size is 6 developers + 4 testers
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;193&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            &amp;lt;o p=&amp;quot;#DEFAULT&amp;quot;&amp;gt;
+            &amp;nbsp;&amp;lt;/o&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+      &amp;lt;/tr&amp;gt;
+      &amp;lt;tr style=&amp;quot;text-align:left;&amp;quot;&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:1px;border-top-style:none;border-left-style:solid;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;139&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            Cost
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;150&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            &amp;lt;o p=&amp;quot;#DEFAULT&amp;quot;&amp;gt;
+            &amp;nbsp;&amp;lt;/o&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;156&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            &amp;lt;o p=&amp;quot;#DEFAULT&amp;quot;&amp;gt;
+            &amp;nbsp;&amp;lt;/o&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;193&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            budget overrun up to 15% acceptable without executive review
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+      &amp;lt;/tr&amp;gt;
+    &amp;lt;/table&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      &amp;nbsp;
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="826, 292, 940, 312" coords2="826, 292, 940, 312" shape="rect" alt="Project Priorities:Node" id="areadiagram_map_OFoH.JKGAqACrK4N" href="MindMapNode_Pudr_JKGAqACrKmV.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-left:0;margin-right:0;color:#000000;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      Stakeholders are individuals, groups, or organizations that are actively 
+      involved in a project, are affected by its outcome, or can influence its 
+      outcome. The stakeholder profiles identify the customers for this 
+      product and other stakeholders, and states their major interests in the 
+      product. Characterize business-level customers, target market segments, 
+      and different user classes, to reduce the likelihood of unexpected 
+      requirements surfacing later that cannot be accommodated because of 
+      schedule or scope constraints. For each stakeholder category, the 
+      profile includes the major value or benefits they will receive from the 
+      product, their likely attitudes toward the product, major features and 
+      characteristics of interest, and any known constraints that must be 
+      accommodated. Examples of stakeholder value include:
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      &amp;nbsp;
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      &amp;#183;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; improved productivity
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      &amp;#183;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; reduced rework
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      &amp;#183;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; cost savings
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      &amp;#183;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; streamlined business processes
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      &amp;#183;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; automation of previously manual tasks
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      &amp;#183;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; ability to perform entirely new tasks or functions
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      &amp;#183;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; conformance to current standards or regulations
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      &amp;#183;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; improved usability or reduced frustration level compared to 
+      current applications
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      
+    &amp;lt;/p&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      
+    &amp;lt;/p&amp;gt;
+    &amp;lt;table border=&amp;quot;1&amp;quot; border-spacing=&amp;quot;0px&amp;quot; cellpadding=&amp;quot;0&amp;quot; cellspacing=&amp;quot;0&amp;quot; class=&amp;quot;MsoNormalTable&amp;quot; style=&amp;quot;border-right-style:none;border-top-width:medium;border-bottom-color:#888888;border-left-style:none;border-right-width:medium;border-bottom-width:medium;border-left-color:#888888;border-top-color:#888888;border-bottom-style:none;border-right-color:#888888;border-left-width:medium;border-top-style:none;&amp;quot;&amp;gt;
+      &amp;lt;tr style=&amp;quot;text-align:left;&amp;quot;&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:1.5pt;border-bottom-color:#888888;border-right-width:1.0pt;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:1.5pt;border-top-style:solid;border-left-style:solid;padding-left:5.4pt;border-bottom-width:4.5pt;border-top-color:#888888;padding-top:0in;border-bottom-style:double;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;103&amp;quot;&amp;gt;
+          &amp;lt;p align=&amp;quot;center&amp;quot; class=&amp;quot;MsoBodyText&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;text-align:center;&amp;quot;&amp;gt;
+            &amp;lt;b&amp;gt;&amp;lt;br style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;
+            Stakeholder&amp;lt;o p=&amp;quot;#DEFAULT&amp;quot; style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/o style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/b&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-bottom-color:#888888;border-top-width:1px;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:solid;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;96&amp;quot;&amp;gt;
+          &amp;lt;p align=&amp;quot;center&amp;quot; class=&amp;quot;MsoBodyText&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;text-align:center;&amp;quot;&amp;gt;
+            &amp;lt;b&amp;gt;Major Value&amp;lt;o p=&amp;quot;#DEFAULT&amp;quot; style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/o style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/b&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-bottom-color:#888888;border-top-width:1px;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:solid;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;138&amp;quot;&amp;gt;
+          &amp;lt;p align=&amp;quot;center&amp;quot; class=&amp;quot;MsoBodyText&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;text-align:center;&amp;quot;&amp;gt;
+            &amp;lt;b&amp;gt;&amp;lt;br style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;
+            Attitudes&amp;lt;o p=&amp;quot;#DEFAULT&amp;quot; style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/o style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/b&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-bottom-color:#888888;border-top-width:1px;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:solid;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;156&amp;quot;&amp;gt;
+          &amp;lt;p align=&amp;quot;center&amp;quot; class=&amp;quot;MsoBodyText&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;text-align:center;&amp;quot;&amp;gt;
+            &amp;lt;b&amp;gt;&amp;lt;br style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;
+            Major Interests&amp;lt;o p=&amp;quot;#DEFAULT&amp;quot; style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/o style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/b&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-bottom-color:#888888;border-top-width:1px;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:solid;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;114&amp;quot;&amp;gt;
+          &amp;lt;p align=&amp;quot;center&amp;quot; class=&amp;quot;MsoBodyText&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;text-align:center;&amp;quot;&amp;gt;
+            &amp;lt;b&amp;gt;&amp;lt;br style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;
+            Constraints&amp;lt;o p=&amp;quot;#DEFAULT&amp;quot; style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/o style=&amp;quot;font-weight:bold;&amp;quot;&amp;gt;&amp;lt;/b&amp;gt;
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+      &amp;lt;/tr&amp;gt;
+      &amp;lt;tr style=&amp;quot;text-align:left;&amp;quot;&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:1px;border-top-style:none;border-left-style:solid;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;103&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            executives
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;96&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            increased revenue
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;138&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            see product as avenue to 25% increase in market share
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;156&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            richer feature set than competitors; time to market
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;114&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            maximum budget = $1.4M
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+      &amp;lt;/tr&amp;gt;
+      &amp;lt;tr style=&amp;quot;text-align:left;&amp;quot;&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:1px;border-top-style:none;border-left-style:solid;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;103&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            editors
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;96&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            fewer errors in work
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;138&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            highly receptive, but expect high usability
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;156&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            automatic error correction; ease of use; high reliability
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;114&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            must run on low-end workstations
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+      &amp;lt;/tr&amp;gt;
+      &amp;lt;tr style=&amp;quot;text-align:left;&amp;quot;&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:1px;border-top-style:none;border-left-style:solid;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;103&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            legal aides
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;96&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            quick access to data
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;138&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            resistant unless product is keystroke-compatible with current 
+            system
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;156&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            ability to handle much larger database than current system; easy 
+            to learn
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+        &amp;lt;td style=&amp;quot;border-right-style:solid;padding-right:5.4pt;border-top-width:medium;border-bottom-color:#888888;border-right-width:1px;padding-bottom:0in;border-left-color:#888888;border-right-color:#888888;border-left-width:medium;border-top-style:none;border-left-style:none;padding-left:5.4pt;border-bottom-width:1px;border-top-color:#888888;padding-top:0in;border-bottom-style:solid;&amp;quot; valign=&amp;quot;top&amp;quot; width=&amp;quot;114&amp;quot;&amp;gt;
+          &amp;lt;p class=&amp;quot;TableTextsmall&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0;&amp;quot;&amp;gt;
+            no budget for retraining
+          &amp;lt;/p&amp;gt;
+        &amp;lt;/td&amp;gt;
+      &amp;lt;/tr&amp;gt;
+    &amp;lt;/table&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      &amp;nbsp;
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="826, 242, 960, 262" coords2="826, 242, 960, 262" shape="rect" alt="Stakeholder Profiles:Node" id="areadiagram_map_0FoH.JKGAqACrK4J" href="MindMapNode_3r_r_JKGAqACrKlj.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-left:0;margin-right:0;color:#000000;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p class=&amp;quot;MsoBodyText&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      This section summarizes some of the business issues around the project, 
+      including profiles of major customer categories, assumptions that went 
+      into the project concept, and the management priorities for the project.
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="688, 292, 807, 312" coords2="688, 292, 807, 312" shape="rect" alt="Business Context:Node" id="areadiagram_map_35oH.JKGAqACrK4F" href="MindMapNode_nFXyeJKGAqACrKgq.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-left:0;margin-right:0;color:#000000;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p class=&amp;quot;MsoBodyText&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      Identify any product features or characteristics that a stakeholder 
+      might anticipate, but which are not planned to be included in the new 
+      product.
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="854, 162, 1027, 182" coords2="854, 162, 1027, 182" shape="rect" alt="Limitations and Exclusions:Node" id="areadiagram_map_N5oH.JKGAqACrK4B" href="MindMapNode_gNbyeJKGAqACrKgc.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-left:0;margin-right:0;color:#000000;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p class=&amp;quot;MsoBodyText&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      If a staged evolution of the product is envisioned over time, indicate 
+      which major features will be deferred to later releases.
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="854, 112, 1050, 132" coords2="854, 112, 1050, 132" shape="rect" alt="Scope of Subsequent Releases:Node" id="areadiagram_map_e5oH.JKGAqACrK39" href="MindMapNode_XrjyeJKGAqACrKgI.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-left:0;margin-right:0;color:#000000;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p class=&amp;quot;MsoBodyText&amp;quot; style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      Describe the intended major features that will be included in the 
+      initial release of the product. Consider the benefits the product is 
+      intended to bring to the various customer communities, and generally 
+      describe the product features and quality characteristics that will 
+      enable it to provide those benefits. Avoid the temptation to include 
+      every possible feature that any potential customer category might 
+      conceivably want some day. Focus on those features and product 
+      characteristics that will provide the most value, at the most acceptable 
+      development cost, to the broadest community.&amp;​gt;&amp;lt;o p=&amp;quot;#DEFAULT&amp;quot;&amp;gt;
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="854, 62, 1006, 82" coords2="854, 62, 1006, 82" shape="rect" alt="Scope of Initial Release:Node" id="areadiagram_map_i5oH.JKGAqACrK35" href="MindMapNode_EftyeJKGAqACrKf6.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-left:0;margin-right:0;color:#000000;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      The project scope defines the concept and range of the proposed 
+      solution. It&amp;#8217;s also important to define what will not be included in the 
+      product. Clarifying the scope and limitations helps to establish 
+      realistic expectations of the many stakeholders. It also provides a 
+      reference frame against which proposed features and requirements changes 
+      can be evaluated. Proposed requirements that are out of scope for the 
+      envisioned product must be rejected, unless they are so beneficial that 
+      the scope should be enlarged to accommodate them (with accompanying 
+      changes in budget, schedule, and/or resources).
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="688, 112, 834, 132" coords2="688, 112, 834, 132" shape="rect" alt="Scope and Limitations:Node" id="areadiagram_map_Q5oH.JKGAqACrK31" href="MindMapNode_k3FyeJKGAqACrKfs.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" coords="65, 372, 268, 392" coords2="65, 372, 268, 392" shape="rect" alt="Assumptions and Dependencies:Node" id="areadiagram_map_LZoH.JKGAqACrK3x" href="MindMapNode_q4RyeJKGAqACrKfc.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="165, 322, 268, 342" coords2="165, 322, 268, 342" shape="rect" alt="Major Features:Node" id="areadiagram_map_ZZoH.JKGAqACrK3t" href="MindMapNode_0S_yeJKGAqACrKfO.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="153, 272, 268, 292" coords2="153, 272, 268, 292" shape="rect" alt="Vision Statement:Node" id="areadiagram_map_GZoH.JKGAqACrK3p" href="MindMapNode_2FuyeJKGAqACrKfC.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="287, 322, 428, 342" coords2="287, 322, 428, 342" shape="rect" alt="Vision of the Solution:Node" id="areadiagram_map_kZoH.JKGAqACrK3l" href="MindMapNode_UzayeJKGAqACrKe0.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-left:0;margin-right:0;color:#000000;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      Summarize the major business risks associated with developing this 
+      product, such as marketplace competition, timing issues, user 
+      acceptance, implementation issues, or possible negative impacts on the 
+      business. Estimate the severity of the risks and identify any risk 
+      mitigation actions that could be taken.
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="154, 204, 260, 224" coords2="154, 204, 260, 224" shape="rect" alt="Business Risks:Node" id="areadiagram_map_3poH.JKGAqACrK3h" href="MindMapNode_QPCyeJKGAqACrKea.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-left:0;margin-right:0;color:#000000;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      Describe the needs of typical customers or market segments, including 
+      needs that are not yet met by the marketplace or by existing systems. 
+      You may wish to describe problems customers currently encounter that the 
+      new product will (or will not) address and how the product would be used 
+      by customers. Identify the customer hardware and software environment in 
+      which the product must operate. Define at a high level any known 
+      critical interface or performance requirements. Avoid including any 
+      design or implementation details. Present the requirements in a numbered 
+      list so that more detailed user or functional requirements can be traced 
+      to them.
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="90, 154, 260, 174" coords2="90, 154, 260, 174" shape="rect" alt="Customer or Market Needs:Node" id="areadiagram_map_mpoH.JKGAqACrK3d" href="MindMapNode_uiIyeJKGAqACrKd_.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-left:0;margin-right:0;color:#000000;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      Describe the important business objectives of the product in a way that 
+      is quantitative and measurable. The value provided to customers is 
+      described in section 1.4, so this section should focus on the value 
+      provided to the business. This could include estimates of revenue or 
+      cost savings, return on investment analysis, or target release dates. 
+      Determine how success will be defined and measured on this project, and 
+      describe the factors that are likely to have the greatest impact on 
+      achieving that success. Include things within the direct control of the 
+      organization, as well as external factors. Establish measurable criteria 
+      to assess whether the business objectives have been met.
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="4, 104, 261, 124" coords2="4, 104, 261, 124" shape="rect" alt="Business Objectives and Success Criteria:Node" id="areadiagram_map_UpoH.JKGAqACrK3Z" href="MindMapNode_BFXSeJKGAqACrKdM.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-left:0;margin-right:0;color:#000000;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      Describe the market opportunity that exists or the business problem that 
+      is being solved. Describe the market in which a commercial product will 
+      be competing or the environment in which an information system will be 
+      used. This may include a brief comparative evaluation of existing 
+      products and potential solutions, indicating why the proposed product is 
+      attractive. Identify the problems that cannot currently be solved 
+      without the product, and how the product fits in with market trends or 
+      corporate strategic directions
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="118, 54, 261, 74" coords2="118, 54, 261, 74" shape="rect" alt="Business Opportunity:Node" id="areadiagram_map_XJoH.JKGAqACrK3V" href="MindMapNode_fMRSeJKGAqACrKcg.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-left:0;margin-right:0;color:#000000;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-left:0pt;margin-bottom:.0001pt;margin-right:0pt;margin-top:0pt;&amp;quot;&amp;gt;
+      The business requirements provide the foundation and reference for all 
+      detailed requirements development. You may gather business requirements 
+      from the customer or development organization&amp;#8217;s senior management, an 
+      executive sponsor, a project visionary, product management, the 
+      marketing department, or other individuals who have a clear sense of why 
+      the project is being undertaken and the ultimate value it will provide, 
+      both to the business and to customers.
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="280, 104, 434, 124" coords2="280, 104, 434, 124" shape="rect" alt="Business Requirements:Node" id="areadiagram_map_VJoH.JKGAqACrK3R" href="MindMapNode_DS2SeJKGAqACrKcO.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" coords="478, 192, 639, 232" coords2="478, 192, 639, 232" shape="rect" alt="Vision and Scope:Node" id="areadiagram_map_fxIH.JKGAqACrK3E" href="MindMapNode_fxIH_JKGAqACrK3F.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+</map>
+				</td>
+			</tr>
+		</table>
+		<p>
+		</p>
+	</div>
+	<div style="height: 20px">
+	</div>
+	<table border="0" cellpadding="0" width="100%" cellspacing="0">
+		<tr>
+			<td class="FooterLine">
+			</td>
+		</tr>
+	</table>
+	<div class="HeaderText">
+		callattendent	</div>
+</body>
+</html>
