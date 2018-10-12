@@ -1,26 +1,62 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
+#
+# Copyright 2018 Bruce Schubert <bruce@emxsys.com>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# This code was inspired by and contains code snippets from
+# https://github.com/pradeesi/Incoming_Call_Detail_Logger
 
 from datetime import datetime
+import atexit
 import serial
 import subprocess
 import threading
+import indicators
 
 
 class Modem(object):
+    """
+    This class is responsible for serial communications between the
+    Raspberry Pi and a US Robotics 5637 modem.
+    """
+
     def __init__(self):
+        """Constructs and prepares a modem for serial communications."""
+
         self.serial_port = serial.Serial()
+
         # Event processing is disabled until we send our first command
+        # after starting the event processing thread
         self.disable_event_processing = True
+
         self.init_modem()
 
+        # Start the event processing
         self.event_thread = threading.Thread(target=self.process_events)
         self.event_thread.start()
 
-
     def init_modem(self):
+        """Auto-detects and initializes the modem."""
 
-        # Detect and Open the Modem Serial COM Port
+        # Detect and open the Modem Serial COM Port
         try:
             self.open_serial_port()
         except:
@@ -34,11 +70,11 @@ class Modem(object):
             self.serial_port.flushOutput()
 
             # Test Modem connection, using basic AT command.
-            if not self.exec_cmd("AT"):
+            if not self.send_cmd("AT"):
                 print "Error: Unable to access the Modem"
 
             # reset to factory default.
-            if not self.exec_cmd("ATZ3"):
+            if not self.send_cmd("ATZ3"):
                 print "Error: Unable reset to factory default"
 
                 # Display result codes in verbose form
@@ -57,11 +93,16 @@ class Modem(object):
             self.serial_port.flushInput()
             self.serial_port.flushOutput()
 
+            # Automatically close the serial port at program termination
+            atexit.register(self.close_serial_port)
+
         except:
             print "Error: unable to Initialize the Modem"
             sys.exit()
 
     def open_serial_port(self):
+        """Detects and opens the serial port attached to the modem."""
+
         # List all the Serial COM Ports on Raspberry Pi
         proc = subprocess.Popen(['ls /dev/tty[A-Za-z]*'], shell=True, stdout=subprocess.PIPE)
         com_ports = proc.communicate()[0]
@@ -92,6 +133,8 @@ class Modem(object):
                         break
 
     def init_serial_port(self, com_port):
+        """Initializes the given COM port for communications with the modem."""
+
         self.serial_port.port = com_port
         self.serial_port.baudrate = 57600  # 9600
         self.serial_port.bytesize = serial.EIGHTBITS  # number of bits per bytes
@@ -104,42 +147,19 @@ class Modem(object):
         self.serial_port.writeTimeout = 3  # timeout for write
 
     def close_serial_port(self):
-        # Close the Serial COM Port
+        """Closes the serial port attached to the modem."""
+        print("Closing Serial Port")
         try:
             if self.serial_port.isOpen():
                 self.serial_port.close()
-                print ("Serial Port closed...")
+                print("Serial Port closed...")
         except:
             print "Error: Unable to close the Serial Port."
             sys.exit()
 
-
-    def process_events(self):
-        # Call detail dictionary
-        call_record = {}
-
-        while 1:
-            if not self.disable_event_processing:
-                modem_data = self.serial_port.readline()
-
-                if modem_data != "":
-                    print modem_data
-
-                    if ("DATE" in modem_data):
-                        call_record['DATE'] = (modem_data[5:]).strip(' \t\n\r')
-                    if ("TIME" in modem_data):
-                        call_record['TIME'] = (modem_data[5:]).strip(' \t\n\r')
-                    if ("NMBR" in modem_data):
-                        call_record['NMBR'] = (modem_data[5:]).strip(' \t\n\r')
-                        # Call call details logger
-                        print call_record
-                        # call_details_logger(call_record)
-
-                    if "RING" in modem_data.strip(chr(16)):
-                        pass
-
-
     def send_cmd(self, command, expected_response="OK"):
+        """Sends a command string (e.g., AT command) to the modem."""
+
         # Disable processing input while sending commands
         self.disable_event_processing = True
 
@@ -157,12 +177,17 @@ class Modem(object):
             print "Error: Failed to execute the command"
             return False
 
-
     def read_cmd_response(self, expected_response="OK"):
+        """
+        Handles the command response code from the modem.
+        Returns True if the expected response was returned.
+        @ReturnType bool
+        """
+
         # Set the auto timeout interval
         start_time = datetime.now()
 
-        MODEM_RESPONSE_READ_TIMEOUT = 10  # Tine in Seconds
+        MODEM_RESPONSE_READ_TIMEOUT = 10  # Time in Seconds
 
         try:
             while 1:
@@ -182,3 +207,33 @@ class Modem(object):
         except:
             print "Error in read_modem_response function..."
             return False
+
+    def process_events(self):
+        """Thread function that processes the incoming modem data."""
+
+        # Call detail dictionary
+        call_record = {}
+
+        while 1:
+            if not self.disable_event_processing:
+                modem_data = self.serial_port.readline()
+
+                if modem_data != "":
+                    print modem_data
+
+                    if "RING" in modem_data.strip(chr(16)):
+                        pass
+
+                    if ("DATE" in modem_data):
+                        call_record['DATE'] = (modem_data[5:]).strip(' \t\n\r')
+                    if ("TIME" in modem_data):
+                        call_record['TIME'] = (modem_data[5:]).strip(' \t\n\r')
+                    if ("NAME" in modem_data):
+                        call_record['NAME'] = (modem_data[5:]).strip(' \t\n\r')
+                    if ("NMBR" in modem_data):
+                        call_record['NMBR'] = (modem_data[5:]).strip(' \t\n\r')
+
+                    if all (k in call_record for k in ("DATE","TIME","NAME","NMBR")):
+                        # call_details_logger(call_record)
+                        print call_record
+                        call_record = {}
