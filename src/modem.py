@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 #
+# file: modem.py
+#
 # Copyright 2018 Bruce Schubert <bruce@emxsys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,9 +22,12 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-#
-# This code was inspired by and contains code snippets from
+
+# ==============================================================================
+# This code was inspired by and contains code snippets from Pradeep Singh:
+# https://iotbytes.wordpress.com/incoming-call-details-logger-with-raspberry-pi/
 # https://github.com/pradeesi/Incoming_Call_Detail_Logger
+# ==============================================================================
 
 from datetime import datetime
 import atexit
@@ -37,68 +42,53 @@ class Modem(object):
     This class is responsible for serial communications between the
     Raspberry Pi and a US Robotics 5637 modem.
     """
-
-    def __init__(self):
-        """Constructs and prepares a modem for serial communications."""
-
+    def __init__(self, call_attendant):
+        """Constructs and starts a modem for serial communications."""
+        self.call_attendant = call_attendant
         self.serial_port = serial.Serial()
-
         # Event processing is disabled until we send our first command
         # after starting the event processing thread
         self.disable_event_processing = True
-
+        # Detect and open the serial port
         self.init_modem()
-
         # Start the event processing
-        self.event_thread = threading.Thread(target=self.process_events)
+        self.event_thread = threading.Thread(target=self.handle_calls)
         self.event_thread.start()
 
-    def init_modem(self):
-        """Auto-detects and initializes the modem."""
+    def block_call(self):
+        """Block the current caller by answering and hanging up"""
+        pass
 
-        # Detect and open the Modem Serial COM Port
-        try:
-            self.open_serial_port()
-        except:
-            print "Error: Unable to open the Serial Port."
-            sys.exit()
+    def handle_calls(self):
+        """Thread function that processes the incoming modem data."""
 
-        # Initialize the Modem
-        try:
-            # Flush any existing input outout data from the buffers
-            self.serial_port.flushInput()
-            self.serial_port.flushOutput()
+        # Call detail dictionary
+        call_record = {}
 
-            # Test Modem connection, using basic AT command.
-            if not self.send_cmd("AT"):
-                print "Error: Unable to access the Modem"
+        while 1:
+            if not self.disable_event_processing:
+                modem_data = self.serial_port.readline()
 
-            # reset to factory default.
-            if not self.send_cmd("ATZ3"):
-                print "Error: Unable reset to factory default"
+                if modem_data != "":
+                    print modem_data
 
-                # Display result codes in verbose form
-            if not self.send_cmd("ATV1"):
-                print "Error: Unable set response in verbose form"
+                    if "RING" in modem_data.strip(chr(16)):
+                        self.call_attendant.phone_ringing(True)
 
-                # Enable Command Echo Mode.
-            if not self.send_cmd("ATE1"):
-                print "Error: Failed to enable Command Echo Mode"
+                    if ("DATE" in modem_data):
+                        call_record['DATE'] = (modem_data[5:]).strip(' \t\n\r')
+                    if ("TIME" in modem_data):
+                        call_record['TIME'] = (modem_data[5:]).strip(' \t\n\r')
+                    if ("NAME" in modem_data):
+                        call_record['NAME'] = (modem_data[5:]).strip(' \t\n\r')
+                    if ("NMBR" in modem_data):
+                        call_record['NMBR'] = (modem_data[5:]).strip(' \t\n\r')
 
-                # Enable formatted caller report.
-            if not self.send_cmd("AT+VCID=1"):
-                print "Error: Failed to enable formatted caller report."
-
-            # Flush any existing input outout data from the buffers
-            self.serial_port.flushInput()
-            self.serial_port.flushOutput()
-
-            # Automatically close the serial port at program termination
-            atexit.register(self.close_serial_port)
-
-        except:
-            print "Error: unable to Initialize the Modem"
-            sys.exit()
+                    # https://stackoverflow.com/questions/1285911/how-do-i-check-that-multiple-keys-are-in-a-dict-in-a-single-pass
+                    if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
+                        print call_record
+                        self.call_attendant.handler_caller(call_record)
+                        call_record = {}
 
     def open_serial_port(self):
         """Detects and opens the serial port attached to the modem."""
@@ -208,32 +198,49 @@ class Modem(object):
             print "Error in read_modem_response function..."
             return False
 
-    def process_events(self):
-        """Thread function that processes the incoming modem data."""
+    def init_modem(self):
+        """Auto-detects and initializes the modem."""
 
-        # Call detail dictionary
-        call_record = {}
+        # Detect and open the Modem Serial COM Port
+        try:
+            self.open_serial_port()
+        except:
+            print "Error: Unable to open the Serial Port."
+            sys.exit()
 
-        while 1:
-            if not self.disable_event_processing:
-                modem_data = self.serial_port.readline()
+        # Initialize the Modem
+        try:
+            # Flush any existing input outout data from the buffers
+            self.serial_port.flushInput()
+            self.serial_port.flushOutput()
 
-                if modem_data != "":
-                    print modem_data
+            # Test Modem connection, using basic AT command.
+            if not self.send_cmd("AT"):
+                print "Error: Unable to access the Modem"
 
-                    if "RING" in modem_data.strip(chr(16)):
-                        pass
+            # reset to factory default.
+            if not self.send_cmd("ATZ3"):
+                print "Error: Unable reset to factory default"
 
-                    if ("DATE" in modem_data):
-                        call_record['DATE'] = (modem_data[5:]).strip(' \t\n\r')
-                    if ("TIME" in modem_data):
-                        call_record['TIME'] = (modem_data[5:]).strip(' \t\n\r')
-                    if ("NAME" in modem_data):
-                        call_record['NAME'] = (modem_data[5:]).strip(' \t\n\r')
-                    if ("NMBR" in modem_data):
-                        call_record['NMBR'] = (modem_data[5:]).strip(' \t\n\r')
+                # Display result codes in verbose form
+            if not self.send_cmd("ATV1"):
+                print "Error: Unable set response in verbose form"
 
-                    if all (k in call_record for k in ("DATE","TIME","NAME","NMBR")):
-                        # call_details_logger(call_record)
-                        print call_record
-                        call_record = {}
+                # Enable Command Echo Mode.
+            if not self.send_cmd("ATE1"):
+                print "Error: Failed to enable Command Echo Mode"
+
+                # Enable formatted caller report.
+            if not self.send_cmd("AT+VCID=1"):
+                print "Error: Failed to enable formatted caller report."
+
+            # Flush any existing input outout data from the buffers
+            self.serial_port.flushInput()
+            self.serial_port.flushOutput()
+
+            # Automatically close the serial port at program termination
+            atexit.register(self.close_serial_port)
+
+        except:
+            print "Error: unable to Initialize the Modem"
+            sys.exit()

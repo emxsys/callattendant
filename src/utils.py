@@ -1,7 +1,7 @@
-#!/usr/bin/python
-# -*- coding: UTF-8 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
-#  indicators.py
+#  utils.py
 #
 #  Copyright 2018 Bruce Schubert <bruce@emxsys.com>
 #
@@ -23,41 +23,11 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-from gpiozero import LED
 
+def query_db(db, query, args=(), one=False):
+    """Executes the given query on the supplied db and returns the result(s)."""
+    cur = db.execute(query, args)
+    results = cur.fetchall()
+    cur.close()
+    return (results[0] if results else None) if one else results
 
-def turn_all_off():
-    pass
-
-
-class RingIndicator(object):
-    def turn_on(self):
-        self.led.blink(0.5, 0.2, 10)
-
-    def turn_off(self):
-        pass
-
-    def __init__(self):
-        self.led = LED(2)
-
-
-class ApprovedIndicator(object):
-    def turn_on(self):
-        self.led.blink(0.5, 0.2, 10)
-
-    def turn_off(self):
-        pass
-
-    def __init__(self):
-        self.led = LED(3)
-
-
-class BlockedIndicator(object):
-    def turn_on(self):
-        self.led.blink(0.5, 0.2, 10)
-
-    def turn_off(self):
-        pass
-
-    def __init__(self):
-        self.led = LED(4)
