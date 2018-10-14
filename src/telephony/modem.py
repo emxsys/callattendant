@@ -34,7 +34,6 @@ import atexit
 import serial
 import subprocess
 import threading
-import indicators
 
 
 class Modem(object):

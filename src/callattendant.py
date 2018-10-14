@@ -24,10 +24,10 @@
 
 import sqlite3
 from Queue import Queue
-from modem import Modem
-from calllogger import CallLogger
-from callscreener import CallScreener
-from indicators import RingIndicator, ApprovedIndicator, BlockedIndicator
+from telephony.modem import Modem
+from telephony.calllogger import CallLogger
+from telephony.callscreener import CallScreener
+from hardware.indicators import RingIndicator, ApprovedIndicator, BlockedIndicator
 
 # SQLite3 DB to store call history, whitelist and blacklist
 DB_NAME = 'callattendant.db'
