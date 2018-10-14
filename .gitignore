@@ -106,6 +106,9 @@ venv.bak/
 # PyCharm project settings
 .idea
 
+# Geany project settings
+*.geany
+
 # mkdocs documentation
 /site
 

@@ -62,7 +62,7 @@ class Whitelist(object):
         self.db.execute(query, arguments)
         self.db.commit()
 
-        print "New whitelist record added"
+        print "New whitelist entry added"
 
     def check_number(self, number):
         query = "SELECT COUNT(*) FROM Whitelist WHERE PhoneNo=:number"

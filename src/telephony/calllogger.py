@@ -51,7 +51,7 @@ class CallLogger(object):
         self.db.execute(query, arguments)
         self.db.commit()
 
-        print "New call record added"
+        print "New log entry added"
 
     def __init__(self, db):
         self.db = db

@@ -49,7 +49,7 @@ class Blacklist(object):
         self.db.execute(query, arguments)
         self.db.commit()
 
-        print "New blacklist record added"
+        print "New blacklist entry added"
 
     def check_number(self, number):
         query = "SELECT COUNT(*) FROM Blacklist WHERE PhoneNo=:number"
