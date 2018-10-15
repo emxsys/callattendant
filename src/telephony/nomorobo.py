@@ -27,7 +27,7 @@
 import sys
 import argparse
 import urllib2
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
 
 class NomoroboService(object):
@@ -35,18 +35,21 @@ class NomoroboService(object):
     def lookup_number(self, number):
         number = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
         url = "https://www.nomorobo.com/lookup/%s" % number
+        print url
         headers = {}
         allowed_codes = [404]  # allow not found response
         content = self.http_get(url, headers, allowed_codes)
-        soup = BeautifulSoup(content)
+        soup = BeautifulSoup(content, "lxml")  # lxml HTML parser: fast
 
         score = 0  # = no spam
         positions = soup.findAll(class_="profile-position")
         if len(positions) > 0:
             position = positions[0].get_text()
             if position.upper().find("DO NOT ANSWER") > -1:
+                print "Spammer!"
                 score = 2  # = is spam
             else:
+                print "Nuisance!"
                 score = 1  # = might be spam (caller is "Political", "Charity", or "Debt Collector")
 
         caller_name = ""
@@ -81,3 +84,16 @@ class NomoroboService(object):
     def __init__(self, spam_threshold=2):
 
         self.spam_threshold = spam_threshold
+
+def test(args):
+    nomorobo = NomoroboService()
+    result = nomorobo.lookup_number("5622862616")
+    print result
+    return 0
+
+
+if __name__ == '__main__':
+    import sys
+    sys.exit(test(sys.argv))
+    print("Done")
+
