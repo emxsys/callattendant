@@ -31,11 +31,6 @@ from hardware.indicators import RingIndicator, ApprovedIndicator, \
     BlockedIndicator
 import userinterface.webapp as webapp
 
-from flask import Flask, request, session, g, redirect, url_for, \
-     abort, render_template, flash, send_from_directory, jsonify
-
-import telephony.utils
-
 # SQLite3 DB to store call history, whitelist and blacklist
 DB_NAME = 'callattendant.db'
 
@@ -55,6 +50,7 @@ class CallAttendant(object):
 
     def __init__(self):
         """The constructor initializes and starts the Call Attendant"""
+        self.db = sqlite3.connect(DB_NAME)
 
         # The current/last caller id
         self._caller_queue = Queue()
@@ -64,23 +60,24 @@ class CallAttendant(object):
         self.blocked_indicator = BlockedIndicator()
         self.ring_indicator = RingIndicator()
 
-        # Subsystems
-        self.db = sqlite3.connect(DB_NAME)
+        # Telephony subsystems
         self.logger = CallLogger(self.db)
         self.screener = CallScreener(self.db)
         self.modem = Modem(self)
 
-        # User Interface
+        # User Interface subsystem
         webapp.start()
 
+        # Run the app
         while 1:
             """Processes incoming callers with logging and screening."""
-            caller = self._caller_queue.get(True)
+            # Wait (blocking) for a caller
+            caller = self._caller_queue.get()
 
             # Log every call to the database
             self.logger.log_caller(caller)
 
-            # Perform call screening
+            # Perform the call screening
             if self.screener.is_whitelisted(caller):
                 print "Whitelisted! :-)"
                 self.approved_indicator.turn_on()
@@ -91,38 +88,7 @@ class CallAttendant(object):
                 self.modem.block_call()
 
 
-# create application
-app = Flask(__name__)
-app.config.from_object(__name__)
-
-
-@app.route('/call_details')
-def call_details():
-
-    query = 'SELECT * from CallLog ORDER BY datetime(SystemDateTime) DESC'
-    arguments = []
-
-    result_set = telephony.utils.query_db(get_db(), query, arguments)
-    call_records = []
-    for record in result_set:
-        call_records.append(dict(Call_No=record[0], Phone_Number=record[1], Name=record[2], Modem_Date=record[3], Modem_Time=record[4], System_Date_Time=record[5]))
-
-    ##print call_records
-    return render_template('call_details.htm',call_records=call_records)
-
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DB_NAME)
-    return db
-
 def main(args):
-
-    with app.app_context():
-        call_details()
-
-    app.run(host= '0.0.0.0')
-
     """Create and run the call attendent"""
     call_attendant = CallAttendant()
     return 0

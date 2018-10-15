@@ -31,33 +31,37 @@
 
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash, send_from_directory, jsonify
-from werkzeug.local import LocalProxy
 import telephony.utils
+import sqlite3
+import thread
 
-# create application
+# Create application
 app = Flask(__name__)
 app.config.from_object(__name__)
-
+app.debug = False  # debug mode prevents app from running in separate thread
 
 @app.route('/call_details')
 def call_details():
-
     query = 'SELECT * from CallLog ORDER BY datetime(SystemDateTime) DESC'
     arguments = []
-
-    result_set = utils.query_db(get_db(), query, arguments)
+    result_set = telephony.utils.query_db(get_db(), query, arguments)
     call_records = []
     for record in result_set:
         call_records.append(dict(Call_No=record[0], Phone_Number=record[1], Name=record[2], Modem_Date=record[3], Modem_Time=record[4], System_Date_Time=record[5]))
-
-    print call_records
+    #print call_records
     return render_template('call_details.htm',call_records=call_records)
 
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
-        db = g._database = sqlite3.connect(DB_NAME)
+        db = g._database = sqlite3.connect('callattendant.db')
     return db
 
+def flaskThread():
+    with app.app_context():
+        call_details()
+    app.run(host='0.0.0.0')
+
 def start():
-    app.run(host= '0.0.0.0')
+    thread.start_new_thread(flaskThread,())
+

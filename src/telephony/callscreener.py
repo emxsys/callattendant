@@ -48,7 +48,7 @@ class CallScreener(object):
                 print "Caller is robocaller"
                 self.blacklist_caller(callerid, "Nomorobo")
                 return True
-            print ""
+            print "Unknown caller"
             return False
 
     def whitelist_caller(self, callerid):
