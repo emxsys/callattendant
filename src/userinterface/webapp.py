@@ -35,7 +35,7 @@ import telephony.utils
 import sqlite3
 import thread
 
-# Create application
+# Create the Flask micro web-framework application
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.debug = False  # debug mode prevents app from running in separate thread
@@ -47,7 +47,9 @@ def call_details():
     result_set = telephony.utils.query_db(get_db(), query, arguments)
     call_records = []
     for record in result_set:
-        call_records.append(dict(Call_No=record[0], Phone_Number=record[1], Name=record[2], Modem_Date=record[3], Modem_Time=record[4], System_Date_Time=record[5]))
+        number = record[2]
+        phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
+        call_records.append(dict(Call_No=record[0], Phone_Number=phone_no, Name=record[1], Modem_Date=record[3], Modem_Time=record[4], System_Date_Time=record[5]))
     #print call_records
     return render_template('call_details.htm',call_records=call_records)
 
@@ -60,8 +62,11 @@ def get_db():
 def flaskThread():
     with app.app_context():
         call_details()
-    app.run(host='0.0.0.0')
+
+    # debug mode prevents app from running in separate thread
+    app.run(host='0.0.0.0', port=80, debug=False)
 
 def start():
+
     thread.start_new_thread(flaskThread,())
 
