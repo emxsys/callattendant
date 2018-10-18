@@ -56,7 +56,14 @@ class Modem(object):
 
     def block_call(self):
         """Block the current caller by answering and hanging up"""
-        pass
+
+        # Pickup the call
+        if self.send_cmd("ATH1"):
+            # Hangup after 2 seconds
+            hangup_thread = threading.Timer(2, self.send_cmd, ("ATH0",))
+            hangup_thread.start()
+        else:
+            print "Error: Failed to block the call."
 
     def handle_calls(self):
         """Thread function that processes the incoming modem data."""
@@ -183,7 +190,7 @@ class Modem(object):
                 # Read Modem Data on Serial Rx Pin
                 modem_response = self.serial_port.readline()
                 print modem_response
-                # Recieved expected Response
+                # Received expected Response
                 if expected_response == modem_response.strip(' \t\n\r' + chr(16)):
                     return True
                 # Failed to execute the command successfully
@@ -221,15 +228,15 @@ class Modem(object):
             if not self.send_cmd("ATZ3"):
                 print "Error: Unable reset to factory default"
 
-                # Display result codes in verbose form
+            # Display result codes in verbose form
             if not self.send_cmd("ATV1"):
                 print "Error: Unable set response in verbose form"
 
-                # Enable Command Echo Mode.
+            # Enable Command Echo Mode.
             if not self.send_cmd("ATE1"):
                 print "Error: Failed to enable Command Echo Mode"
 
-                # Enable formatted caller report.
+            # Enable formatted caller report.
             if not self.send_cmd("AT+VCID=1"):
                 print "Error: Failed to enable formatted caller report."
 
