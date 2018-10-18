@@ -109,6 +109,9 @@ venv.bak/
 # Geany project settings
 *.geany
 
+# Netbeans project settings
+/nbproject/private/
+
 # mkdocs documentation
 /site
 
