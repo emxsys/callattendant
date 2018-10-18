@@ -31,9 +31,6 @@ from hardware.indicators import RingIndicator, ApprovedIndicator, \
     BlockedIndicator
 import userinterface.webapp as webapp
 
-# SQLite3 DB to store call history, whitelist and blacklist
-DB_NAME = 'callattendant.db'
-
 
 class CallAttendant(object):
     """The CallAttendant provides call logging and call screening services."""
@@ -50,7 +47,15 @@ class CallAttendant(object):
 
     def __init__(self):
         """The constructor initializes and starts the Call Attendant"""
-        self.db = sqlite3.connect(DB_NAME)
+
+        self.settings = {}
+        self.settings["DB_NAME"] = "callattendant.db"  # SQLite3 DB to store call history, whitelist and blacklist
+        self.settings["SCREENING_ACTION"] = "log_only"  # log_only, block_calls
+        self.settings["SCREENING_MODE"] = "whitelist_and_blacklist"  # no_screening, whitelists_only, whitelist_and_blacklist, blacklist_only
+        self.settings["IGNORE_PRIVATE"] = False # Ignore "P" CID names
+        self.settings["IGNORE_UNKNOWN"] = True # Ignore "P" CID names
+
+        self.db = sqlite3.connect(self.settings["DB_NAME"])
 
         # The current/last caller id
         self._caller_queue = Queue()
