@@ -36,10 +36,11 @@ class CallAttendant(object):
     """The CallAttendant provides call logging and call screening services."""
 
     def handler_caller(self, caller):
+        """Places the caller record in synchronized queue for processing"""
         self._caller_queue.put(caller)
 
     def phone_ringing(self, enabled):
-        """Controls the phone ringing status."""
+        """Controls the phone ringing status indicator."""
         if enabled:
             self.ring_indicator.turn_on()
         else:
@@ -47,15 +48,15 @@ class CallAttendant(object):
 
     def __init__(self):
         """The constructor initializes and starts the Call Attendant"""
-
         self.settings = {}
-        self.settings["DB_NAME"] = "callattendant.db"  # SQLite3 DB to store call history, whitelist and blacklist
-        self.settings["SCREENING_ACTION"] = "log_only"  # log_only, block_calls
-        self.settings["SCREENING_MODE"] = "whitelist_and_blacklist"  # no_screening, whitelists_only, whitelist_and_blacklist, blacklist_only
-        self.settings["IGNORE_PRIVATE"] = False # Ignore "P" CID names
-        self.settings["IGNORE_UNKNOWN"] = True # Ignore "P" CID names
+        self.settings["db_name"] = "callattendant.db"  # SQLite3 DB to store incoming call log, whitelist and blacklist
+        self.settings["screening_mode"] = "whitelist_and_blacklist"  # no_screening, whitelist_only, whitelist_and_blacklist, blacklist_only
+        self.settings["bad_cid_patterns"] = ""  # regex name patterns to ignore
+        self.settings["ignore_private_numbers"] = False # Ignore "P" CID names
+        self.settings["ignore_unknown_numbers"] = True # Ignore "O" CID names
+        self.settings["block_calls"] = True
 
-        self.db = sqlite3.connect(self.settings["DB_NAME"])
+        self.db = sqlite3.connect(self.settings["db_name"])
 
         # The current/last caller id
         self._caller_queue = Queue()
@@ -76,21 +77,32 @@ class CallAttendant(object):
         # Run the app
         while 1:
             """Processes incoming callers with logging and screening."""
+
             # Wait (blocking) for a caller
             caller = self._caller_queue.get()
 
+            # Perform the call screening
+            mode = self.settings["screening_mode"]
+            whitelisted = False
+            blacklisted = False
+            if mode in ["whitelist_only", "whitelist_and_blacklist"]:
+                print "Checking whitelist(s)"
+                if self.screener.is_whitelisted(caller):
+                    whitelisted = True
+                    caller["NOTE"] = "Whitelisted"
+                    self.approved_indicator.turn_on()
+
+            if not whitelisted and mode in ["blacklist_only", "whitelist_and_blacklist"]:
+                print "Checking blacklist(s)"
+                if self.screener.is_blacklisted(caller):
+                    blacklisted = True
+                    caller["NOTE"] = "Blacklisted"
+                    self.blocked_indicator.turn_on()
+                    if self.settings["block_calls"]:
+                        self.modem.block_call()
+
             # Log every call to the database
             self.logger.log_caller(caller)
-
-            # Perform the call screening
-            if self.screener.is_whitelisted(caller):
-                print "Whitelisted! :-)"
-                self.approved_indicator.turn_on()
-
-            elif self.screener.is_blacklisted(caller):
-                print "Blacklisted! :-["
-                self.blocked_indicator.turn_on()
-                self.modem.block_call()
 
 
 def main(args):
