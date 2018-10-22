@@ -48,6 +48,8 @@ class Modem(object):
 
         self.call_attendant = call_attendant
         self.serial_port = serial.Serial()
+        self.read_buffer = bytearray("", encoding='ascii')
+
         # Event processing is disabled until we send our first command
         # after starting the event processing thread
         self.disable_event_processing = True
@@ -58,20 +60,6 @@ class Modem(object):
         self.event_thread = threading.Thread(target=self.handle_calls)
         self.event_thread.start()
 
-    def block_call(self):
-        """Block the current caller by answering and hanging up"""
-
-        self.serial_port.cancel_read()
-        self.lock.acquire()
-        # Pickup the call
-        if self.send_cmd("ATH1"):
-            # Hangup after 2 seconds
-            time.sleep(2)
-            self.send_cmd("ATH0")
-        else:
-            print "Error: Failed to block the call."
-        self.lock.release()
-
     def handle_calls(self):
         """Thread function that processes the incoming modem data."""
 
@@ -80,9 +68,12 @@ class Modem(object):
 
         while 1:
             if not self.disable_event_processing:
+                modem_data = ""
                 self.lock.acquire()
-                modem_data = self.serial_port.readline()
-                self.lock.release()
+                try:
+                    modem_data = self.readline().decode('UTF-8')
+                finally:
+                    self.lock.release()
 
                 if modem_data != "":
                     print modem_data
@@ -104,6 +95,20 @@ class Modem(object):
                         print call_record
                         self.call_attendant.handler_caller(call_record)
                         call_record = {}
+
+    def block_call(self):
+        """Block the current caller by answering and hanging up"""
+
+        self.serial_port.cancel_read()
+        self.lock.acquire()
+        # Pickup the call
+        if self.send_cmd("ATH1"):
+            # Hangup after 2 seconds
+            time.sleep(2)
+            self.send_cmd("ATH0")
+        else:
+            print "Error: Failed to block the call."
+        self.lock.release()
 
     def open_serial_port(self):
         """Detects and opens the serial port attached to the modem."""
@@ -261,3 +266,21 @@ class Modem(object):
         except:
             print "Error: unable to Initialize the Modem"
             sys.exit()
+
+    # https://github.com/pyserial/pyserial/issues/216#issuecomment-369414522
+    def readline(self):
+        i = self.read_buffer.find(b"\n")
+        if i >= 0:
+            r = self.read_buffer[:i+1]
+            self.read_buffer = self.read_buffer[i+1:]
+            return r
+        while True:
+            i = max(1, min(2048, self.serial_port.in_waiting))
+            data = self.serial_port.read(i)  # will block up to timeout value
+            i = data.find(b"\n")
+            if i >= 0:
+                r = self.read_buffer + data[:i+1]
+                self.read_buffer[0:] = data[i+1:]
+                return r
+            else:
+                self.read_buffer.extend(data)
