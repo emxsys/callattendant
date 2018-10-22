@@ -1,4 +1,4 @@
-#!/usr/bin/python
+ #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 #
 # file: modem.py
@@ -34,6 +34,7 @@ import atexit
 import serial
 import subprocess
 import threading
+import time
 
 
 class Modem(object):
@@ -41,13 +42,16 @@ class Modem(object):
     This class is responsible for serial communications between the
     Raspberry Pi and a US Robotics 5637 modem.
     """
+
     def __init__(self, call_attendant):
         """Constructs and starts a modem for serial communications."""
+
         self.call_attendant = call_attendant
         self.serial_port = serial.Serial()
         # Event processing is disabled until we send our first command
         # after starting the event processing thread
         self.disable_event_processing = True
+        self.lock = threading.RLock()
         # Detect and open the serial port
         self.init_modem()
         # Start the event processing
@@ -57,13 +61,16 @@ class Modem(object):
     def block_call(self):
         """Block the current caller by answering and hanging up"""
 
+        self.serial_port.cancel_read()
+        self.lock.acquire()
         # Pickup the call
         if self.send_cmd("ATH1"):
             # Hangup after 2 seconds
-            hangup_thread = threading.Timer(2, self.send_cmd, ("ATH0",))
-            hangup_thread.start()
+            time.sleep(2)
+            self.send_cmd("ATH0")
         else:
             print "Error: Failed to block the call."
+        self.lock.release()
 
     def handle_calls(self):
         """Thread function that processes the incoming modem data."""
@@ -73,7 +80,9 @@ class Modem(object):
 
         while 1:
             if not self.disable_event_processing:
+                self.lock.acquire()
                 modem_data = self.serial_port.readline()
+                self.lock.release()
 
                 if modem_data != "":
                     print modem_data
@@ -144,6 +153,7 @@ class Modem(object):
 
     def close_serial_port(self):
         """Closes the serial port attached to the modem."""
+
         print("Closing Serial Port")
         try:
             if self.serial_port.isOpen():
@@ -158,20 +168,21 @@ class Modem(object):
 
         # Disable processing input while sending commands
         self.disable_event_processing = True
-
+        self.lock.acquire()
         try:
             # Send command to the Modem
             self.serial_port.write((command + "\r").encode())
             # Read Modem response
             execution_status = self.read_cmd_response(expected_response)
-            self.disable_event_processing = False
             # Return command execution status
             return execution_status
-
         except:
-            self.disable_event_processing = False
             print "Error: Failed to execute the command"
             return False
+        finally:
+            self.disable_event_processing = False
+            self.lock.release()
+
 
     def read_cmd_response(self, expected_response="OK"):
         """
