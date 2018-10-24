@@ -46,7 +46,8 @@ class CallScreener(object):
             result = self._nomorobo.lookup_number(number)
             if result["spam"]:
                 print "Caller is robocaller"
-                self.blacklist_caller(callerid, "Nomorobo")
+                self.blacklist_caller(callerid, "{} with score {}".format(
+                    result["reason"], result["score"]))
                 return True
             print "Unknown caller"
             return False
