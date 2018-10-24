@@ -64,7 +64,7 @@ def flaskThread():
         call_details()
 
     # debug mode prevents app from running in separate thread
-    app.run(host='0.0.0.0', port=80, debug=False)
+    app.run(host='0.0.0.0',  debug=False)
 
 def start():
 
