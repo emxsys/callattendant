@@ -53,20 +53,20 @@ class NomoroboService(object):
                 print "Nuisance!"
                 score = 1  # = might be spam (caller is "Political", "Charity", or "Debt Collector")
 
-        caller_name = ""
+        reason = ""
         titles = soup.findAll(class_="profile-title")
         if len(titles) > 0:
-            caller_name = titles[0].get_text()
-            caller_name = caller_name.replace("\n", "").strip(" ")
+            reason = titles[0].get_text()
+            reason = reason.replace("\n", "").strip(" ")
             # TODO: if score == 1, check for "Political", "Charity", and/or "Debt Collector"
-            # in the caller_name and adjust the score if appropriate
+            # in the reason and adjust the score if appropriate
 
         spam = False if score < self.spam_threshold else True
 
         result = {
             "spam": spam,
             "score": score,
-            "name": caller_name
+            "reason": reason
         }
         return result
 
