@@ -40,6 +40,7 @@ Automated call attendant, call blocker, and voice messaging on a Raspberry Pi
 ---
 
 ## Software Development Plan
+The development plan phase objectives are described in the [projects](https://github.com/emxsys/callattendant/projects?query=is%3Aopen+sort%3Acreated-asc) 
 ### [Inception Phase](https://github.com/emxsys/callattendant/projects/1)
 - [Release v0.1](https://github.com/emxsys/callattendant/releases/tag/v0.1)
 ### [Elaboration Phase](https://github.com/emxsys/callattendant/projects/1)
