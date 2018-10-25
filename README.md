@@ -39,6 +39,18 @@ Automated call attendant, call blocker, and voice messaging on a Raspberry Pi
 
 ---
 
+## Software Development Plan
+### [Inception Phase](https://github.com/emxsys/callattendant/projects/1)
+- [Release v0.1](https://github.com/emxsys/callattendant/releases/tag/v0.1)
+### [Elaboration Phase](https://github.com/emxsys/callattendant/projects/1)
+- [Release v0.2]()
+### [Construction Phase](https://github.com/emxsys/callattendant/projects/1)
+...
+### [Transition Phase](https://github.com/emxsys/callattendant/projects/1)
+...
+
+---
+
 ## Tools
 
 #### DB Browser for SQLite
