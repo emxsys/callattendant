@@ -24,11 +24,10 @@
 
 import sqlite3
 from Queue import Queue
-from telephony.calllogger import CallLogger
-from telephony.callscreener import CallScreener
+from screening.calllogger import CallLogger
+from screening.callscreener import CallScreener
 from hardware.modem import Modem
-from hardware.indicators import RingIndicator, ApprovedIndicator, \
-    BlockedIndicator
+from hardware.indicators import RingIndicator, ApprovedIndicator, BlockedIndicator
 import userinterface.webapp as webapp
 
 

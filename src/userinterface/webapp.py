@@ -31,7 +31,7 @@
 
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash, send_from_directory, jsonify
-import telephony.utils
+import screening.utils
 import sqlite3
 import thread
 
@@ -44,7 +44,7 @@ app.debug = False  # debug mode prevents app from running in separate thread
 def call_details():
     query = 'SELECT * from CallLog ORDER BY datetime(SystemDateTime) DESC'
     arguments = []
-    result_set = telephony.utils.query_db(get_db(), query, arguments)
+    result_set = screening.utils.query_db(get_db(), query, arguments)
     call_records = []
     for record in result_set:
         number = record[2]
