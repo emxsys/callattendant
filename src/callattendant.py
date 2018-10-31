@@ -69,6 +69,7 @@ class CallAttendant(object):
         self.logger = CallLogger(self.db)
         self.screener = CallScreener(self.db)
         self.modem = Modem(self)
+        self.modem.handle_calls()
 
         # User Interface subsystem
         webapp.start()
@@ -98,6 +99,8 @@ class CallAttendant(object):
                     caller["NOTE"] = "Blacklisted"
                     self.blocked_indicator.turn_on()
                     if self.settings["block_calls"]:
+                        #~ self.modem.play_audio("sample.wav")
+                        #~ self.modem.hang_up()
                         self.modem.block_call()
 
             # Log every call to the database
