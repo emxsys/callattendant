@@ -36,17 +36,25 @@ import subprocess
 import sys
 import threading
 import time
+import wave
 
 #  Modem AT commands:
 #  See http://support.usr.com/support/5637/5637-ug/ref_data.html
-FACTORY_RESET_CMD = "ATZ3"
-PICKUP_CMD = "ATH1"
-HANGUP_CMD = "ATH0"
-DISPLAY_MODEM_SETTINGS_CMD = "ATI4"
+DLE_CODE = chr(16)  # Data Link Escape code
+ETX_CODE = chr(3)  # End Transmission code
+DISPLAY_MODEM_SETTINGS = "ATI4"
 ENABLE_ECHO_COMMANDS = "ATE1"
 ENABLE_FORMATTED_CID = "AT+VCID=1"
 ENABLE_VERBOSE_CODES = "ATV1"
-ENABLE_VOICE_MODE = "AT+FCLASS=8"
+ENTER_VOICE_MODE = "AT+FCLASS=8"
+ENTER_TELEPHONE_ANSWERING_DEVICE_MODE = "AT+VLS=1"  # DCE off-hook
+ENTER_VOICE_TRANSMIT_DATA_STATE = "AT+VTX"
+END_VOICE_TRANSMIT_DATA_STATE = DLE_CODE + ETX_CODE
+FACTORY_RESET = "ATZ3"
+GO_OFF_HOOK = "ATH1"
+GO_ON_HOOK = "ATH0"
+SET_VOICE_COMPRESSION_METHOD = "AT+VSM=128,8000"  # 128 = 8-bit linear, 8.0 kHz
+TERMINATE_CALL = "ATH"
 
 
 class Modem(object):
@@ -56,35 +64,41 @@ class Modem(object):
     """
 
     def __init__(self, call_attendant):
-        """Constructs and starts a modem for serial communications."""
+        """Constructs a modem object for serial communications."""
         self.call_attendant = call_attendant
-        # Thread synchronization objects
-        self.lock = threading.RLock()
+        # Thread synchronization object
+        self._lock = threading.RLock()
         # Setup and open the serial port
-        self.read_buffer = bytearray("", encoding='ascii')
-        self.serial_port = serial.Serial()
-        self._init_modem()
-        # Start the event processing
-        self.event_thread = threading.Thread(target=self.handle_calls)
-        self.event_thread.start()
+        self._serial = serial.Serial()
 
     def handle_calls(self):
+        self._init_modem()
+        self.event_thread = threading.Thread(target=self._call_handler)
+        self.event_thread.start()
+
+    def _call_handler(self):
         """Thread function that processes the incoming modem data."""
+
+        # Prerequisites
+        if self.call_attendant == None:
+            print "No call attendant in call handler; calls will not be handled."
+            return
+
+        # Handle incoming calls
         call_record = {}
         while 1:
             modem_data = ""
 
-            self.lock.acquire()
+            self._lock.acquire()
             try:
-                # modem_data = self._readline().decode('UTF-8')
-                modem_data = self.serial_port.readline()
+                modem_data = self._serial.readline()
             finally:
-                self.lock.release()
+                self._lock.release()
 
             if modem_data != "":
                 print modem_data
 
-                if "RING" in modem_data.strip(chr(16)):
+                if "RING" in modem_data.strip(DLE_CODE):
                     self.call_attendant.phone_ringing(True)
 
                 if ("DATE" in modem_data):
@@ -106,62 +120,118 @@ class Modem(object):
                     # to screen call before resuming
                     time.sleep(2)
 
+    def hang_up(self):
+        """Terminate an active call, e.g., hang up."""
+        print "Terminating call..."
+        self._serial.cancel_read()
+        self._lock.acquire()
+        try:
+            if not self._send_cmd(TERMINATE_CALL):
+                print "Error: Failed to terminate the call."
+        finally:
+            self._lock.release()
+
     def block_call(self):
         """Block the current caller by answering and hanging up"""
         print "Blocking call..."
-        self.serial_port.cancel_read()
-        self.lock.acquire()
+        self._serial.cancel_read()
+        self._lock.acquire()
         try:
-            if self._send_cmd(PICKUP_CMD):
+            if self._send_cmd(GO_OFF_HOOK):
                 time.sleep(2)
-                self._send_cmd(HANGUP_CMD)
+                self._send_cmd(GO_ON_HOOK)
             else:
                 print "Error: Failed to block the call."
         finally:
-            self.lock.release()
+            self._lock.release()
+
+    def play_audio(self, wave_filename):
+        """Play an audio file with 8-bit linear compression at 8.0 kHz sampling"""
+        print "Play Audio Msg - Start"
+
+        self._serial.cancel_read()
+        self._lock.acquire()
+        try:
+            if not self._send_cmd(ENTER_VOICE_MODE):
+                print "Error: Failed to put modem into voice mode."
+                return
+            if not self._send_cmd(SET_VOICE_COMPRESSION_METHOD):
+                print "Error: Failed to set compression method and sampling rate specifications."
+                return
+            if not self._send_cmd(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE):
+                print "Error: Unable put modem into TAD mode."
+                return
+            if not self._send_cmd(ENTER_VOICE_TRANSMIT_DATA_STATE, "CONNECT"):
+                print "Error: Unable put modem into TAD data transmit state."
+                return
+
+            time.sleep(1)
+
+            # Play Audio File
+            print "Play Audio Msg - playing wav file"
+
+            wf = wave.open(wave_filename, 'rb')
+            chunk = 1024
+
+            data = wf.readframes(chunk)
+            while data != '':
+                self._serial.write(data)
+                data = wf.readframes(chunk)
+                # You may need to change this sleep interval to smooth-out the audio
+                time.sleep(.12)
+            wf.close()
+
+            #self._serial.flushInput()
+            #self._serial.flushOutput()
+
+            self._send_cmd(END_VOICE_TRANSMIT_DATA_STATE, "NONE")
+            #self._send_cmd(TERMINATE_CALL)
+
+        finally:
+            self._lock.release()
+
+        print "Play Audio Msg - END"
 
     def _send_cmd(self, command, expected_response="OK"):
         """Sends a command string (e.g., AT command) to the modem."""
         # Disable processing while sending commands lest the response
         # get processed by the event processing thread.
-        self.lock.acquire()
+        self._lock.acquire()
         try:
-            self.serial_port.write((command + "\r").encode())
-            execution_status = self._read_cmd_response(expected_response)
-            return execution_status
+            self._serial.write((command + "\r").encode())
+            if expected_response == "NONE" or expected_response == "":
+                return True
+            else:
+                execution_status = self._read_response(expected_response)
+                return execution_status
         except:
             print "Error: Failed to execute the command"
             return False
         finally:
             # Resume event processing
-            self.lock.release()
+            self._lock.release()
 
-    def _read_cmd_response(self, expected_response="OK"):
+    def _read_response(self, expected_response="OK", read_timeout_secs=5):
         """
         Handles the command response code from the modem.
         Returns True if the expected response was returned.
+        Returns False if ERROR is returned or if it times out
+        before the expected response is returned
         """
-        # Set the auto timeout interval
-        MODEM_RESPONSE_READ_TIMEOUT = 5  # Time in Seconds
         start_time = datetime.now()
-
         try:
             while 1:
-                # Read Modem Data on Serial Rx Pin
-                modem_response = self.serial_port.readline()
-                print modem_response
-                # Received expected Response
-                if expected_response == modem_response.strip(' \t\n\r' + chr(16)):
+                modem_data = self._serial.readline()
+                print modem_data
+                response = modem_data.strip(' \t\n\r' + DLE_CODE)
+                if expected_response == response:
                     return True
-                # Failed to execute the command successfully
-                elif "ERROR" in modem_response.strip(' \t\n\r' + chr(16)):
+                elif "ERROR" in response:
                     return False
-                # Timeout
-                elif (datetime.now() - start_time).seconds > MODEM_RESPONSE_READ_TIMEOUT:
+                elif (datetime.now() - start_time).seconds > read_timeout_secs:
                     return False
-
         except:
-            print "Error in read_modem_response function..."
+            print "Error in read_cmd_modem_response function..."
             return False
 
     def _init_modem(self):
@@ -176,13 +246,13 @@ class Modem(object):
         # Initialize the Modem
         try:
             # Flush any existing input outout data from the buffers
-            self.serial_port.flushInput()
-            self.serial_port.flushOutput()
+            self._serial.flushInput()
+            self._serial.flushOutput()
 
             # Test Modem connection, using basic AT command.
             if not self._send_cmd("AT"):
                 print "Error: Unable to access the Modem"
-            if not self._send_cmd(FACTORY_RESET_CMD):
+            if not self._send_cmd(FACTORY_RESET):
                 print "Error: Unable reset to factory default"
             if not self._send_cmd(ENABLE_VERBOSE_CODES):
                 print "Error: Unable set response in verbose form"
@@ -190,12 +260,12 @@ class Modem(object):
                 print "Error: Failed to enable local echo mode"
             if not self._send_cmd(ENABLE_FORMATTED_CID):
                 print "Error: Failed to enable formatted caller report."
-            if not self._send_cmd(DISPLAY_MODEM_SETTINGS_CMD):
+            if not self._send_cmd(DISPLAY_MODEM_SETTINGS):
                 print "Error: Failed to display modem settings."
 
             # Flush any existing input outout data from the buffers
-            self.serial_port.flushInput()
-            self.serial_port.flushOutput()
+            self._serial.flushInput()
+            self._serial.flushOutput()
 
             # Automatically close the serial port at program termination
             atexit.register(self.close_serial_port)
@@ -218,61 +288,81 @@ class Modem(object):
                 try:
                     # Initialize the serial port and attempt to open
                     self.init_serial_port(com_port)
-                    self.serial_port.open()
+                    self._serial.open()
                 except:
                     print "Unable to open COM Port: " + com_port
                     pass
                 else:
                     # Validate modem selection by trying to put it in Voice Mode
-                    if not self._send_cmd(ENABLE_VOICE_MODE):
+                    if not self._send_cmd(ENTER_VOICE_MODE):
                         print "Error: Failed to put modem into voice mode."
-                        if self.serial_port.isOpen():
-                            self.serial_port.close()
+                        if self._serial.isOpen():
+                            self._serial.close()
                     else:
                         # Found the COM Port exit the loop
                         print "Modem COM Port is: " + com_port
-                        self.serial_port.flushInput()
-                        self.serial_port.flushOutput()
+                        self._serial.flushInput()
+                        self._serial.flushOutput()
                         break
 
     def init_serial_port(self, com_port):
         """Initializes the given COM port for communications with the modem."""
-        self.serial_port.port = com_port
-        self.serial_port.baudrate = 57600  # 9600
-        self.serial_port.bytesize = serial.EIGHTBITS  # number of bits per bytes
-        self.serial_port.parity = serial.PARITY_NONE  # set parity check: no parity
-        self.serial_port.stopbits = serial.STOPBITS_ONE  # number of stop bits
-        self.serial_port.timeout = 3  # non-block read
-        self.serial_port.xonxoff = False  # disable software flow control
-        self.serial_port.rtscts = False  # disable hardware (RTS/CTS) flow control
-        self.serial_port.dsrdtr = False  # disable hardware (DSR/DTR) flow control
-        self.serial_port.writeTimeout = 3  # timeout for write
+        self._serial.port = com_port
+        self._serial.baudrate = 57600  # 9600
+        self._serial.bytesize = serial.EIGHTBITS  # number of bits per bytes
+        self._serial.parity = serial.PARITY_NONE  # set parity check: no parity
+        self._serial.stopbits = serial.STOPBITS_ONE  # number of stop bits
+        self._serial.timeout = 3  # non-block read
+        self._serial.xonxoff = False  # disable software flow control
+        self._serial.rtscts = False  # disable hardware (RTS/CTS) flow control
+        self._serial.dsrdtr = False  # disable hardware (DSR/DTR) flow control
+        self._serial.writeTimeout = 3  # timeout for write
 
     def close_serial_port(self):
         """Closes the serial port attached to the modem."""
         print("Closing Serial Port")
         try:
-            if self.serial_port.isOpen():
-                self.serial_port.close()
+            if self._serial.isOpen():
+                self._serial.close()
                 print("Serial Port closed...")
         except:
             print "Error: Unable to close the Serial Port."
             sys.exit()
 
-    # https://github.com/pyserial/pyserial/issues/216#issuecomment-369414522
-    def _readline(self):
-        i = self.read_buffer.find(b"\n")
-        if i >= 0:
-            r = self.read_buffer[:i+1]
-            self.read_buffer = self.read_buffer[i+1:]
-            return r
-        while True:
-            i = max(1, min(2048, self.serial_port.in_waiting))
-            data = self.serial_port.read(i)  # will block up to timeout value
-            i = data.find(b"\n")
-            if i >= 0:
-                r = self.read_buffer + data[:i+1]
-                self.read_buffer[0:] = data[i+1:]
-                return r
-            else:
-                self.read_buffer.extend(data)
+def test(args):
+
+    print "Running tests...."
+    modem = Modem(None) # No call attendent is set in tests
+
+    try:
+        modem.open_serial_port()
+    except:
+        print "Error: Unable to open the Serial Port."
+        return 1
+
+    if not modem._send_cmd(FACTORY_RESET, "OK"):
+        print "Factory reset failed."
+    if not modem._send_cmd(DISPLAY_MODEM_SETTINGS, "OK"):
+        print "Display modem settings failed."
+    if not modem._send_cmd(ENTER_VOICE_MODE):
+        print "Error: Failed to put modem into voice mode."
+    if not modem._send_cmd(SET_VOICE_COMPRESSION_METHOD):
+        print "Error: Failed to set compression method and sampling rate specifications."
+    if not modem._send_cmd(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE):
+        print "Error: Unable to put modem into TAD mode."
+    if not modem._send_cmd(ENTER_VOICE_TRANSMIT_DATA_STATE, "CONNECT"):
+        print "Error: Unable to put modem into data transmit state."
+    if not modem._send_cmd(END_VOICE_TRANSMIT_DATA_STATE, "OK"):
+        print "Error: Unable to cancel data transmit state."
+
+    modem._send_cmd(FACTORY_RESET)
+
+    modem.play_audio("sample.wav")
+
+    return 0
+
+
+if __name__ == '__main__':
+    import sys
+    sys.exit(test(sys.argv))
+    print("Done")
