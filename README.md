@@ -1,7 +1,29 @@
 # Call Attendant
-Automated call attendant, call blocker, and voice messaging on a Raspberry Pi
+Automated call attendant, call blocker, and voice messaging on a Raspberry Pi.
 
-### Context Diagrams
+## Overview
+The Call Attendant (__callattendant__) uses a Raspberry Pi coupled with a US Robotics 5637 modem to screen incoming 
+calls on a landline. Features being developed include:
+- [x] Robocallers and blacklisted numbers are intercepted after the first ring
+- [x] Whitelisted callers pass straight through to the local phone system for normal call ringing and answering
+- [x] Visual indicators to show whether the incoming call is from a whitelisted, blacklisted, or unknown number 
+- [ ] Unknown callers are handled by a voice messaging system that requires human interaction, e.g, "Press 1 to leave a message"
+- [ ] Call details, blacklists, whitelists are available in a web-based user interface 
+
+The Call Attendant project was inspired by the [pamapa/callblocker](https://github.com/pamapa/callblocker) project,
+an excellent Raspberry Pi based call blocker.  However, the __callattendant__ differs from the __callblocker__ in that adds
+voice messaging; and the __callattendant__ is written entirely in Python, uses SQLite for the call logging, and
+uses Flask for the web interface. 
+
+### More information
+The following blogs from [IoT Bytes by Pradeep Singh](https://iotbytes.wordpress.com/) were very useful for learning to how
+to program the Raspberry Pi and the US Robotics 5637 modem. His blog site has many Raspberry Pi resources. Thanks Pradeep!
+
+- [Incoming Call Details Logger with Raspberry Pi](https://iotbytes.wordpress.com/incoming-call-details-logger-with-raspberry-pi/)
+- [Play Audio File on Phone Line with Raspberry Pi](https://iotbytes.wordpress.com/play-audio-file-on-phone-line-with-raspberry-pi/)
+- [Record Audio from Phone Line with Raspberry Pi](https://iotbytes.wordpress.com/record-audio-from-phone-line-with-raspberry-pi/)
+
+## Context Diagrams
 ###### System View
 ![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/System_View.png "System View")
 
@@ -59,10 +81,14 @@ sudo apt-get install sqlitebrowser
 ```
 
 ---
-## Related projects and resources
-### Telephony
+
+## Related Projects
+
 - [pamapa/callblocker](https://github.com/pamapa/callblocker)
 - [pradeesi/Incoming_Call_Detail_Logger ](https://github.com/pradeesi/Incoming_Call_Detail_Logger)
 - [pradeesi/record_audio_from_phone_line](https://github.com/pradeesi/record_audio_from_phone_line)
 - [pradeesi/play_audio_over_phone_line](https://github.com/pradeesi/play_audio_over_phone_line)
+
+
+
 
