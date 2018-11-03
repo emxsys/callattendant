@@ -42,16 +42,37 @@ app.debug = False  # debug mode prevents app from running in separate thread
 
 @app.route('/call_details')
 def call_details():
-    query = 'SELECT * from CallLog ORDER BY datetime(SystemDateTime) DESC'
+    query = """
+    SELECt
+      a.CallLogID,
+      a.Name,
+      a.Number,
+      a.Date,
+      a.Time,
+      CASE WHEN b.PhoneNo IS NULL THEN 'N' ELSE 'Y' END Whitelisted,
+      CASE WHEN c.PhoneNo IS NULL THEN 'N' ELSE 'Y' END Blacklisted,
+      CASE WHEN b.PhoneNo IS NOT NULL THEN b.Reason ELSE c.Reason END Reason
+    FROM calllog AS a
+    LEFT JOIN whitelist AS b ON a.Number = b.PhoneNo
+    LEFT JOIN blacklist AS c ON a.Number = c.PhoneNo
+    ORDER BY a.SystemDateTime DESC
+    """
     arguments = []
     result_set = screening.utils.query_db(get_db(), query, arguments)
-    call_records = []
+    records = []
     for record in result_set:
         number = record[2]
         phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
-        call_records.append(dict(Call_No=record[0], Phone_Number=phone_no, Name=record[1], Modem_Date=record[3], Modem_Time=record[4], System_Date_Time=record[5]))
-    #print call_records
-    return render_template('call_details.htm',call_records=call_records)
+        records.append(dict(
+            Call_No=record[0],
+            Phone_Number=phone_no,
+            Name=record[1],
+            Date=record[3],
+            Time=record[4],
+            Whitelisted=record[5],
+            Blacklisted=record[6],
+            Reason=record[7]))
+    return render_template('call_details.htm',call_records=records)
 
 @app.route('/blacklist')
 def blacklist():
