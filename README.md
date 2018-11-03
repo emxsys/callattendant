@@ -1,6 +1,11 @@
 # Call Attendant
 Automated call attendant, call blocker, and voice messaging on a Raspberry Pi.
 
+#### Table of Contents
+- [Overview](#overview)
+- [Software Architecture](#software-architecture)
+- [Software Development Plan](#software-development-plan)
+
 ## Overview
 The Call Attendant (__callattendant__) uses a Raspberry Pi coupled with a US Robotics 5637 modem to screen incoming 
 calls on a landline. Features being developed include:
