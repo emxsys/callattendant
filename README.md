@@ -13,7 +13,14 @@ calls on a landline. Features being developed include:
 The Call Attendant project was inspired by the [pamapa/callblocker](https://github.com/pamapa/callblocker) project,
 an excellent Raspberry Pi based call blocker.  However, the __callattendant__ differs from the __callblocker__ in that adds
 voice messaging; and the __callattendant__ is written entirely in Python, uses SQLite for the call logging, and
-uses Flask for the web interface. 
+implments the web interface with Flask. 
+
+### Context Diagrams
+###### System View
+![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/System_View.png "System View")
+
+###### _Subsystem View_
+![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Subsystem_View.png "Subsystem View")
 
 ### More information
 The following blogs from [IoT Bytes by Pradeep Singh](https://iotbytes.wordpress.com/) were very useful for learning to how
@@ -23,12 +30,7 @@ to program the Raspberry Pi and the US Robotics 5637 modem. His blog site has ma
 - [Play Audio File on Phone Line with Raspberry Pi](https://iotbytes.wordpress.com/play-audio-file-on-phone-line-with-raspberry-pi/)
 - [Record Audio from Phone Line with Raspberry Pi](https://iotbytes.wordpress.com/record-audio-from-phone-line-with-raspberry-pi/)
 
-## Context Diagrams
-###### System View
-![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/System_View.png "System View")
 
-###### _Subsystem View_
-![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Subsystem_View.png "Subsystem View")
 
 ## Software Architecture
 ### Archtectural Viewpoints
