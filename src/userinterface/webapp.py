@@ -53,6 +53,38 @@ def call_details():
     #print call_records
     return render_template('call_details.htm',call_records=call_records)
 
+@app.route('/blacklist')
+def blacklist():
+    query = 'SELECT * from Blacklist ORDER BY datetime(SystemDateTime) DESC'
+    arguments = []
+    result_set = screening.utils.query_db(get_db(), query, arguments)
+    records = []
+    for record in result_set:
+        number = record[0]
+        phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
+        records.append(dict(
+            Phone_Number=phone_no,
+            Name=record[1],
+            Reason=record[2],
+            System_Date_Time=record[3]))
+    return render_template('blacklist.htm', blacklist=records)
+
+@app.route('/whitelist')
+def whitelist():
+    query = 'SELECT * from Whitelist ORDER BY datetime(SystemDateTime) DESC'
+    arguments = []
+    result_set = screening.utils.query_db(get_db(), query, arguments)
+    records = []
+    for record in result_set:
+        number = record[0]
+        phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
+        records.append(dict(
+            Phone_Number=phone_no,
+            Name=record[1],
+            Reason=record[2],
+            System_Date_Time=record[3]))
+    return render_template('whitelist.htm', whitelist=records)
+
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
