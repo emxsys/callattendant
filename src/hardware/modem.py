@@ -189,7 +189,7 @@ class Modem(object):
             #self._serial.flushInput()
             #self._serial.flushOutput()
 
-            self._send(END_VOICE_TRANSMIT_DATA_STATE, "NONE")
+            self._send(END_VOICE_TRANSMIT_DATA_STATE)
 
         finally:
             self._lock.release()
