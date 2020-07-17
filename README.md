@@ -86,6 +86,20 @@ The development plan's [phase objectives](https://github.com/emxsys/callattendan
 ```
 sudo apt-get install sqlitebrowser
 ```
+```
+sqlitebrowser callattendant/src/callattendant.db
+```
+
+## Web Pages
+##### Call Log
+http://localhost:5000/
+
+##### Block List
+http://localhost:5000/blacklist
+
+##### Permitted List
+http://localhost:5000/whitelist
+
 
 ---
 
