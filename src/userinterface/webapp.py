@@ -40,7 +40,7 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 app.debug = False  # debug mode prevents app from running in separate thread
 
-@app.route('/call_details')
+@app.route('/')
 def call_details():
     query = """
     SELECt
@@ -59,6 +59,7 @@ def call_details():
     """
     arguments = []
     result_set = screening.utils.query_db(get_db(), query, arguments)
+
     records = []
     for record in result_set:
         number = record[2]
@@ -72,7 +73,7 @@ def call_details():
             Whitelisted=record[5],
             Blacklisted=record[6],
             Reason=record[7]))
-    return render_template('call_details.htm',call_records=records)
+    return render_template('call_details.htm', calls=records)
 
 @app.route('/blacklist')
 def blacklist():

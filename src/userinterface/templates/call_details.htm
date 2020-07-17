@@ -4,7 +4,9 @@
   <title>Call Log | Call Attendant</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="300">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../static/css/callattendant.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 </head>
@@ -12,7 +14,7 @@
 
 <div class="container">
   <h2>Call Details</h2>
-  <table class="table">
+  <table id="calls" class="table table-hover">
     <thead>
       <tr>
         <th>Number</th>
@@ -25,26 +27,97 @@
       </tr>
     </thead>
     <tbody>
-      {% for record in call_records %}
-      <tr
-        {% if record.Whitelisted == 'Y' %}
-          bgcolor="#90EE90"
-        {% elif record.Blacklisted == 'Y' %}
-          bgcolor="#FFC0CB"
+      {% for item in calls %}
+        {% if item.Whitelisted == 'Y' %}
+          <tr bgcolor="#90EE90">
+        {% elif item.Blacklisted == 'Y' %}
+          <tr bgcolor="#FFC0CB">
         {% endif %}
-      >
-        <td>{{ record.Phone_Number }}</td>
-        <td>{{ record.Name }}</td>
-        <td>{{ record.Date }}</td>
-        <td>{{ record.Time }}</td>
-        <td>{{ record.Whitelisted }}</td>
-        <td>{{ record.Blacklisted }}</td>
-        <td>{{ record.Reason}}</td>
+        <td class="phoneno">{{ item.Phone_Number }}</td>
+        <td>{{ item.Name }}</td>
+        <td>{{ item.Date }}</td>
+        <td>{{ item.Time }}</td>
+        <td>{{ item.Whitelisted }}</td>
+        <td>{{ item.Blacklisted }}</td>
+        <td>{{ item.Reason }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
+<ul id="contextMenu" class="dropdown-menu" role="menu" style="display:none" >
+    <li><a tabindex="-1" href="#">Action</a></li>
+    <li><a tabindex="-1" href="#">Another action</a></li>
+    <li><a tabindex="-1" href="#">Something else here</a></li>
+    <li class="divider"></li>
+    <li><a tabindex="-1" href="#">Separated link</a></li>
+</ul>
+
+<script type="text/javascript">
+(function ($, window) {
+
+    $.fn.contextMenu = function (settings) {
+
+        return this.each(function () {
+
+            // Open context menu
+            $(this).on("contextmenu", function (e) {
+                // return native menu if pressing control
+                if (e.ctrlKey) return;
+
+                //open menu
+                var $menu = $(settings.menuSelector)
+                    .data("invokedOn", $(e.target))
+                    .show()
+                    .css({
+                        position: "absolute",
+                        left: getMenuPosition(e.clientX, 'width', 'scrollLeft'),
+                        top: getMenuPosition(e.clientY, 'height', 'scrollTop')
+                    })
+                    .off('click')
+                    .on('click', 'a', function (e) {
+                        $menu.hide();
+
+                        var $invokedOn = $menu.data("invokedOn");
+                        var $selectedMenu = $(e.target);
+
+                        settings.menuSelected.call(this, $invokedOn, $selectedMenu);
+                    });
+
+                return false;
+            });
+
+            //make sure menu closes on any click
+            $('body').click(function () {
+                $(settings.menuSelector).hide();
+            });
+        });
+
+        function getMenuPosition(mouse, direction, scrollDir) {
+            var win = $(window)[direction](),
+                scroll = $(window)[scrollDir](),
+                menu = $(settings.menuSelector)[direction](),
+                position = mouse + scroll;
+
+            // opening menu would pass the side of the page
+            if (mouse + menu > win && menu < mouse)
+                position -= menu;
+
+            return position;
+        }
+
+    };
+})(jQuery, window);
+
+$("#calls td").contextMenu({
+    menuSelector: "#contextMenu",
+    menuSelected: function (invokedOn, selectedMenu) {
+        var msg = "You selected the menu item '" + selectedMenu.text() +
+            "' on the value '" + invokedOn.text() + "'";
+        alert(msg);
+    }
+});
+</script>
 
 </body>
 </html>
