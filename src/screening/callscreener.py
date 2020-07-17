@@ -26,6 +26,8 @@
 from blacklist import Blacklist
 from whitelist import Whitelist
 from nomorobo import NomoroboService
+import re
+import sys
 
 
 class CallScreener(object):
@@ -35,22 +37,32 @@ class CallScreener(object):
         '''Returns true if the number is on a whitelist'''
         return self._whitelist.check_number(callerid['NMBR'])
 
-    def is_blacklisted(self, callerid):
+    def is_blacklisted(self, callerid, bad_cid_dict):
         '''Returns true if the number is on a blacklist'''
         number = callerid['NMBR']
-        if self._blacklist.check_number(number):
-            print "Caller is blacklisted"
-            return True
-        else:
-            print "Checking nomorobo..."
-            result = self._nomorobo.lookup_number(number)
-            if result["spam"]:
-                print "Caller is robocaller"
-                self.blacklist_caller(callerid, "{} with score {}".format(
-                    result["reason"], result["score"]))
+        name = callerid["NAME"]
+        try:
+            if self._blacklist.check_number(number):
+                print "Caller is blacklisted"
                 return True
-            print "Unknown caller"
-            return False
+            else:
+                print "Checking nomorobo..."
+                result = self._nomorobo.lookup_number(number)
+                if result["spam"]:
+                    print "Caller is robocaller"
+                    self.blacklist_caller(callerid, "{} with score {}".format(result["reason"], result["score"]))
+                    return True
+                print "Checking CID patterns..."
+                for key in bad_cid_dict.keys():
+                    match = re.search(key, name)
+                    if match:
+                        print "CID pattern is ignored"
+                        self.blacklist_caller(callerid, bad_cid_dict[key])
+                        return True
+                print "Unknown caller"
+                return False
+        finally:
+            sys.stdout.flush()
 
     def whitelist_caller(self, callerid):
         self._whitelist.add_caller(callerid)

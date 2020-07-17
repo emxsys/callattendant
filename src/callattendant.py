@@ -50,7 +50,7 @@ class CallAttendant(object):
         self.settings = {}
         self.settings["db_name"] = "callattendant.db"  # SQLite3 DB to store incoming call log, whitelist and blacklist
         self.settings["screening_mode"] = "whitelist_and_blacklist"  # no_screening, whitelist_only, whitelist_and_blacklist, blacklist_only
-        self.settings["bad_cid_patterns"] = ""  # regex name patterns to ignore
+        self.settings["bad_cid_patterns"] = {"V[0-9]{15}":"Telemarketer CID"}  # Bad CID regex pattern dictionary
         self.settings["ignore_private_numbers"] = False # Ignore "P" CID names
         self.settings["ignore_unknown_numbers"] = True # Ignore "O" CID names
         self.settings["block_calls"] = True
@@ -94,7 +94,7 @@ class CallAttendant(object):
 
             if not whitelisted and mode in ["blacklist_only", "whitelist_and_blacklist"]:
                 print "Checking blacklist(s)"
-                if self.screener.is_blacklisted(caller):
+                if self.screener.is_blacklisted(caller, self.settings["bad_cid_patterns"]):
                     blacklisted = True
                     caller["NOTE"] = "Blacklisted"
                     self.blocked_indicator.turn_on()
