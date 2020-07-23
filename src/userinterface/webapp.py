@@ -30,7 +30,7 @@
 # ==============================================================================
 
 from flask import Flask, request, session, g, redirect, url_for, \
-     abort, render_template, flash, send_from_directory, jsonify
+    abort, render_template, flash, send_from_directory, jsonify
 import screening.utils
 import sqlite3
 import thread
@@ -39,6 +39,7 @@ import thread
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.debug = False  # debug mode prevents app from running in separate thread
+
 
 @app.route('/')
 def call_details():
@@ -75,6 +76,7 @@ def call_details():
             Reason=record[7]))
     return render_template('call_details.htm', calls=records)
 
+
 @app.route('/blacklist')
 def blacklist():
     query = 'SELECT * from Blacklist ORDER BY datetime(SystemDateTime) DESC'
@@ -90,6 +92,7 @@ def blacklist():
             Reason=record[2],
             System_Date_Time=record[3]))
     return render_template('blacklist.htm', blacklist=records)
+
 
 @app.route('/whitelist')
 def whitelist():
@@ -107,20 +110,21 @@ def whitelist():
             System_Date_Time=record[3]))
     return render_template('whitelist.htm', whitelist=records)
 
+
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
         db = g._database = sqlite3.connect('callattendant.db')
     return db
 
+
 def flaskThread():
     with app.app_context():
         call_details()
 
     # debug mode prevents app from running in separate thread
-    app.run(host='0.0.0.0',  debug=False)
+    app.run(host='0.0.0.0', debug=False)
+
 
 def start():
-
-    thread.start_new_thread(flaskThread,())
-
+    thread.start_new_thread(flaskThread, ())

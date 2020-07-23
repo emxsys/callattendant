@@ -30,4 +30,3 @@ def query_db(db, query, args=(), one=False):
     results = cur.fetchall()
     cur.close()
     return (results[0] if results else None) if one else results
-

@@ -32,6 +32,7 @@
 import utils
 from datetime import datetime
 
+
 class Whitelist(object):
 
     def __init__(self, db):
@@ -58,7 +59,7 @@ class Whitelist(object):
             call_record['NMBR'],
             call_record['NAME'],
             (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
-            ]
+        ]
         self.db.execute(query, arguments)
         self.db.commit()
 
@@ -82,13 +83,13 @@ def test(args):
 
     # Create the test db in RAM
     db = sqlite3.connect(":memory:")
-    #db.text_factory = str
+    # db.text_factory = str
 
     # Create the whitelist to be tested
     whitelist = Whitelist(db)
 
     # Add a record
-    call_record = {"NAME":"Bruce", "NMBR":"1234567890", "DATE":"1012", "TIME":"0600"}
+    call_record = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
     whitelist.add_caller(call_record)
 
     # List the records
@@ -112,4 +113,3 @@ if __name__ == '__main__':
     import sys
     sys.exit(test(sys.argv))
     print("Done")
-

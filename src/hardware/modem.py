@@ -62,6 +62,7 @@ TERMINATE_CALL = "ATH"
 # Record Voice Mail variables
 REC_VM_MAX_DURATION = 120  # Time in Seconds
 
+
 class Modem(object):
     """
     This class is responsible for serial communications between the
@@ -85,7 +86,7 @@ class Modem(object):
         """Thread function that processes the incoming modem data."""
 
         # Prerequisites
-        if self.call_attendant == None:
+        if self.call_attendant is None:
             print "No call attendant in call handler; calls will not be handled."
             return
 
@@ -186,8 +187,8 @@ class Modem(object):
                 time.sleep(.12)
             wf.close()
 
-            #self._serial.flushInput()
-            #self._serial.flushOutput()
+            # self._serial.flushInput()
+            # self._serial.flushOutput()
 
             self._send(END_VOICE_TRANSMIT_DATA_STATE)
 
@@ -195,7 +196,6 @@ class Modem(object):
             self._lock.release()
 
         print "Play Audio Msg - END"
-
 
     def record_audio(self, audio_file_name):
         print "Record Audio Msg - Start"
@@ -227,7 +227,7 @@ class Modem(object):
                 if not self._send("AT+VTS=[933,900,100]", "OK"):
                     raise RuntimeError("Failed to play 1.2 second beep.")
 
-                if not self._send("AT+VRX","CONNECT"):
+                if not self._send("AT+VRX", "CONNECT"):
                     raise RuntimeError("Error: Unable put modem into voice receive mode.")
 
             except RuntimeError as error:
@@ -235,7 +235,6 @@ class Modem(object):
                 return
 
             # Record Audio File
-
 
             # Set the auto timeout interval
             start_time = datetime.now()
@@ -247,12 +246,12 @@ class Modem(object):
                 audio_data = self._serial.read(CHUNK)
 
                 # Check if <DLE>b is in the stream
-                if ((chr(16)+chr(98)) in audio_data):
+                if ((chr(16) + chr(98)) in audio_data):
                     print "Busy Tone... Call will be disconnected."
                     break
 
                 # Check if <DLE>s is in the stream
-                if ((chr(16)+chr(115)) in audio_data):
+                if ((chr(16) + chr(115)) in audio_data):
                     print "Silence Detected... Call will be disconnected."
                     break
 
@@ -262,7 +261,7 @@ class Modem(object):
                     break
 
                 # Timeout
-                elif ((datetime.now()-start_time).seconds) > REC_VM_MAX_DURATION:
+                elif ((datetime.now() - start_time).seconds) > REC_VM_MAX_DURATION:
                     print "Timeout - Max recording limit reached."
                     break
 
@@ -281,7 +280,7 @@ class Modem(object):
             audio_file_name = ''
 
             # Send End of Voice Recieve state by passing "<DLE>!"
-            if not self._send((chr(16)+chr(33)), "OK"):
+            if not self._send((chr(16) + chr(33)), "OK"):
                 print "Error: Unable to signal end of voice receive state"
 
             # Hangup the Call
@@ -290,7 +289,6 @@ class Modem(object):
 
         finally:
             self._lock.release()
-
 
         print "Record Audio Msg - END"
         return
@@ -304,7 +302,7 @@ class Modem(object):
 
         try:
             self._serial.write((command + "\r").encode())
-            if expected_response == None:
+            if expected_response is None:
                 return True
             else:
                 execution_status = self._read_response(expected_response, response_timeout)
@@ -435,10 +433,11 @@ class Modem(object):
             print "Error: Unable to close the Serial Port."
             sys.exit()
 
+
 def test(args):
 
     print "Running tests...."
-    modem = Modem(None) # No call attendent is set in tests
+    modem = Modem(None)  # No call attendent is set in tests
 
     try:
         modem.open_serial_port()

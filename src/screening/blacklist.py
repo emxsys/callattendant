@@ -32,6 +32,7 @@
 import utils
 from datetime import datetime
 
+
 class Blacklist(object):
 
     def add_caller(self, callerid, reason=""):
@@ -45,7 +46,7 @@ class Blacklist(object):
             callerid['NAME'],
             reason,
             (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
-            ]
+        ]
         self.db.execute(query, arguments)
         self.db.commit()
 
@@ -92,13 +93,13 @@ def test(args):
 
     # Create the test db in RAM
     db = sqlite3.connect(":memory:")
-    #db.text_factory = str
+    # db.text_factory = str
 
     # Create the blacklist to be tested
     blacklist = Blacklist(db)
 
     # Add a record
-    callerid = {"NAME":"Bruce", "NMBR":"1234567890", "DATE":"1012", "TIME":"0600"}
+    callerid = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
     blacklist.add_caller(callerid)
 
     # List the records
@@ -122,4 +123,3 @@ if __name__ == '__main__':
     import sys
     sys.exit(test(sys.argv))
     print("Done")
-

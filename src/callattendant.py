@@ -50,9 +50,9 @@ class CallAttendant(object):
         self.settings = {}
         self.settings["db_name"] = "callattendant.db"  # SQLite3 DB to store incoming call log, whitelist and blacklist
         self.settings["screening_mode"] = "whitelist_and_blacklist"  # no_screening, whitelist_only, whitelist_and_blacklist, blacklist_only
-        self.settings["bad_cid_patterns"] = {"V[0-9]{15}":"Telemarketer CID"}  # Bad CID regex pattern dictionary
-        self.settings["ignore_private_numbers"] = False # Ignore "P" CID names
-        self.settings["ignore_unknown_numbers"] = True # Ignore "O" CID names
+        self.settings["bad_cid_patterns"] = {"V[0-9]{15}": "Telemarketer CID"}  # Bad CID regex pattern dictionary
+        self.settings["ignore_private_numbers"] = False  # Ignore "P" CID names
+        self.settings["ignore_unknown_numbers"] = True  # Ignore "O" CID names
         self.settings["block_calls"] = True
 
         self.db = sqlite3.connect(self.settings["db_name"])
@@ -99,8 +99,8 @@ class CallAttendant(object):
                     caller["NOTE"] = "Blacklisted"
                     self.blocked_indicator.turn_on()
                     if self.settings["block_calls"]:
-                        #~ self.modem.play_audio("sample.wav")
-                        #~ self.modem.hang_up()
+                        # self.modem.play_audio("sample.wav")
+                        # self.modem.hang_up()
                         self.modem.block_call()
 
             # Log every call to the database

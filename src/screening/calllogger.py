@@ -83,7 +83,7 @@ def test(args):
     logger = CallLogger(db)
 
     # Add a record
-    callerid = {"NAME":"Bruce", "NMBR":"1234567890", "DATE":"1012", "TIME":"0600"}
+    callerid = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
     logger.log_caller(callerid)
 
     # List the records
