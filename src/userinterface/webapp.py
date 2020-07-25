@@ -52,7 +52,7 @@ def call_details():
       a.Time,
       CASE WHEN b.PhoneNo IS NULL THEN 'N' ELSE 'Y' END Whitelisted,
       CASE WHEN c.PhoneNo IS NULL THEN 'N' ELSE 'Y' END Blacklisted,
-      CASE WHEN b.PhoneNo IS NOT NULL THEN b.Reason ELSE c.Reason END Reason
+      CASE WHEN b.PhoneNo IS NOT NULL THEN c.Reason END Reason
     FROM calllog AS a
     LEFT JOIN whitelist AS b ON a.Number = b.PhoneNo
     LEFT JOIN blacklist AS c ON a.Number = c.PhoneNo
