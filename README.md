@@ -212,6 +212,69 @@ OK
 Navigate to <pi_address> on port 5000 and you should see the home page. Make a few calls to
 yourself to test the service.
 
+### Run as a Service
+###### *Optional*
+We're going to define a service to automatically run the Call Attendant on the Raspberry Pi at start up. Our simple service will run the `callattendant.py` script and if by any means is aborted it is going to be restarted automatically. 
+
+#### Create the Service
+
+##### Step 1. Create the Unit File
+The service definition must be on the `/lib/systemd/system` folder. Our service is going to be called "callattendant.service":
+
+```Shell
+cd /lib/systemd/system/
+sudo nano callattendant.service
+```
+
+Copy the following text into the `callattendant.service` unit file, using your path to `callattendant.py`:
+
+```text
+[Unit]
+Description=Call Attendant
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python /home/pi/callattendant/src/callattendant.py
+WorkingDirectory=/home/pi/callattendant/src
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
+```
+You can check more on service's options in the next wiki: https://wiki.archlinux.org/index.php/systemd.
+
+##### Step 2. Activate the Service
+Now that we have our service we need to activate it:
+
+```Shell
+sudo chmod 644 /lib/systemd/system/callattendant.service
+chmod +x /home/pi/callattendant/src/callattendant.py
+sudo systemctl daemon-reload
+sudo systemctl enable callattendant.service
+sudo systemctl start callattendant.service
+```
+
+#### Service Tasks
+For every change that we do on the `/lib/systemd/system` folder we need to execute a 
+`daemon-reload` (third line of previous code). 
+
+You can execute the following commands as needed to check the status, start and stop 
+the service, or check the logs. Several shell scripts are included in the root of this
+project to perfom these tasks.
+
+##### Check status
+`sudo systemctl status callattendant.service`
+
+##### Start service
+`sudo systemctl start callattendant.service`
+
+##### Stop service
+`sudo systemctl stop callattendant.service`
+
+##### Check service's log
+`sudo journalctl -f -u callattendant.service`
+
 ---
 
 ## Operation
