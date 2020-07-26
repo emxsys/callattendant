@@ -6,6 +6,9 @@ Automated call attendant, call blocker, and voice messaging on a Raspberry Pi.
 - [Software Architecture](#software-architecture)
 - [Software Development Plan](#software-development-plan)
 - [Installation](#installation)
+- [Operation](#operation)
+- [Related Projects](#related-projects)
+
 
 ## Overview
 The Call Attendant (__callattendant__) uses a Raspberry Pi coupled with a US Robotics 5637 modem to screen incoming 
@@ -81,38 +84,6 @@ The development plan's [phase objectives](https://github.com/emxsys/callattendan
 
 ---
 
-## Tools
-
-#### DB Browser for SQLite
-```
-sudo apt-get install sqlitebrowser
-```
-```
-sqlitebrowser callattendant/src/callattendant.db
-```
-
-## Web Pages
-##### Call Log
-http://localhost:5000/
-
-##### Block List
-http://localhost:5000/blacklist
-
-##### Permitted List
-http://localhost:5000/whitelist
-
-
----
-
-## Related Projects
-
-- [pamapa/callblocker](https://github.com/pamapa/callblocker)
-- [pradeesi/Incoming_Call_Detail_Logger ](https://github.com/pradeesi/Incoming_Call_Detail_Logger)
-- [pradeesi/record_audio_from_phone_line](https://github.com/pradeesi/record_audio_from_phone_line)
-- [pradeesi/play_audio_over_phone_line](https://github.com/pradeesi/play_audio_over_phone_line)
-
-
-
 ## Installation
 
 ### Prequisites
@@ -121,7 +92,9 @@ You will need a raspberry pi running raspbian and access to the Internet for
 software installation. For the project, you will need a modem of some sort to
 do modem stuff.
 
-This modem: https://www.amazon.com/gp/product/B0013FDLM0/ref=ppx_yo_dt_b_asin_image_o03_s00?ie=UTF8&psc=1
+The **U.S. Robotics USR5637 56K USB Modem**:
+
+https://www.amazon.com/gp/product/B0013FDLM0/ref=ppx_yo_dt_b_asin_image_o03_s00?ie=UTF8&psc=1
 
 has been proven effective. For some installs, it just works, no config needed.
 It showed up as /dev/ttyACM0.
@@ -197,79 +170,154 @@ CallLogger initialized
 Blacklist initialized
 Whitelist initialized
 AT+FCLASS=8
-
 OK
-
 Modem COM Port is: /dev/ttyACM0
 AT
-
 OK
-
 ATZ3
-
 OK
-
 ATV1
-
 OK
-
 ATE1
-
 OK
-
 AT+VCID=1
-
 OK
-
 ATI4
  * Serving Flask app "userinterface.webapp" (lazy loading)
-
  * Environment: production
    WARNING: This is a development server. Do not use it in a production deployment.
-
-
    Use a production WSGI server instead.
  * Debug mode: off
  * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)
  ----Option----- --Setting-- Cmd  ----Option----- --Setting-- --Cmd--
-
  Comm Standard   CCITT       B0   Answer Ring#    0            S0=000
-
  Command Echo    Enabled     E1   Escape Char     43           S2=043
-
  Speaker Volume  Medium      L2   CR Char         13           S3=013
-
  Speaker Control OnUntilCD   M1   LF Char         10           S4=010
-
  Result Codes    Enabled     Q0   BS Char         8            S5=008
-
  Dialer Type     Tone        T/P  Dial Pause      3 sec        S6=003
-
  Result Form     Text        V1   NoAns Timeout   60 sec       S7=060
-
  Extend Result   Enabled     X4   "," Pause       2 sec        S8=002
-
  DialTone Detect Disabled    X4   No CD Disc      2000 msec   S10=020
-
  BusyTone Detect Disabled    X4   DTMF Speed      95 msec     S11=095
-
  DCD Action      Std RS232   &C1  Esc GuardTime   1000 msec   S12=050
-
  DTR Action      Std RS232   &D2  Calling Tone    Enabled     S35=001
-
  V22b Guard Tone Disabled    &G0  Line Rate       33600       S37=000
-
  Flow Control    Disabled    &H0
-
  Error Control   V42,MNP,Bfr &M4
-
  Compression     44 42b MNP5 &K1
-
-
-
 OK
-
 ```
 
 Navigate to <pi_address> on port 5000 and you should see the home page. Make a few calls to
 yourself to test the service.
+
+### Run as a Service
+###### *Optional*
+We're going to define a service to automatically run the Call Attendant on the Raspberry Pi at start up. Our simple service will run the `callattendant.py` script and if by any means is aborted it is going to be restarted automatically. 
+
+#### Create the Service
+
+##### Step 1. Create the Unit File
+The service definition must be on the `/lib/systemd/system` folder. Our service is going to be called "callattendant.service":
+
+```Shell
+cd /lib/systemd/system/
+sudo nano callattendant.service
+```
+
+Copy the following text into the `callattendant.service` unit file, using your path to `callattendant.py`:
+
+```text
+[Unit]
+Description=Call Attendant
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python /home/pi/callattendant/src/callattendant.py
+WorkingDirectory=/home/pi/callattendant/src
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
+```
+You can check more on service's options in the next wiki: https://wiki.archlinux.org/index.php/systemd.
+
+##### Step 2. Activate the Service
+Now that we have our service we need to activate it:
+
+```Shell
+sudo chmod 644 /lib/systemd/system/callattendant.service
+chmod +x /home/pi/callattendant/src/callattendant.py
+sudo systemctl daemon-reload
+sudo systemctl enable callattendant.service
+sudo systemctl start callattendant.service
+```
+
+#### Service Tasks
+For every change that we do on the `/lib/systemd/system` folder we need to execute a 
+`daemon-reload` (third line of previous code). 
+
+You can execute the following commands as needed to check the status, start and stop 
+the service, or check the logs. Several shell scripts are included in the root of this
+project to perfom these tasks.
+
+##### Check status
+`sudo systemctl status callattendant.service`
+
+##### Start service
+`sudo systemctl start callattendant.service`
+
+##### Stop service
+`sudo systemctl stop callattendant.service`
+
+##### Check service's log
+`sudo journalctl -f -u callattendant.service`
+
+---
+
+## Operation
+
+### Web Pages
+A few web pages are used to monitor your installation. You can use `localhost` for the `pi_address` 
+when you are running the web browser on the pi.
+
+##### Call Log
+The call log displays all the calls that have been processed by the call attendant. This list refreshes
+automatically after a period of several minutes.
+```
+http://localhost:5000/
+```
+##### Blocked List
+This is the list of blocked numbers.
+```
+http://localhost:5000/blacklist
+```
+
+##### Permitted List
+This is the list of permitted numbers.
+```
+http://localhost:5000/whitelist
+```
+### Tools
+
+#### DB Browser for SQLite
+If needed, you can use **DB Browser for SQLite** to view and edit the tables used by the **callattendant**.
+
+```
+sudo apt-get install sqlitebrowser
+```
+```
+sqlitebrowser callattendant/src/callattendant.db
+```
+
+---
+
+## Related Projects
+
+- [pamapa/callblocker](https://github.com/pamapa/callblocker)
+- [pradeesi/Incoming_Call_Detail_Logger ](https://github.com/pradeesi/Incoming_Call_Detail_Logger)
+- [pradeesi/record_audio_from_phone_line](https://github.com/pradeesi/record_audio_from_phone_line)
+- [pradeesi/play_audio_over_phone_line](https://github.com/pradeesi/play_audio_over_phone_line)
+
