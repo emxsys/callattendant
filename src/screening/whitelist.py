@@ -43,6 +43,7 @@ class Whitelist(object):
         sql = '''CREATE TABLE IF NOT EXISTS Whitelist (
             PhoneNo TEXT PRIMARY KEY,
             Name TEXT,
+            Reason TEXT,
             SystemDateTime TEXT)'''
         curs = self.db.cursor()
         curs.executescript(sql)
@@ -54,10 +55,12 @@ class Whitelist(object):
         query = '''INSERT INTO Whitelist(
             PhoneNo,
             Name,
-            SystemDateTime) VALUES(?,?,?)'''
+            Reason,
+            SystemDateTime) VALUES(?,?,?,?)'''
         arguments = [
             call_record['NMBR'],
             call_record['NAME'],
+            call_record['REASON'],
             (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
         ]
         self.db.execute(query, arguments)
@@ -89,7 +92,7 @@ def test(args):
     whitelist = Whitelist(db)
 
     # Add a record
-    call_record = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
+    call_record = {"NAME": "Bruce", "NMBR": "1234567890", "REASON": "some reason", "DATE": "1012", "TIME": "0600"}
     whitelist.add_caller(call_record)
 
     # List the records
