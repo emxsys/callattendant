@@ -1,3 +1,9 @@
+/* Offset the body from the nav-bar fixed to the top */
+body {
+  min-height: 75rem;
+  padding-top: 4.5rem;
+}
+/* Set a fixed width for the phone column */
 .phoneno {
    width: 120px;
-   }
+}
