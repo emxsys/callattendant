@@ -5,5 +5,9 @@ body {
 }
 /* Set a fixed width for the phone column */
 .phoneno {
-   width: 120px;
+   width: 125px;
+}
+/* Set a fixed width for the time column */
+.time {
+   width: 95px;
 }
