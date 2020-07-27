@@ -7,6 +7,10 @@ body {
 .phoneno {
    width: 125px;
 }
+/* Set a fixed width for the date column */
+.date {
+   width: 90px;
+}
 /* Set a fixed width for the time column */
 .time {
    width: 95px;
