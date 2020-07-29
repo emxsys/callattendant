@@ -16,20 +16,14 @@ calls on a landline. Features being developed include:
 - [x] Robocallers and blacklisted numbers are intercepted after the first ring
 - [x] Whitelisted callers pass straight through to the local phone system for normal call ringing and answering
 - [x] Visual indicators to show whether the incoming call is from a whitelisted, blacklisted, or unknown number 
+- [x] Call details, blacklists, whitelists are available in a web-based user interface 
 - [ ] Unknown callers are handled by a voice messaging system that requires human interaction, e.g, "Press 1 to leave a message"
-- [ ] Call details, blacklists, whitelists are available in a web-based user interface 
 
 The Call Attendant project was inspired by the [pamapa/callblocker](https://github.com/pamapa/callblocker) project,
 an excellent Raspberry Pi based call blocker.  However, the __callattendant__ differs from the __callblocker__ in that adds
 voice messaging; and the __callattendant__ is written entirely in Python, uses SQLite for the call logging, and
 implments the web interface with Flask. 
 
-### Context Diagrams
-###### System View
-![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/System_View.png "System View")
-
-###### _Subsystem View_
-![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Subsystem_View.png "Subsystem View")
 
 ### More information
 The following blogs from [IoT Bytes by Pradeep Singh](https://iotbytes.wordpress.com/) were very useful for learning to how
@@ -47,26 +41,31 @@ to program the Raspberry Pi and the US Robotics 5637 modem. His blog site has ma
 ![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/RUP_41_View.png "RUP 4+1 View")
 
 ### Use Case View
-###### _Main Use Case Diagram_
-![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Main_Use_Case_Diagram.png "Main Use Case Diagram")
+###### _Use Case Diagram_
+![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Use_Case_View.png "Use Case Diagram")
 
 ### Logical View
-###### _Main Class Diagram_
-![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Main_Class_Diagram.png "Main Class Diagram")
+###### _Class Diagram_
+![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Logical_View.png "Logical View Diagram")
 
 ### Process View
-###### _Main Activity Diagram_
-![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Main_Activity_Diagram.png "Main Activity Diagram")
+###### _Activity Diagram_
+![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Process_View.png "Process View Diagram")
 
-###### _Main Sequence Diagram_
+###### _Sequence Diagram_
 ![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Main_Sequence_Diagram.png "Main Sequence Diagram")
 
 ### Implementation View
- TODO...
+###### _Component Diagram_
+![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Implementation_View.png "Implementation Diagram")
  
 ### Deployment View
-###### _Main Deployment Diagram_
-![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Main_Deployment_Diagram.png "Main Deployment Diagram")
+###### _Deployment Diagram_
+![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Deployment_View.png "Deployment Diagram")
+
+### Data View
+###### _Entity Relationship Diagram_
+![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Data_View.png "Entity Relationship Diagram")
 
 ---
 
