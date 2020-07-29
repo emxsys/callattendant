@@ -29,5 +29,3 @@ This project and everyone participating in it is governed by the project's [Code
 * Ask any question by [opening a new issue](https://github.com/emxsys/callattendant/issues/new) and add a _question_ label to it.
 
 Thanks! :heart: :heart: :heart:
-
-Rails Team
