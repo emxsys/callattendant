@@ -29,7 +29,7 @@ webapp.py with a dictionary object named 'caller'.
       </div>
       {% else %}
       <div class="alert alert-info" role="alert">
-         <h4>This caller will be screened for robocalling, scams, etc.</h4>
+         <h4>This caller will be screened for robocalling, scams, patterns, etc.</h4>
       </div>
       {% endif %}
       {% if caller.Whitelisted == 'N' %}
@@ -93,7 +93,7 @@ webapp.py with a dictionary object named 'caller'.
       {% else %}
       <div class="alert alert-warning" role="alert">
          <form name="block" action="/manage_caller/{{ caller.Call_ID }}" method="post">
-            <h4>Removed from Blocked List</h4>
+            <h4>Remove from Blocked List</h4>
             <input name="action" type="hidden" value="RemoveBlock">
             <input name="phone_no" type="hidden" value="{{ caller.Phone_Number }}">
             <div class="row">
