@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Manage Caller | Call Attendant</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <link rel="stylesheet" href="../static/css/callattendant.css">
+</head>
+<!--
+This template displays a form for managing a caller's membership in the
+and/or whitelist and blacklist tables. The template is rendered by
+webapp.py with a dictionary object named 'caller'.
+-->
+<body>
+
+   {% include 'navbar.htm' %}
+
+   <div class="container">
+      <h2>Manage Caller {{ caller.Phone_Number }}</h2>
+      <h3>Name: {{ caller.Name }}</h4>
+      {% if caller.Whitelisted == 'Y' %}
+      <div class="alert alert-success" role="alert">
+         <h4><i>This caller is permitted and calls will not be screened or blocked</i></h4>
+      </div>
+      {% elif caller.Blacklisted == 'Y' %}
+      <div class="alert alert-danger" role="alert">
+         <h4><b>This caller is blocked and calls will be immediately intercepted</b></h4>
+      </div>
+      {% else %}
+      <div class="alert alert-info" role="alert">
+         <h4>This caller will be screened for robocalling, scams, etc.</h4>
+      </div>
+      {% endif %}
+      {% if caller.Whitelisted == 'N' %}
+      <div class="alert alert-success" role="alert">
+         <form name="permit" action="/manage_caller/{{ caller.Call_ID }}" method="post">
+            <h4>Add to Permitted List</h4>
+            <input name="action" type="hidden" value="Permit">
+            <input name="phone_no" type="hidden" value="{{ caller.Phone_Number }}">
+            <div class="row">
+               <div class="col">
+                  <label for="name">Name:</label>
+                  <input id="name" name="name" type="text" class="form-control" placeholder="Name" value="{{ caller.Name }}" />
+               </div>
+               <div class="col">
+                  <label for="reason">Reason:</label>
+                  <input id="reason" name="reason" type="text" class="form-control" placeholder="Reason" value="{{ caller.WhitelistReason }}" />
+               </div>
+            </div>
+            <button type="submit" class="btn btn-primary mb-2">Add</button>
+         </form>
+      </div>
+      {% else %}
+      <div class="alert alert-warning" role="alert">
+         <form name="remove-permit" action="/manage_caller/{{ caller.Call_ID }}" method="post">
+            <h4>Remove from Permitted List</h4>
+            <input name="action" type="hidden" value="RemovePermit">
+            <input name="phone_no" type="hidden" value="{{ caller.Phone_Number }}">
+            <div class="row">
+               <div class="col">
+                  <label for="name">Name:</label>
+                  <input id="name" name="name" type="text" disabled class="form-control" placeholder="Name" value="{{ caller.Name }}" />
+               </div>
+               <div class="col">
+                  <label for="reason">Reason:</label>
+                  <input id="reason" name="reason" type="text" disabled class="form-control" placeholder="Reason" value="{{ caller.WhitelistReason }}" />
+               </div>
+            </div>
+            <button type="submit" class="btn btn-primary mb-2">Remove</button>
+         </form>
+      </div>
+      {% endif %}
+      {% if caller.Blacklisted == 'N' %}
+      <div class="alert alert-danger" role="alert">
+         <form name="block" action="/manage_caller/{{ caller.Call_ID }}" method="post">
+            <h4>Add to Blocked List</h4>
+            <input name="action" type="hidden" value="Block">
+            <input name="phone_no" type="hidden" value="{{ caller.Phone_Number }}">
+            <div class="row">
+               <div class="col">
+                  <label for="name">Name:</label>
+                  <input id="name" name="name" type="text" class="form-control" placeholder="Name" value="{{ caller.Name }}" />
+               </div>
+               <div class="col">
+                  <label for="reason">Reason:</label>
+                  <input id="reason" name="reason" type="text" class="form-control" placeholder="Reason" value="{{ caller.BlacklistReason }}" />
+               </div>
+            </div>
+            <button type="submit" class="btn btn-primary mb-2">Add</button>
+         </form>
+      </div>
+      {% else %}
+      <div class="alert alert-warning" role="alert">
+         <form name="block" action="/manage_caller/{{ caller.Call_ID }}" method="post">
+            <h4>Removed from Blocked List</h4>
+            <input name="action" type="hidden" value="RemoveBlock">
+            <input name="phone_no" type="hidden" value="{{ caller.Phone_Number }}">
+            <div class="row">
+               <div class="col">
+                  <label for="name">Name:</label>
+                  <input id="name" name="name" type="text" disabled class="form-control" placeholder="Name" value="{{ caller.Name }}" />
+               </div>
+               <div class="col">
+                  <label for="reason">Reason:</label>
+                  <input id="reason" name="reason" type="text" disabled class="form-control" placeholder="Reason" value="{{ caller.BlacklistReason }}" />
+               </div>
+            </div>
+            <button type="submit" class="btn btn-primary mb-2">Remove</button>
+         </form>
+      </div>
+      {% endif %}
+   </div>
+
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+</body>
+
+</html>

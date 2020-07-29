@@ -8,6 +8,10 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <link rel="stylesheet" href="../static/css/callattendant.css">
 </head>
+<!--
+This template displays the list of callers in the call log.
+The template is rendered with an array of dictionary objects named 'calls'.
+-->
 <body>
 
 {% include 'navbar.htm' %}
@@ -21,25 +25,25 @@
         <th>Name</th>
         <th>Date</th>
         <th>Time</th>
-        <th>Whitelisted</th>
-        <th>Blacklisted</th>
+        <th>Action</th>
         <th>Reason</th>
       </tr>
     </thead>
     <tbody>
       {% for item in calls %}
-        {% if item.Whitelisted == 'Y' %}
-          <tr bgcolor="#90EE90">
-        {% elif item.Blacklisted == 'Y' %}
-          <tr bgcolor="#FFC0CB">
+        <tr data-call-number="{{ item.Call_No }}" onClick="location.href='/manage_caller/{{ item.Call_No }}'"
+        {% if item.Action == 'Permitted' %}
+          bgcolor="#90EE90"
+        {% elif item.Action == 'Blocked' %}
+          bgcolor="#FFC0CB"
         {% endif %}
+        >
         <td class="phoneno">{{ item.Phone_Number }}</td>
-        <td>{{ item.Name }}</td>
+        <td class="name">{{ item.Name }}</td>
         <td class="date">{{ item.Date }}</td>
         <td class="time">{{ item.Time }}</td>
-        <td>{{ item.Whitelisted }}</td>
-        <td>{{ item.Blacklisted }}</td>
-        <td>{{ item.Reason }}</td>
+        <td class="action">{{ item.Action }}</td>
+        <td class="reason">{{ item.Reason }}</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -47,18 +51,14 @@
 </div>
 
 <ul id="contextMenu" class="dropdown-menu" role="menu" style="display:none" >
-    <li><a tabindex="-1" href="#">Action</a></li>
-    <li><a tabindex="-1" href="#">Another action</a></li>
-    <li><a tabindex="-1" href="#">Something else here</a></li>
-    <li class="divider"></li>
-    <li><a tabindex="-1" href="#">Separated link</a></li>
+    <li id="permit-item"><a tabindex="-1" href="#">Permit</a></li>
+    <li id="block-item"><a tabindex="-1" href="#">Block</a></li>
 </ul>
 
 
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-
 <script type="text/javascript">
 (function ($, window) {
 
@@ -125,7 +125,7 @@ $("#calls td").contextMenu({
 });
 
 $(document).ready( function () {
-  // Highlight the current page in the menu
+  // Highlight this page in the menu
   $('#log').addClass('active');
 });
 </script>

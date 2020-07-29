@@ -52,6 +52,15 @@ class Blacklist(object):
 
         print "New blacklist entry added"
 
+    def remove_number(self, phone_no):
+        '''Removes records for the given number (without dashes or formatting)'''
+        query = 'DELETE FROM Blacklist WHERE PhoneNo=:phone_no'
+        arguments = {'phone_no': phone_no}
+        self.db.execute(query, arguments)
+        self.db.commit()
+
+        print "blacklist entry removed"
+
     def check_number(self, number):
         query = "SELECT COUNT(*) FROM Blacklist WHERE PhoneNo=:number"
         args = {"number": number}
