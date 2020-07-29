@@ -1,0 +1,267 @@
+<html>
+<head>
+	<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<link rel="stylesheet" href="report.css" type="text/css"/>
+	<title>Component Diagram - Implementation View</title>
+	<script type="text/javascript" src="report.js"></script>
+	<script type="text/javascript" src="link_popup.js"></script>
+	<script type="text/javascript" src="tooltip.js"></script>
+</head>
+<body style="margin-left: 10px; margin-right: 10px; margin-top: 10px; margin-bottom: 10px;" onload="initPage();initDiagram();initGridDiagram();">
+	<div style="position:absolute; z-index:2; visibility:hidden;border-top: 2px #FF0000 solid;" id="spotlight_top">
+	</div>
+	<div style="position:absolute; z-index:2; visibility:hidden;border-top: 2px #FF0000 solid;" id="spotlight_bottom">
+	</div>
+	<div style="position:absolute; z-index:2; visibility:hidden;border-left: 2px #FF0000 solid;" id="spotlight_left">
+	</div>
+	<div style="position:absolute; z-index:2; visibility:hidden;border-left: 2px #FF0000 solid;" id="spotlight_right">
+	</div>
+	<canvas width="100" style="position:absolute; z-index:2; visibility:hidden" id="spotlight_c" height="100">
+	</canvas>
+	<div style="position:absolute; width:100px; height:100px; z-index:1; visibility:hidden" id="spotLightResourcesTop">
+		<table border="0" cellpadding="0" cellspacing="0">
+			<tr>
+				<td>
+<a href="#top"><img style="border:none" src="../images/icons/BackToTop.gif" alt="Back to top"/></a>				</td>
+				<td>
+<a href="javascript:clearSpotLightFromOpenSpecButton();"><img style="border:none" src="../images/icons/OpenSpecification.gif" alt="Open specification"/></a>				</td>
+			</tr>
+		</table>
+	</div>
+	<div style="position:absolute; width:100px; height:100px; z-index:1; visibility:hidden" id="spotLightResourcesRight">
+		<table border="0" cellpadding="0" cellspacing="0">
+			<tr>
+				<td>
+<a href="#top"><img style="border:none" src="../images/icons/BackToTop.gif" alt="Back to top"/></a>				</td>
+			</tr>
+			<tr>
+				<td>
+<a href="javascript:clearSpotLightFromOpenSpecButton();"><img style="border:none" src="../images/icons/OpenSpecification.gif" alt="Open specification"/></a>				</td>
+			</tr>
+		</table>
+	</div>
+	<div style="position:absolute;z-index:4;visibility:hidden" id="linkPopupMenuLayer">
+		<table border="0" width="100%" style="border-style:solid; border-width:1px; border-color:#000000; background:#FFFFFF; width:250px" id="linkPopupMenuTable">
+		</table>
+	</div>
+	<div style="position:absolute; z-index:1; visibility:hidden; " id="referenceIconLayer">
+		<table border="0" cellpadding="3" cellspacing="0" style="font-size:1;">
+			<tr>
+				<td>
+					<img src="../images/icons/Ref.gif" style="border:none" onclick="movePopupPositionToReferenceIconPosition();resetPopupForReference();switchPopupShowHideStatus();" />				</td>
+			</tr>
+		</table>
+	</div>
+	<div style="position:absolute; z-index:1; visibility:hidden; " id="subdiagramIconLayer">
+		<table border="0" cellpadding="3" cellspacing="0" style="font-size:1;">
+			<tr>
+				<td>
+					<img src="../images/icons/Subdiagram.gif" style="border:none" onclick="movePopupPositionToSubdiagramIconPosition();resetPopupForSubdiagram();switchPopupShowHideStatus();" />				</td>
+			</tr>
+		</table>
+	</div>
+	<div style="position:absolute; z-index:1; visibility:hidden; " id="transitorIconLayer">
+		<table border="0" cellpadding="3" cellspacing="0" style="font-size:1;">
+			<tr>
+				<td>
+					<img src="../images/icons/Transitor.gif" style="border:none" onclick="movePopupPositionToTransitorIconPosition();resetPopupForTransitor();switchPopupShowHideStatus();" />				</td>
+			</tr>
+		</table>
+	</div>
+	<div style="position:absolute; z-index:1; visibility:hidden; " id="documentationIconLayer">
+		<table border="0" cellpadding="3" cellspacing="0" style="font-size:1;">
+			<tr>
+				<td>
+					<img src="../images/icons/Documentation.png" style="border:none" />				</td>
+			</tr>
+		</table>
+	</div>
+	<div class="HeaderText">
+		callattendent	</div>
+	<table border="0" cellpadding="0" width="100%" cellspacing="0">
+		<tr>
+			<td class="HeaderLine1">
+			</td>
+		</tr>
+		<tr>
+			<td class="HeaderLine2">
+			</td>
+		</tr>
+		<tr>
+			<td class="HeaderLine3">
+			</td>
+		</tr>
+	</table>
+	<div style="position:absolute; z-index:21; visibility:hidden" id="referencedBys">
+		<table border="0" width="100%" style="border-style:solid; border-width:1px; border-color:#000000; background:#FFFFFF; width:250px" id="referencedBysTable">
+		</table>
+	</div>
+	<div style="position:absolute; z-index:21; visibility:hidden" id="vplink">
+		<table border="1" cellpadding="0" cellspacing="0" bordercolor="#A9BFD3">
+			<tr>
+				<td>
+					<table border="0" cellpadding="0" width="100%" cellspacing="0">
+						<tr style="background:#DDDDDD">
+							<td style="font-size: 12px;" align="left">
+								<select onchange="vpLinkToggleName()" id="vplink-linkType">
+	<option value="Project Link">Project Link</option>
+	<option value="Page URL">Page URL</option>
+</select>
+							</td>
+							<td style="font-size: 12px;" align="right">
+								<input onclick="javascript: vpLinkToggleName()" id="vplink-checkbox" type="checkbox" />
+								<label for="vplink-checkbox">with Name</label>							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<textarea id="vplink-text" style="width: 348px; height: 60px; border-color: #7EADD9; outline: none;"></textarea>				</td>
+			</tr>
+		</table>
+	</div>
+	<p>
+<a href="Model_0M5zcmaGAqBwARFx.html" class="PageParentTitle">Implementation Model : Model</a>	</p>
+	<p class="PageTitle">
+		<span id="PageTitleText">
+			Component Diagram - Implementation View		</span>
+<a onclick="javascript: showVpLink('callattendent.vpp://diagram/p4q5TmaGAqBwARlz', 'Implementation View\ncallattendent.vpp://diagram/p4q5TmaGAqBwARlz', 'Implementation View', this); return false;" style="padding-left: 16px; font-size: 12px" href="#"><img src="../images/icons/link.png" border="0"> link</a>	</p>
+	<div style="position: relative; padding-bottom: 20px;">
+		<table border="0" cellpadding="0" width="100%" cellspacing="0" style="position: absolute; top: 0; left: 0; z-index: 20;" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),hideLinkPopup(),hideReferencedBys();">
+			<tr>
+				<td>
+<span class="TableContent">Jump to:</span>					<select id="SelectShape" class="TableContent" onChange="scrollWin('diagram', this.value);hideLinkPopup();showSpotLight('diagram', this.value)">
+<option value="">Please select a model element</option>
+<option value="shape|537.0|252.0|115.0|48.0|Component_6SFYzmaGAqBwAWdd.html|Component_6SFYzmaGAqBwAWdd.html|aSFYzmaGAqBwAWdb" id="optionaSFYzmaGAqBwAWdb">webapp.py : Component</option>
+<option value="shape|764.0|221.0|115.0|48.0|Component_afdvTmaGAqBwAWbP.html|Component_afdvTmaGAqBwAWbP.html|afdvTmaGAqBwAWbN" id="optionafdvTmaGAqBwAWbN">indicators.py : Component</option>
+<option value="shape|530.0|563.0|115.0|48.0|Component_VE_vTmaGAqBwAWaR.html|Component_VE_vTmaGAqBwAWaR.html|VE.vTmaGAqBwAWaP" id="optionVE.vTmaGAqBwAWaP">gpiozero : Component</option>
+<option value="shape|732.0|163.0|166.0|115.0|Subsystem_Q4FPTmaGAqBwAWYc.html|Subsystem_Q4FPTmaGAqBwAWYc.html|Q4FPTmaGAqBwAWYa" id="optionQ4FPTmaGAqBwAWYa">hardware : Subsystem</option>
+<option value="shape|379.0|564.0|115.0|48.0|Component_olE3TmaGAqBwAWMe.html|Component_olE3TmaGAqBwAWMe.html|olE3TmaGAqBwAWMc" id="optionolE3TmaGAqBwAWMc">BeautifulSoup : Component</option>
+<option value="shape|220.0|564.0|115.0|48.0|Component_OHQ3TmaGAqBwAWMP.html|Component_OHQ3TmaGAqBwAWMP.html|2HQ3TmaGAqBwAWMN" id="option2HQ3TmaGAqBwAWMN">Flask : Component</option>
+<option value="shape|61.0|564.0|115.0|48.0|Component_2N3XTmaGAqBwAWL7.html|Component_2N3XTmaGAqBwAWL7.html|2N3XTmaGAqBwAWL6" id="option2N3XTmaGAqBwAWL6">sqlite3 : Component</option>
+<option value="shape|2.0|551.0|917.0|77.0|Rectangle_nqDXTmaGAqBwAWLo.html|Rectangle_nqDXTmaGAqBwAWLo.html|nqDXTmaGAqBwAWLm" id="optionnqDXTmaGAqBwAWLm">libraries : Rectangle</option>
+<option value="shape|178.0|427.0|115.0|48.0|Component_2nnNTmaGAqBwAR4f.html|Component_2nnNTmaGAqBwAR4f.html|aJBbTmaGAqBwAVai" id="optionaJBbTmaGAqBwAVai">voicemail.py : Component</option>
+<option value="shape|178.0|367.0|115.0|48.0|Component_u_0pTmaGAqBwARgY.html|Component_u_0pTmaGAqBwARgY.html|fvybTmaGAqBwAVZn" id="optionfvybTmaGAqBwAVZn">calllogger.py : Component</option>
+<option value="shape|178.0|245.0|115.0|48.0|Component_x73VTmaGAqBwARwg.html|Component_x73VTmaGAqBwARwg.html|aEibTmaGAqBwAVZS" id="optionaEibTmaGAqBwAVZS">modem.py : Component</option>
+<option value="shape|177.0|306.0|115.0|48.0|Component_N0lZTmaGAqBwARj4.html|Component_N0lZTmaGAqBwARj4.html|uJ8bTmaGAqBwAVY9" id="optionuJ8bTmaGAqBwAVY9">callscreener.py : Component</option>
+<option value="shape|23.0|163.0|305.0|326.0|Subsystem_wFarVmaGAqBwARAr.html|Subsystem_wFarVmaGAqBwARAr.html|xm4bTmaGAqBwAVYX" id="optionxm4bTmaGAqBwAVYX">screening : Subsystem</option>
+<option value="shape|381.0|163.0|305.0|326.0|Subsystem_EPerVmaGAqBwARBN.html|Subsystem_EPerVmaGAqBwARBN.html|ym4bTmaGAqBwAVYU" id="optionym4bTmaGAqBwAVYU">user-interface : Subsystem</option>
+<option value="shape|291.0|2.0|327.0|86.0|Component_jfkJTmaGAqBwARfv.html|Component_jfkJTmaGAqBwARfv.html|0_25TmaGAqBwARm6" id="option0_25TmaGAqBwARm6">callattendant.py : Component</option>
+<option value="shape|2.0|141.0|917.0|378.0|Rectangle__qOXTmaGAqBwAWLE.html|Rectangle__qOXTmaGAqBwAWLE.html|_qOXTmaGAqBwAWLD" id="option_qOXTmaGAqBwAWLD">subsystems : Rectangle</option>
+<option value="shape|163.0|15.0|30.0|60.0|Actor_deh9cmaGAqBwAQus.html|Actor_deh9cmaGAqBwAQus.html|6pz5TmaGAqBwARn1" id="option6pz5TmaGAqBwARn1">Caller : Actor</option>
+<option value="shape|717.0|15.0|30.0|60.0|Actor_TWJ9cmaGAqBwAQu7.html|Actor_TWJ9cmaGAqBwAQu7.html|fBr5TmaGAqBwARoM" id="optionfBr5TmaGAqBwARoM">Callee : Actor</option>
+<option value="shape|44.0|261.0|80.0|40.0|UseCase_sFF9cmaGAqBwAQvZ.html|UseCase_sFF9cmaGAqBwAQvZ.html|RW4bTmaGAqBwAVYm" id="optionRW4bTmaGAqBwAVYm">Call Home : Use Case</option>
+<option value="shape|402.0|261.0|80.0|40.0|UseCase_yVwDcmaGAqBwAQ3D.html|UseCase_yVwDcmaGAqBwAQ3D.html|QW4bTmaGAqBwAVYg" id="optionQW4bTmaGAqBwAVYg">View Call Log : Use Case</option>
+<option value="shape|391.0|368.0|103.0|40.0|UseCase_IMSDcmaGAqBwAQ39.html|UseCase_IMSDcmaGAqBwAQ39.html|zm4bTmaGAqBwAVYa" id="optionzm4bTmaGAqBwAVYa">Configure Whitelist : Use Case</option>
+<option value="shape|391.0|315.0|102.0|40.0|UseCase_5gGDcmaGAqBwAQ4b.html|UseCase_5gGDcmaGAqBwAQ4b.html|QW4bTmaGAqBwAVYd" id="optionQW4bTmaGAqBwAVYd">Configure Blacklist : Use Case</option>
+<option value="shape|40.0|340.0|88.0|40.0|UseCase_bb5DcmaGAqBwAQ5H.html|UseCase_bb5DcmaGAqBwAQ5H.html|jW4bTmaGAqBwAVYs" id="optionjW4bTmaGAqBwAVYs">Leave Message : Use Case</option>
+<option value="shape|392.0|421.0|100.0|40.0|UseCase_HENDcmaGAqBwAQ5j.html|UseCase_HENDcmaGAqBwAQ5j.html|SW4bTmaGAqBwAVYj" id="optionSW4bTmaGAqBwAVYj">Review Messages : Use Case</option>
+<option value="shape|44.0|421.0|80.0|40.0|UseCase__IjDcmaGAqBwAQ6P.html|UseCase__IjDcmaGAqBwAQ6P.html|RW4bTmaGAqBwAVYp" id="optionRW4bTmaGAqBwAVYp">Screen Call : Use Case</option>
+</select>				</td>
+			</tr>
+		</table>
+		<table border="0" cellpadding="0" width="100%" cellspacing="0" style="position: relative; top: 24;">
+			<tr>
+				<td>
+					<img id="diagram" src="../images/Implementation_View.png" usemap="#diagram_map" class="Image" width="923" height="632"/>
+					<map name="diagram_map">
+<area imageId="diagram" coords="193.0, 38.0, 193.0, 52.0, 291.0, 52.0, 291.0, 38.0" coords2="193.0, 38.0, 193.0, 52.0, 291.0, 52.0, 291.0, 38.0" shape="poly" alt=":Association" id="areadiagram_map_wIn5TmaGAqBwARom" href="Association_5gn5TmaGAqBwARoh.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="618.0, 38.0, 618.0, 52.0, 717.0, 52.0, 717.0, 38.0" coords2="618.0, 38.0, 618.0, 52.0, 717.0, 52.0, 717.0, 38.0" shape="poly" alt=":Association" id="areadiagram_map_x1X5TmaGAqBwARoy" href="Association_alX5TmaGAqBwARot.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="447.0, 88.0, 447.0, 106.0, 182.0, 106.0, 182.0, 103.0, 168.0, 103.0, 168.0, 106.0, 165.0, 106.0, 165.0, 120.0, 168.0, 120.0, 168.0, 163.0, 182.0, 163.0, 182.0, 120.0, 447.0, 120.0, 447.0, 123.0, 461.0, 123.0, 461.0, 120.0, 464.0, 120.0, 464.0, 106.0, 461.0, 106.0, 461.0, 88.0" coords2="447.0, 88.0, 447.0, 106.0, 182.0, 106.0, 182.0, 103.0, 168.0, 103.0, 168.0, 106.0, 165.0, 106.0, 165.0, 120.0, 168.0, 120.0, 168.0, 163.0, 182.0, 163.0, 182.0, 120.0, 447.0, 120.0, 447.0, 123.0, 461.0, 123.0, 461.0, 120.0, 464.0, 120.0, 464.0, 106.0, 461.0, 106.0, 461.0, 88.0" shape="poly" alt=":Dependency" id="areadiagram_map_jc5bTmaGAqBwAVbS" href="Dependency_dM5bTmaGAqBwAVbR.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="447.0, 88.0, 447.0, 106.0, 444.0, 106.0, 444.0, 120.0, 447.0, 120.0, 447.0, 123.0, 461.0, 123.0, 461.0, 120.0, 526.0, 120.0, 526.0, 163.0, 540.0, 163.0, 540.0, 120.0, 543.0, 120.0, 543.0, 106.0, 540.0, 106.0, 540.0, 103.0, 526.0, 103.0, 526.0, 106.0, 461.0, 106.0, 461.0, 88.0" coords2="447.0, 88.0, 447.0, 106.0, 444.0, 106.0, 444.0, 120.0, 447.0, 120.0, 447.0, 123.0, 461.0, 123.0, 461.0, 120.0, 526.0, 120.0, 526.0, 163.0, 540.0, 163.0, 540.0, 120.0, 543.0, 120.0, 543.0, 106.0, 540.0, 106.0, 540.0, 103.0, 526.0, 103.0, 526.0, 106.0, 461.0, 106.0, 461.0, 88.0" shape="poly" alt=":Dependency" id="areadiagram_map_Ag3bTmaGAqBwAVcT" href="Dependency_w_XbTmaGAqBwAVcS.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="328.0, 319.0, 328.0, 333.0, 381.0, 333.0, 381.0, 319.0" coords2="328.0, 319.0, 328.0, 333.0, 381.0, 333.0, 381.0, 319.0" shape="poly" alt=":Dependency" id="areadiagram_map_F6WHTmaGAqBwAVeG" href="Dependency_UqWHTmaGAqBwAVeF.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="447.0, 88.0, 447.0, 106.0, 444.0, 106.0, 444.0, 120.0, 447.0, 120.0, 447.0, 123.0, 461.0, 123.0, 461.0, 120.0, 799.0, 120.0, 799.0, 163.0, 813.0, 163.0, 813.0, 120.0, 816.0, 120.0, 816.0, 106.0, 813.0, 106.0, 813.0, 103.0, 799.0, 103.0, 799.0, 106.0, 461.0, 106.0, 461.0, 88.0" coords2="447.0, 88.0, 447.0, 106.0, 444.0, 106.0, 444.0, 120.0, 447.0, 120.0, 447.0, 123.0, 461.0, 123.0, 461.0, 120.0, 799.0, 120.0, 799.0, 163.0, 813.0, 163.0, 813.0, 120.0, 816.0, 120.0, 816.0, 106.0, 813.0, 106.0, 813.0, 103.0, 799.0, 103.0, 799.0, 106.0, 461.0, 106.0, 461.0, 88.0" shape="poly" alt=":Dependency" id="areadiagram_map__ogfTmaGAqBwAWb9" href="Dependency_TwgfTmaGAqBwAWb8.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-right:0;color:#000000;margin-left:0;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-right:0pt;margin-left:0pt;margin-bottom:.0001pt;margin-top:0pt;&amp;quot;&amp;gt;
+      This component manifests the WebApp interfaces.
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="537, 252, 652, 300" coords2="537, 252, 652, 300" shape="rect" alt="webapp.py:Component" id="areadiagram_map_aSFYzmaGAqBwAWdb" href="Component_6SFYzmaGAqBwAWdd.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-right:0;color:#000000;margin-left:0;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-right:0pt;margin-left:0pt;margin-bottom:.0001pt;margin-top:0pt;&amp;quot;&amp;gt;
+      This component manifests the hardware indicator interfaces.
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="764, 221, 879, 269" coords2="764, 221, 879, 269" shape="rect" alt="indicators.py:Component" id="areadiagram_map_afdvTmaGAqBwAWbN" href="Component_afdvTmaGAqBwAWbP.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" coords="530, 563, 645, 611" coords2="530, 563, 645, 611" shape="rect" alt="gpiozero:Component" id="areadiagram_map_VE.vTmaGAqBwAWaP" href="Component_VE_vTmaGAqBwAWaR.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="732, 163, 898, 278" coords2="732, 163, 898, 278" shape="rect" alt="hardware:Subsystem" id="areadiagram_map_Q4FPTmaGAqBwAWYa" href="Subsystem_Q4FPTmaGAqBwAWYc.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="379, 564, 494, 612" coords2="379, 564, 494, 612" shape="rect" alt="BeautifulSoup:Component" id="areadiagram_map_olE3TmaGAqBwAWMc" href="Component_olE3TmaGAqBwAWMe.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="220, 564, 335, 612" coords2="220, 564, 335, 612" shape="rect" alt="Flask:Component" id="areadiagram_map_2HQ3TmaGAqBwAWMN" href="Component_OHQ3TmaGAqBwAWMP.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="61, 564, 176, 612" coords2="61, 564, 176, 612" shape="rect" alt="sqlite3:Component" id="areadiagram_map_2N3XTmaGAqBwAWL6" href="Component_2N3XTmaGAqBwAWL7.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="2, 551, 919, 628" coords2="2, 551, 919, 628" shape="rect" alt="libraries:Rectangle" id="areadiagram_map_nqDXTmaGAqBwAWLm" href="Rectangle_nqDXTmaGAqBwAWLo.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-right:0;color:#000000;margin-left:0;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-right:0pt;margin-left:0pt;margin-bottom:.0001pt;margin-top:0pt;&amp;quot;&amp;gt;
+      This component manifests the CallLogger interfaces.
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="178, 427, 293, 475" coords2="178, 427, 293, 475" shape="rect" alt="voicemail.py:Component" id="areadiagram_map_aJBbTmaGAqBwAVai" href="Component_2nnNTmaGAqBwAR4f.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-right:0;color:#000000;margin-left:0;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-right:0pt;margin-left:0pt;margin-bottom:.0001pt;margin-top:0pt;&amp;quot;&amp;gt;
+      This component manifests the CallLogger interfaces.
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="178, 367, 293, 415" coords2="178, 367, 293, 415" shape="rect" alt="calllogger.py:Component" id="areadiagram_map_fvybTmaGAqBwAVZn" href="Component_u_0pTmaGAqBwARgY.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-right:0;color:#000000;margin-left:0;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-right:0pt;margin-left:0pt;margin-bottom:.0001pt;margin-top:0pt;&amp;quot;&amp;gt;
+      This component interfaces with the analog phone modem.
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="178, 245, 293, 293" coords2="178, 245, 293, 293" shape="rect" alt="modem.py:Component" id="areadiagram_map_aEibTmaGAqBwAVZS" href="Component_x73VTmaGAqBwARwg.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-right:0;color:#000000;margin-left:0;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-right:0pt;margin-left:0pt;margin-bottom:.0001pt;margin-top:0pt;&amp;quot;&amp;gt;
+      This component manifests the CallScreener interfaces.
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="177, 306, 292, 354" coords2="177, 306, 292, 354" shape="rect" alt="callscreener.py:Component" id="areadiagram_map_uJ8bTmaGAqBwAVY9" href="Component_N0lZTmaGAqBwARj4.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" coords="40, 340, 128, 380" coords2="40, 340, 128, 380" shape="rect" alt="Leave Message:Use Case" id="areadiagram_map_jW4bTmaGAqBwAVYs" href="UseCase_bb5DcmaGAqBwAQ5H.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="44, 421, 124, 461" coords2="44, 421, 124, 461" shape="rect" alt="Screen Call:Use Case" id="areadiagram_map_RW4bTmaGAqBwAVYp" href="UseCase__IjDcmaGAqBwAQ6P.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="44, 261, 124, 301" coords2="44, 261, 124, 301" shape="rect" alt="Call Home:Use Case" id="areadiagram_map_RW4bTmaGAqBwAVYm" href="UseCase_sFF9cmaGAqBwAQvZ.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="392, 421, 492, 461" coords2="392, 421, 492, 461" shape="rect" alt="Review Messages:Use Case" id="areadiagram_map_SW4bTmaGAqBwAVYj" href="UseCase_HENDcmaGAqBwAQ5j.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="402, 261, 482, 301" coords2="402, 261, 482, 301" shape="rect" alt="View Call Log:Use Case" id="areadiagram_map_QW4bTmaGAqBwAVYg" href="UseCase_yVwDcmaGAqBwAQ3D.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="391, 315, 493, 355" coords2="391, 315, 493, 355" shape="rect" alt="Configure Blacklist:Use Case" id="areadiagram_map_QW4bTmaGAqBwAVYd" href="UseCase_5gGDcmaGAqBwAQ4b.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="391, 368, 494, 408" coords2="391, 368, 494, 408" shape="rect" alt="Configure Whitelist:Use Case" id="areadiagram_map_zm4bTmaGAqBwAVYa" href="UseCase_IMSDcmaGAqBwAQ39.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="23, 163, 328, 489" coords2="23, 163, 328, 489" shape="rect" alt="screening:Subsystem" id="areadiagram_map_xm4bTmaGAqBwAVYX" href="Subsystem_wFarVmaGAqBwARAr.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="381, 163, 686, 489" coords2="381, 163, 686, 489" shape="rect" alt="user-interface:Subsystem" id="areadiagram_map_ym4bTmaGAqBwAVYU" href="Subsystem_EPerVmaGAqBwARBN.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="717, 15, 747, 75" coords2="717, 15, 747, 75" shape="rect" alt="Callee:Actor" id="areadiagram_map_fBr5TmaGAqBwARoM" href="Actor_TWJ9cmaGAqBwAQu7.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" coords="163, 15, 193, 75" coords2="163, 15, 193, 75" shape="rect" alt="Caller:Actor" id="areadiagram_map_6pz5TmaGAqBwARn1" href="Actor_deh9cmaGAqBwAQus.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+<area imageId="diagram" docContent="&amp;lt;head&amp;gt;
+    
+  &amp;lt;/head&amp;gt;
+  &amp;lt;body style=&amp;quot;margin-right:0;color:#000000;margin-left:0;font-weight:normal;font-size:11px;font-family:Dialog;&amp;quot;&amp;gt;
+    &amp;lt;p style=&amp;quot;margin-right:0pt;margin-left:0pt;margin-bottom:.0001pt;margin-top:0pt;&amp;quot;&amp;gt;
+      This component is the entry point for the application.
+    &amp;lt;/p&amp;gt;
+  &amp;lt;/body&amp;gt;" coords="291, 2, 618, 88" coords2="291, 2, 618, 88" shape="rect" alt="callattendant.py:Component" id="areadiagram_map_0_25TmaGAqBwARm6" href="Component_jfkJTmaGAqBwARfv.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon(),showTooltip(this)" onmousedown="clearSpotLight();" onmouseout="hideTooltip()"/>
+<area imageId="diagram" coords="2, 141, 919, 519" coords2="2, 141, 919, 519" shape="rect" alt="subsystems:Rectangle" id="areadiagram_map__qOXTmaGAqBwAWLD" href="Rectangle__qOXTmaGAqBwAWLE.html" onmouseover="hideReferenceIcon(),hideSubdiagramIcon(),hideTransitorIcon()" onmousedown="clearSpotLight();"/>
+</map>
+				</td>
+			</tr>
+		</table>
+		<p>
+		</p>
+	</div>
+	<div style="height: 20px">
+	</div>
+	<table border="0" cellpadding="0" width="100%" cellspacing="0">
+		<tr>
+			<td class="FooterLine">
+			</td>
+		</tr>
+	</table>
+	<div class="HeaderText">
+		callattendent	</div>
+</body>
+</html>

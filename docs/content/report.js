@@ -703,6 +703,10 @@ function showFoeWireframeStatesDialog(stateDialogId, selectStateDialogButtonId) 
 		yOffset = yOffset-getScrollTop();
 		if (yOffset + lDialogHeight > getClientHeight()) {
 			yOffset = getClientHeight()-lDialogHeight;
+			
+			if (yOffset < getScrollTop()) {
+				yOffset = getScrollTop();
+			}
 		}
 		
 		base.style.marginRight = lDialogWidth;
