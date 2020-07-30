@@ -88,7 +88,7 @@ def call_details():
     return render_template('call_details.htm', calls=records)
 
 
-@app.route('/blacklist')
+@app.route('/blocked')
 def blacklist():
     '''Display the blocked numbers from the blacklist table'''
     query = 'SELECT * from Blacklist ORDER BY datetime(SystemDateTime) DESC'
@@ -106,7 +106,7 @@ def blacklist():
     return render_template('blacklist.htm', blacklist=records)
 
 
-@app.route('/whitelist')
+@app.route('/permitted')
 def whitelist():
     '''Display the permitted numbers from the whitelist table'''
     query = 'SELECT * from Whitelist ORDER BY datetime(SystemDateTime) DESC'

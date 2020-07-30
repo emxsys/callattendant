@@ -11,18 +11,18 @@ Automated call attendant, call blocker, and voice messaging on a Raspberry Pi.
 
 
 ## Overview
-The Call Attendant (__callattendant__) uses a Raspberry Pi coupled with a US Robotics 5637 modem to screen incoming 
+The Call Attendant (__callattendant__) uses a Raspberry Pi coupled with a US Robotics 5637 modem to screen incoming
 calls on a landline. Features being developed include:
-- [x] Robocallers and blacklisted numbers are intercepted after the first ring
-- [x] Whitelisted callers pass straight through to the local phone system for normal call ringing and answering
-- [x] Visual indicators to show whether the incoming call is from a whitelisted, blacklisted, or unknown number 
-- [x] Call details, blacklists, whitelists are available in a web-based user interface 
+- [x] Robocallers and blocked numbers are intercepted at the first ring
+- [x] Permitted numbers pass straight through to the local phone system for normal call ringing and answering
+- [x] Visual indicators to show whether the incoming call is from a permitted, blocked, or unknown number
+- [x] Call details, permitted numbers, and blocked numbers are available in a web-based user interface
 - [ ] Unknown callers are handled by a voice messaging system that requires human interaction, e.g, "Press 1 to leave a message"
 
 The Call Attendant project was inspired by the [pamapa/callblocker](https://github.com/pamapa/callblocker) project,
 an excellent Raspberry Pi based call blocker.  However, the __callattendant__ differs from the __callblocker__ in that adds
 voice messaging; and the __callattendant__ is written entirely in Python, uses SQLite for the call logging, and
-implments the web interface with Flask. 
+implments the web interface with Flask.
 
 
 ### More information
@@ -58,7 +58,7 @@ to program the Raspberry Pi and the US Robotics 5637 modem. His blog site has ma
 ### Implementation View
 ###### _Component Diagram_
 ![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Implementation_View.png "Implementation Diagram")
- 
+
 ### Deployment View
 ###### _Deployment Diagram_
 ![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Deployment_View.png "Deployment Diagram")
@@ -74,7 +74,7 @@ The development plan's [phase objectives](https://github.com/emxsys/callattendan
 ### [Inception Phase](https://github.com/emxsys/callattendant/projects/1)
 - Iteration #I1: [v0.1](https://github.com/emxsys/callattendant/releases/tag/v0.1)
 ### [Elaboration Phase](https://github.com/emxsys/callattendant/projects/2)
-- Iteration #E1: v0.2
+- Iteration #E1: [v0.2](https://github.com/emxsys/callattendant/releases/tag/v0.2)
 ### [Construction Phase](https://github.com/emxsys/callattendant/projects/3)
 - Iteration #C1: v0.3
 - Iteration #C2: v0.4
@@ -164,7 +164,7 @@ python callattendant.py
 You should see output of the form:
 
 ```
-(ca_testing) pi@raspberrypi:~/testing/callattendant/src $ python callattendant.py 
+(ca_testing) pi@raspberrypi:~/testing/callattendant/src $ python callattendant.py
 CallLogger initialized
 Blacklist initialized
 Whitelist initialized
@@ -213,7 +213,7 @@ yourself to test the service.
 
 ### Run as a Service
 ###### *Optional*
-We're going to define a service to automatically run the Call Attendant on the Raspberry Pi at start up. Our simple service will run the `callattendant.py` script and if by any means is aborted it is going to be restarted automatically. 
+We're going to define a service to automatically run the Call Attendant on the Raspberry Pi at start up. Our simple service will run the `callattendant.py` script and if by any means is aborted it is going to be restarted automatically.
 
 #### Create the Service
 
@@ -255,10 +255,10 @@ sudo systemctl start callattendant.service
 ```
 
 #### Service Tasks
-For every change that we do on the `/lib/systemd/system` folder we need to execute a 
-`daemon-reload` (third line of previous code). 
+For every change that we do on the `/lib/systemd/system` folder we need to execute a
+`daemon-reload` (third line of previous code).
 
-You can execute the following commands as needed to check the status, start and stop 
+You can execute the following commands as needed to check the status, start and stop
 the service, or check the logs. Several shell scripts are included in the root of this
 project to perfom these tasks.
 
@@ -279,7 +279,7 @@ project to perfom these tasks.
 ## Operation
 
 ### Web Pages
-A few web pages are used to monitor your installation. You can use `localhost` for the `pi_address` 
+A few web pages are used to monitor your installation. You can use `localhost` for the `pi_address`
 when you are running the web browser on the pi.
 
 ##### Call Log
@@ -291,13 +291,13 @@ http://localhost:5000/
 ##### Blocked List
 This is the list of blocked numbers.
 ```
-http://localhost:5000/blacklist
+http://localhost:5000/blocked
 ```
 
 ##### Permitted List
 This is the list of permitted numbers.
 ```
-http://localhost:5000/whitelist
+http://localhost:5000/permitted
 ```
 ### Tools
 
