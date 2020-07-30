@@ -8,6 +8,7 @@ __pycache__/
 
 # Backup files
 *~
+*.vpp.bak*
 
 # C extensions
 *.so
@@ -95,6 +96,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+ca_testing/
 
 # Spyder project settings
 .spyderproject
