@@ -45,6 +45,7 @@ app.debug = False  # debug mode prevents app from running in separate thread
 
 @app.before_request
 def before_request():
+    '''Establish a database connection for the current request'''
     g.conn = sqlite3.connect(current_app.config.get('DATABASE', 'callattendant.db'))
     g.conn.row_factory = sqlite3.Row
     g.cur = g.conn.cursor()
@@ -52,6 +53,7 @@ def before_request():
 
 @app.teardown_request
 def teardown(error):
+    '''Closes the database connection for the last request'''
     if hasattr(g, 'conn'):
         g.conn.close()
 
@@ -61,20 +63,19 @@ def call_details():
     '''Display the call details from the call log table'''
 
     # Get values used for pagination of the call log
-    g.cur.execute("select count(*) from CallLog")
-    total = g.cur.fetchone()[0]
+    total = get_row_count('CallLog')
     page, per_page, offset = get_page_args(
         page_parameter="page", per_page_parameter="per_page"
     )
     # Get the call log subset, limited to the pagination settings
-    sql = """select a.CallLogID, a.Name, a.Number, a.Date, a.Time,
+    sql = '''select a.CallLogID, a.Name, a.Number, a.Date, a.Time,
       case when b.PhoneNo is null then 'N' else 'Y' end Whitelisted,
       case when c.PhoneNo is null then 'N' else 'Y' end Blacklisted,
       case when b.PhoneNo is not null then b.Reason else c.Reason end Reason
     from CallLog as a
     left join Whitelist as b ON a.Number = b.PhoneNo
     left join Blacklist as c ON a.Number = c.PhoneNo
-    order by a.SystemDateTime desc limit {}, {}""".format(offset, per_page)
+    order by a.SystemDateTime desc limit {}, {}'''.format(offset, per_page)
     g.cur.execute(sql)
     result_set = g.cur.fetchall()
 
@@ -123,9 +124,16 @@ def call_details():
 @app.route('/blocked')
 def blacklist():
     '''Display the blocked numbers from the blacklist table'''
-    query = 'SELECT * from Blacklist ORDER BY datetime(SystemDateTime) DESC'
-    arguments = []
-    result_set = screening.utils.query_db(get_db(), query, arguments)
+    # Get values used for pagination of the blacklist
+    total = get_row_count('Blacklist')
+    page, per_page, offset = get_page_args(
+        page_parameter="page", per_page_parameter="per_page"
+    )
+    # Get the blacklist subset, limited to the pagination settings
+    sql = 'SELECT * from Blacklist ORDER BY datetime(SystemDateTime) DESC limit {}, {}'.format(offset, per_page)
+    g.cur.execute(sql)
+    result_set = g.cur.fetchall()
+
     records = []
     for record in result_set:
         number = record[0]
@@ -135,7 +143,25 @@ def blacklist():
             Name=record[1],
             Reason=record[2],
             System_Date_Time=record[3]))
-    return render_template('blacklist.htm', blacklist=records)
+
+    # Create a pagination object for the page
+    pagination = get_pagination(
+        page=page,
+        per_page=per_page,
+        total=total,
+        record_name="blocked numbers",
+        format_total=True,
+        format_number=True,
+    )
+    # Render the resullts with pagination
+    return render_template(
+        'blacklist.htm',
+        blacklist=records,
+        page=page,
+        per_page=per_page,
+        pagination=pagination,
+    )
+
 
 
 @app.route('/permitted')
@@ -253,6 +279,14 @@ def close_db(e=None):
     if db is not None:
         db.close()
 
+def get_row_count(table_name):
+    '''Returns the row count for the given table'''
+    # Using the current request's db connection
+    sql = 'select count(*) from {}'.format(table_name)
+    print sql
+    g.cur.execute(sql)
+    total = g.cur.fetchone()[0]
+    return total
 
 def get_css_framework():
     return current_app.config.get("CSS_FRAMEWORK", "bootstrap4")
