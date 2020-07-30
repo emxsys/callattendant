@@ -29,8 +29,8 @@
 # https://iotbytes.wordpress.com/incoming-call-details-logger-with-raspberry-pi/
 # ==============================================================================
 
-from flask import Flask, request, session, g, redirect, url_for, \
-    abort, render_template, flash, send_from_directory, jsonify
+from flask import Flask, request, g, current_app, render_template
+from flask_paginate import Pagination, get_page_args
 from screening.blacklist import Blacklist
 from screening.whitelist import Whitelist
 import screening.utils
@@ -39,30 +39,46 @@ import thread
 
 # Create the Flask micro web-framework application
 app = Flask(__name__)
-app.config.from_object(__name__)
+app.config.from_pyfile('webapp.cfg')
 app.debug = False  # debug mode prevents app from running in separate thread
+
+
+@app.before_request
+def before_request():
+    g.conn = sqlite3.connect(current_app.config.get('DATABASE', 'callattendant.db'))
+    g.conn.row_factory = sqlite3.Row
+    g.cur = g.conn.cursor()
+
+
+@app.teardown_request
+def teardown(error):
+    if hasattr(g, 'conn'):
+        g.conn.close()
 
 
 @app.route('/')
 def call_details():
-    '''Display the call details from the calllog table'''
+    '''Display the call details from the call log table'''
 
-    query = """SELECT
-      a.CallLogID,
-      a.Name,
-      a.Number,
-      a.Date,
-      a.Time,
-      CASE WHEN b.PhoneNo IS NULL THEN 'N' ELSE 'Y' END Whitelisted,
-      CASE WHEN c.PhoneNo IS NULL THEN 'N' ELSE 'Y' END Blacklisted,
-      CASE WHEN b.PhoneNo IS NOT NULL THEN b.Reason ELSE c.Reason END Reason
-    FROM calllog AS a
-    LEFT JOIN whitelist AS b ON a.Number = b.PhoneNo
-    LEFT JOIN blacklist AS c ON a.Number = c.PhoneNo
-    ORDER BY a.SystemDateTime DESC"""
-    arguments = []
-    result_set = screening.utils.query_db(get_db(), query, arguments)
+    # Get values used for pagination of the call log
+    g.cur.execute("select count(*) from CallLog")
+    total = g.cur.fetchone()[0]
+    page, per_page, offset = get_page_args(
+        page_parameter="page", per_page_parameter="per_page"
+    )
+    # Get the call log subset, limited to the pagination settings
+    sql = """select a.CallLogID, a.Name, a.Number, a.Date, a.Time,
+      case when b.PhoneNo is null then 'N' else 'Y' end Whitelisted,
+      case when c.PhoneNo is null then 'N' else 'Y' end Blacklisted,
+      case when b.PhoneNo is not null then b.Reason else c.Reason end Reason
+    from CallLog as a
+    left join Whitelist as b ON a.Number = b.PhoneNo
+    left join Blacklist as c ON a.Number = c.PhoneNo
+    order by a.SystemDateTime desc limit {}, {}""".format(offset, per_page)
+    g.cur.execute(sql)
+    result_set = g.cur.fetchall()
 
+    # Create a formatted list of records including some derived values
     records = []
     for record in result_set:
         number = record[2]
@@ -74,7 +90,6 @@ def call_details():
             action = "Blocked"
         else:
             action = "Screened"
-
         records.append(dict(
             Call_No=record[0],
             Phone_Number=phone_no,
@@ -85,7 +100,24 @@ def call_details():
             Blacklisted=record[6],
             Action=action,
             Reason=record[7]))
-    return render_template('call_details.htm', calls=records)
+
+    # Create a pagination object for the page
+    pagination = get_pagination(
+        page=page,
+        per_page=per_page,
+        total=total,
+        record_name="calls",
+        format_total=True,
+        format_number=True,
+    )
+    # Render the resullts with pagination
+    return render_template(
+        'call_details.htm',
+        calls=records,
+        page=page,
+        per_page=per_page,
+        pagination=pagination,
+    )
 
 
 @app.route('/blocked')
@@ -199,21 +231,65 @@ def manage_caller(call_log_id):
     return render_template('manage_caller.htm', caller=caller)
 
 
+
 def get_db():
-    '''Returns the callattendant database'''
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect('callattendant.db')
-    return db
+    '''Get a connection to the database'''
+    # Flask template for database connections
+    if 'db' not in g:
+        g.db = sqlite3.connect(
+            current_app.config.get('DATABASE', 'callattendant.db'),
+            detect_types=sqlite3.PARSE_DECLTYPES
+        )
+        g.db.row_factory = sqlite3.Row
+
+    return g.db
 
 
-def flaskThread():
-    with app.app_context():
-        call_details()
+def close_db(e=None):
+    '''Clost the connection to the database'''
+    # Flask template for database connections
+    db = g.pop('db', None)
 
+    if db is not None:
+        db.close()
+
+
+def get_css_framework():
+    return current_app.config.get("CSS_FRAMEWORK", "bootstrap4")
+
+
+def get_link_size():
+    return current_app.config.get("LINK_SIZE", "sm")
+
+
+def get_alignment():
+    return current_app.config.get("LINK_ALIGNMENT", "")
+
+
+def show_single_page_or_not():
+    return current_app.config.get("SHOW_SINGLE_PAGE", False)
+
+
+def get_pagination(**kwargs):
+    kwargs.setdefault("record_name", "records")
+    return Pagination(
+        css_framework=get_css_framework(),
+        link_size=get_link_size(),
+        alignment=get_alignment(),
+        show_single_page=show_single_page_or_not(),
+        **kwargs
+    )
+
+
+def runFlask():
+    #with app.app_context():
+    #    call_details()
+
+    print "calling app.run()"
     # debug mode prevents app from running in separate thread
     app.run(host='0.0.0.0', debug=False)
 
 
 def start():
-    thread.start_new_thread(flaskThread, ())
+    '''Start the Flask webapp in a separate thread'''
+    thread.start_new_thread(runFlask, ())
