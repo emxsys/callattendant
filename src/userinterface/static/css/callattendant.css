@@ -3,7 +3,10 @@ body {
   min-height: 75rem;
   padding-top: 4.5rem;
 }
-/* Set a fixed width for the phone column */
+/* Set a fixed width for the Call # column */
+.callno {
+   width: 100px;
+}/* Set a fixed width for the phone column */
 .phoneno {
    width: 125px;
 }
@@ -14,4 +17,44 @@ body {
 /* Set a fixed width for the time column */
 .time {
    width: 95px;
+}
+
+.pagination-fixed {
+    position: fixed;
+    top: 40px;
+    left: 0;
+    right: 0;
+    z-index: 1020;
+    border-color: #D5D5D5;
+    border-width: 0 0 1px;
+    -webkit-border-radius: 0;
+    -moz-border-radius: 0;
+    border-radius: 0;
+    -webkit-box-shadow: inset 0 1px 0 white, 0 1px 5px rgba(0, 0, 0, .1);
+    -moz-box-shadow: inset 0 1px 0 #fff, 0 1px 5px rgba(0,0,0,.1);
+    box-shadow: inset 0 1px 0 white, 0 1px 5px rgba(0, 0, 0, .1);
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
+}
+
+.pagination {
+    margin: 10px 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+.pagination-page-info {
+    padding: .6em;
+    padding-top: 5px;
+    padding-bottom: 0;
+    padding-left: 0;
+    width: 40em;
+    margin: .5em;
+    margin-left: 0;
+    font-size: 12px;
+}
+.pagination-page-info b {
+    color: black;
+    background: #6aa6ed;
+    padding-left: 2px;
+    padding: .1em .25em;
+    font-size: 150%;
 }

@@ -13,26 +13,30 @@
 
 <div class="container">
   <h2>Permitted Numbers</h2>
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Number</th>
-        <th>Name</th>
-        <th>Reason</th>
-        <th>System Date Time</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for item in whitelist %}
-      <tr>
-        <td>{{ item.Phone_Number }}</td>
-        <td>{{ item.Name }}</td>
-        <td>{{ item.Reason }}</td>
-        <td>{{ item.System_Date_Time }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  {% if whitelist %}
+    {{ pagination.links }}
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Number</th>
+          <th>Name</th>
+          <th>Reason</th>
+          <th>System Date Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in whitelist %}
+        <tr>
+          <td>{{ item.Phone_Number }}</td>
+          <td>{{ item.Name }}</td>
+          <td>{{ item.Reason }}</td>
+          <td>{{ item.System_Date_Time }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {{ pagination.links }}
+    {% endif %}
 </div>
 
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
