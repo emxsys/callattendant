@@ -28,7 +28,7 @@
 # https://github.com/pradeesi/Incoming_Call_Detail_Logger
 # https://iotbytes.wordpress.com/incoming-call-details-logger-with-raspberry-pi/
 # ==============================================================================
-
+from __future__ import division
 from flask import Flask, request, g, current_app, render_template
 from flask_paginate import Pagination, get_page_args
 from screening.blacklist import Blacklist
@@ -111,10 +111,24 @@ def call_details():
         format_total=True,
         format_number=True,
     )
+    # Gather some metrics
+    sql = '''select count(*)
+        from CallLog as a
+        left join Whitelist as b ON a.Number = b.PhoneNo
+        left join Blacklist as c ON a.Number = c.PhoneNo
+        where b.PhoneNo is null and c.PhoneNo is not null'''
+    g.cur.execute(sql)
+    blocked = g.cur.fetchone()[0]
+    percent_blocked = blocked / total * 100
+    print percent_blocked
+    print '{0:.0%}'.format(percent_blocked)
     # Render the resullts with pagination
     return render_template(
         'call_details.htm',
         calls=records,
+        total_calls='{:,}'.format(total),
+        blocked_calls='{:,}'.format(blocked),
+        percent_blocked='{0:.0f}%'.format(percent_blocked),
         page=page,
         per_page=per_page,
         pagination=pagination,
@@ -199,6 +213,7 @@ def whitelist():
     return render_template(
         'whitelist.htm',
         whitelist=records,
+        total_calls=total,
         page=page,
         per_page=per_page,
         pagination=pagination,
@@ -306,7 +321,6 @@ def get_row_count(table_name):
     '''Returns the row count for the given table'''
     # Using the current request's db connection
     sql = 'select count(*) from {}'.format(table_name)
-    print sql
     g.cur.execute(sql)
     total = g.cur.fetchone()[0]
     return total
