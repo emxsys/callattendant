@@ -35,7 +35,7 @@ The template is rendered with an array of dictionary objects named 'calls'.
         </thead>
         <tbody>
         {% for item in calls %}
-            <tr data-call-number="{{ item.Call_No }}" onClick="location.href='/manage_caller/{{ item.Call_No }}'"
+            <tr class="clickable" data-call-number="{{ item.Call_No }}" onClick="location.href='/manage_caller/{{ item.Call_No }}'"
             {% if item.Action == 'Permitted' %}
                 bgcolor="#90EE90"
             {% elif item.Action == 'Blocked' %}

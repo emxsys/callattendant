@@ -18,7 +18,9 @@ body {
 .time {
    width: 95px;
 }
-
+.clickable {
+    cursor: pointer;
+}
 .pagination-fixed {
     position: fixed;
     top: 40px;
