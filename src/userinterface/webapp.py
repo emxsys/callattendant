@@ -167,9 +167,16 @@ def blacklist():
 @app.route('/permitted')
 def whitelist():
     '''Display the permitted numbers from the whitelist table'''
-    query = 'SELECT * from Whitelist ORDER BY datetime(SystemDateTime) DESC'
-    arguments = []
-    result_set = screening.utils.query_db(get_db(), query, arguments)
+    # Get values used for pagination of the blacklist
+    total = get_row_count('Whitelist')
+    page, per_page, offset = get_page_args(
+        page_parameter="page", per_page_parameter="per_page"
+    )
+    # Get the whitelist subset, limited to the pagination settings
+    sql = 'select * from Whitelist ORDER BY datetime(SystemDateTime) DESC limit {}, {}'.format(offset, per_page)
+    g.cur.execute(sql)
+    result_set = g.cur.fetchall()
+    # Build a list of formatted dict items
     records = []
     for record in result_set:
         number = record[0]
@@ -179,7 +186,23 @@ def whitelist():
             Name=record[1],
             Reason=record[2],
             System_Date_Time=record[3]))
-    return render_template('whitelist.htm', whitelist=records)
+    # Create a pagination object for the page
+    pagination = get_pagination(
+        page=page,
+        per_page=per_page,
+        total=total,
+        record_name="permitted numbers",
+        format_total=True,
+        format_number=True,
+    )
+    # Render the results with pagination
+    return render_template(
+        'whitelist.htm',
+        whitelist=records,
+        page=page,
+        per_page=per_page,
+        pagination=pagination,
+    )
 
 
 @app.route('/manage_caller/<int:call_log_id>', methods=['GET', 'POST'])
