@@ -86,10 +86,11 @@ The development plan's [phase objectives](https://github.com/emxsys/callattendan
 ## Installation
 
 ### Prequisites
+#### Hardware
 
-You will need a raspberry pi running raspbian and access to the Internet for
-software installation. For the project, you will need a modem of some sort to
-do modem stuff.
+You will need a Raspberry Pi running Raspbian or better and access to the Internet 
+for the software installation. For the project, you will need a modem of some sort to
+do the telephony communications.
 
 The **U.S. Robotics USR5637 56K USB Modem**:
 
@@ -98,10 +99,48 @@ https://www.amazon.com/gp/product/B0013FDLM0/ref=ppx_yo_dt_b_asin_image_o03_s00?
 has been proven effective. For some installs, it just works, no config needed.
 It showed up as /dev/ttyACM0.
 
+#### Software
+
+You need a copy of this repository placed in a folder on your pi, e.g., `/pi/home/callattendant`.
+You can either clone this repository, or [download a zip file](https://github.com/emxsys/callattendant/archive/master.zip),
+or download a specific release from [Releases](https://github.com/emxsys/callattendant/releases).
+
+##### Clone wtih Git
+
+Here's how clone the repository with `git` into your home folder:
+
+```bash
+cd 
+git clone https://github.com/emxsys/callattendant.git
+cd callattendant
+```
+
+##### Download Zip
+
+If you [download the latest code](https://github.com/emxsys/callattendant/archive/master.zip) or a
+specific release, the unzpped folder will be named `callattendant-master` or `callattendant-<release_tag>` 
+depending on what you downloaded. You can rename it if you wish. Here's how unzip it into your home folder.
+
+```bash
+cd
+unzip ~/Downloads/callattendant-master.zip 
+cd callattendant-master
+```
+
 ### Setup
 
 The installation calls for Python2.X. Yes, it's deprecated, but go ahead and
-live dangerously. Set up a virtual environment:
+live dangerously. 
+
+#### Setup Virtual Environment
+###### *Optional*
+
+For development purposes, you might be best served by setting up a virtual environment.
+If you intend to simply install and run the **callattendant** on a dedicated Raspberry Pi, 
+you can skip this step and proceed with [Install Packages](#install-packages).
+
+The following instructions create a virtual environment named _ca_testing_ within the current
+folder:
 
 ```bash
 sudo apt install virtualenv
@@ -143,7 +182,8 @@ Python 2.7.16
 #### Install Packages
 
 We've provided a requirements file called `requirements.txt`. Let's use it to
-install the required packages.
+install the required packages. But first, navigate to the folder where the 
+callattendant repository was placed, e.g., `/pi/home/callattendant`.
 
 ```bash
 $ pip install -r requirements.txt
