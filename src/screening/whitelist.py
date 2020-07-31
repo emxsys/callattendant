@@ -51,7 +51,7 @@ class Whitelist(object):
 
         print "Whitelist initialized"
 
-    def add_caller(self, call_record):
+    def add_caller(self, call_record, reason=""):
         query = '''INSERT INTO Whitelist(
             PhoneNo,
             Name,
@@ -60,7 +60,7 @@ class Whitelist(object):
         arguments = [
             call_record['NMBR'],
             call_record['NAME'],
-            call_record['REASON'],
+            reason,
             (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
         ]
         self.db.execute(query, arguments)

@@ -231,10 +231,9 @@ def manage_caller(call_log_id):
             caller = {}
             caller['NMBR'] = number
             caller['NAME'] = request.form['name']
-            caller['REASON'] = request.form['reason']
             print "Adding " + caller['NAME'] + " to whitelist"
             whitelist = Whitelist(get_db())
-            whitelist.add_caller(caller)
+            whitelist.add_caller(caller, request.form['reason'])
 
         elif request.form['action'] == 'RemovePermit':
             print "Removing " + number + " from whitelist"
@@ -245,10 +244,9 @@ def manage_caller(call_log_id):
             caller = {}
             caller['NMBR'] = number
             caller['NAME'] = request.form['name']
-            caller['REASON'] = request.form['reason']
             print "Adding " + caller['NAME'] + " to blacklist"
             blacklist = Blacklist(get_db())
-            blacklist.add_caller(caller)
+            blacklist.add_caller(caller, request.form['reason'])
 
         elif request.form['action'] == 'RemoveBlock':
             print "Removing " + number + " from blacklist"

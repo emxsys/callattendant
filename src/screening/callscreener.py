@@ -79,8 +79,8 @@ class CallScreener(object):
         finally:
             sys.stdout.flush()
 
-    def whitelist_caller(self, callerid):
-        self._whitelist.add_caller(callerid)
+    def whitelist_caller(self, callerid, reason):
+        self._whitelist.add_caller(callerid, reason)
 
     def blacklist_caller(self, callerid, reason):
         self._blacklist.add_caller(callerid, reason)
