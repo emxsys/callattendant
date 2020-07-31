@@ -383,18 +383,19 @@ class Modem(object):
         # List all the Serial COM Ports on Raspberry Pi
         proc = subprocess.Popen(['ls /dev/tty[A-Za-z]*'], shell=True, stdout=subprocess.PIPE)
         com_ports = proc.communicate()[0]
-        com_ports_list = com_ports.split('\n')
+        # In order to split, need to pass a bytes-like object
+        com_ports_list = com_ports.split(b'\n')
 
         # Find the right port associated with the Voice Modem
         for com_port in com_ports_list:
-            if 'tty' in com_port:
+            if b'tty' in com_port:
                 # Try to open the COM Port and execute AT Command
                 try:
                     # Initialize the serial port and attempt to open
-                    self._init_serial_port(com_port)
+                    self._init_serial_port(com_port.decode("utf-8"))
                     self._serial.open()
                 except:
-                    print("Unable to open COM Port: " + com_port)
+                    print("Unable to open COM Port: " + str(com_port.decode("utf-8")))
                     pass
                 else:
                     # Validate modem selection by trying to put it in Voice Mode
@@ -404,7 +405,7 @@ class Modem(object):
                             self._serial.close()
                     else:
                         # Found the COM Port exit the loop
-                        print("Modem COM Port is: " + com_port)
+                        print("Modem COM Port is: " + com_port.decode("utf-8"))
                         self._serial.flushInput()
                         self._serial.flushOutput()
                         break
