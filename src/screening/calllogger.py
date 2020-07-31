@@ -51,7 +51,7 @@ class CallLogger(object):
         self.db.execute(query, arguments)
         self.db.commit()
 
-        print "New log entry added"
+        print("New log entry added")
 
     def __init__(self, db):
         self.db = db
@@ -69,7 +69,7 @@ class CallLogger(object):
         curs.executescript(sql)
         curs.close()
 
-        print "CallLogger initialized"
+        print("CallLogger initialized")
 
 
 def test(args):
@@ -89,8 +89,8 @@ def test(args):
     # List the records
     query = "SELECT * FROM CallLog"
     results = utils.query_db(db, query)
-    print "Query results:"
-    print results
+    print("Query results:")
+    print(results)
 
     return 0
 

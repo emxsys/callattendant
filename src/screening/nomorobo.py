@@ -26,7 +26,7 @@
 
 import sys
 import argparse
-import urllib2
+import urllib
 from bs4 import BeautifulSoup
 
 
@@ -35,7 +35,7 @@ class NomoroboService(object):
     def lookup_number(self, number):
         number = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
         url = "https://www.nomorobo.com/lookup/%s" % number
-        print url
+        print(url)
         headers = {}
         allowed_codes = [404]  # allow not found response
         content = self.http_get(url, headers, allowed_codes)
@@ -47,10 +47,10 @@ class NomoroboService(object):
         if len(positions) > 0:
             position = positions[0].get_text()
             if position.upper().find("DO NOT ANSWER") > -1:
-                print "Spammer!"
+                print("Spammer!")
                 score = 2  # = is spam
             else:
-                print "Nuisance!"
+                print("Nuisance!")
                 score = 1  # = might be spam (caller is "Political", "Charity", or "Debt Collector")
 
         reason = ""
@@ -72,10 +72,10 @@ class NomoroboService(object):
 
     def http_get(self, url, add_headers={}, allowed_codes=[]):
         try:
-            request = urllib2.Request(url, headers=add_headers)
-            response = urllib2.urlopen(request, timeout=5)
+            request = urllib.request.Request(url, headers=add_headers)
+            response = urllib.request.urlopen(request, timeout=5)
             data = response.read()
-        except urllib2.HTTPError, e:
+        except urllib2.HTTPError as e:
             code = e.getcode()
             if code not in allowed_codes:
                 raise
@@ -90,7 +90,7 @@ class NomoroboService(object):
 def test(args):
     nomorobo = NomoroboService()
     result = nomorobo.lookup_number("5622862616")
-    print result
+    print(result)
     return 0
 
 

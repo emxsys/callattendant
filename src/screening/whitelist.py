@@ -29,7 +29,7 @@
 # https://iotbytes.wordpress.com/incoming-call-details-logger-with-raspberry-pi/
 # ==============================================================================
 
-import utils
+import screening.utils
 from datetime import datetime
 
 
@@ -49,7 +49,7 @@ class Whitelist(object):
         curs.executescript(sql)
         curs.close()
 
-        print "Whitelist initialized"
+        print("Whitelist initialized")
 
     def add_caller(self, call_record, reason=""):
         query = '''INSERT INTO Whitelist(
@@ -66,7 +66,7 @@ class Whitelist(object):
         self.db.execute(query, arguments)
         self.db.commit()
 
-        print "New whitelist entry added"
+        print("New whitelist entry added")
 
     def remove_number(self, phone_no):
         '''Removes records for the given number (without dashes or formatting)'''
@@ -75,7 +75,7 @@ class Whitelist(object):
         self.db.execute(query, arguments)
         self.db.commit()
 
-        print "whitelist entry removed"
+        print("whitelist entry removed")
 
     def check_number(self, number):
         query = "SELECT COUNT(*) FROM Whitelist WHERE PhoneNo=:number"
@@ -107,16 +107,16 @@ def test(args):
     # List the records
     query = 'SELECT * from Whitelist'
     results = utils.query_db(db, query)
-    print "Query results:"
-    print results
+    print("Query results:")
+    print(results)
 
     number = "1234567890"
-    print "Check number: " + number
-    print whitelist.check_number(number)
-    print "Check wrong number:"
-    print whitelist.check_number("1111111111")
-    print "Get number:"
-    print whitelist.get_number(number)
+    print("Check number: " + number)
+    print(whitelist.check_number(number))
+    print("Check wrong number:")
+    print(whitelist.check_number("1111111111"))
+    print("Get number:")
+    print(whitelist.get_number(number))
 
     return 0
 

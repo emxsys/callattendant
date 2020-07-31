@@ -29,7 +29,7 @@
 # https://iotbytes.wordpress.com/incoming-call-details-logger-with-raspberry-pi/
 # ==============================================================================
 
-import utils
+import screening.utils
 from datetime import datetime
 
 
@@ -50,7 +50,7 @@ class Blacklist(object):
         self.db.execute(query, arguments)
         self.db.commit()
 
-        print "New blacklist entry added"
+        print("New blacklist entry added")
 
     def remove_number(self, phone_no):
         '''Removes records for the given number (without dashes or formatting)'''
@@ -59,7 +59,7 @@ class Blacklist(object):
         self.db.execute(query, arguments)
         self.db.commit()
 
-        print "blacklist entry removed"
+        print("blacklist entry removed")
 
     def check_number(self, number):
         query = "SELECT COUNT(*) FROM Blacklist WHERE PhoneNo=:number"
@@ -94,7 +94,7 @@ class Blacklist(object):
         curs.executescript(sql)
         curs.close()
 
-        print "Blacklist initialized"
+        print("Blacklist initialized")
 
 
 def test(args):
@@ -114,16 +114,16 @@ def test(args):
     # List the records
     query = 'select * from Blacklist'
     results = utils.query_db(db, query)
-    print "Query results:"
-    print results
+    print("Query results:")
+    print(results)
 
     number = "1234567890"
-    print "Check number: " + number
-    print blacklist.check_number(number)
-    print "Check wrong number:"
-    print blacklist.check_number("1111111111")
-    print "Get number:"
-    print blacklist.get_number(number)
+    print("Check number: " + number)
+    print(blacklist.check_number(number))
+    print("Check wrong number:")
+    print(blacklist.check_number("1111111111"))
+    print("Get number:")
+    print(blacklist.get_number(number))
 
     return 0
 

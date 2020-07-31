@@ -30,9 +30,9 @@ parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
 
 import config
-from blacklist import Blacklist
-from whitelist import Whitelist
-from nomorobo import NomoroboService
+from screening.blacklist import Blacklist
+from screening.whitelist import Whitelist
+from screening.nomorobo import NomoroboService
 import re
 import sys
 
@@ -50,31 +50,31 @@ class CallScreener(object):
         name = callerid["NAME"]
         try:
             if self._blacklist.check_number(number):
-                print "Caller is blacklisted"
+                print("Caller is blacklisted")
                 return True
             else:
-                print "Checking nomorobo..."
+                print("Checking nomorobo...")
                 result = self._nomorobo.lookup_number(number)
                 if result["spam"]:
-                    print "Caller is robocaller"
+                    print("Caller is robocaller")
                     self.blacklist_caller(callerid, "{} with score {}".format(result["reason"], result["score"]))
                     return True
-                print "Checking CID patterns..."
+                print("Checking CID patterns...")
                 for key in config.IGNORE_NAME_PATTERNS.keys():
                     match = re.search(key, name)
                     if match:
-                        print "CID ignore name pattern detected"
+                        print("CID ignore name pattern detected")
                         reason = config.IGNORE_NAME_PATTERNS[key]
                         self.blacklist_caller(callerid, reason)
                         return True
                 for key in config.IGNORE_NUMBER_PATTERNS.keys():
                     match = re.search(key, number)
                     if match:
-                        print "CID ignore number pattern detected"
+                        print("CID ignore number pattern detected")
                         reason = config.IGNORE_NUMBER_PATTERNS[key]
                         self.blacklist_caller(callerid, reason)
                         return True
-                print "Caller has been screened"
+                print("Caller has been screened")
                 return False
         finally:
             sys.stdout.flush()
@@ -114,22 +114,22 @@ def test(args):
     caller4 = {"NAME": "Robocaller", "NMBR": "3105241189", "DATE": "1012", "TIME": "0600"}
 
     # Perform tests
-    print "Assert is blacklisted: " + caller1['NMBR']
+    print("Assert is blacklisted: " + caller1['NMBR'])
     assert screener.is_blacklisted(caller1)
 
-    print "Assert not is whitelisted: " + caller1['NMBR']
+    print("Assert not is whitelisted: " + caller1['NMBR'])
     assert not screener.is_whitelisted(caller1)
 
-    print "Assert not is blacklisted: " + caller2['NMBR']
+    print("Assert not is blacklisted: " + caller2['NMBR'])
     assert not screener.is_blacklisted(caller2)
 
-    print "Assert is whitelisted: " + caller2['NMBR']
+    print("Assert is whitelisted: " + caller2['NMBR'])
     assert screener.is_whitelisted(caller2)
 
-    print "Assert a bad name pattern: " + caller3['NMBR']
+    print("Assert a bad name pattern: " + caller3['NMBR'])
     assert screener.is_blacklisted(caller3)
 
-    print "Assert is blacklisted by nomorobo: " + caller4['NMBR']
+    print("Assert is blacklisted by nomorobo: " + caller4['NMBR'])
     assert screener.is_blacklisted(caller4)
 
     return 0

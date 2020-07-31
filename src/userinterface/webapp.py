@@ -35,7 +35,7 @@ from screening.blacklist import Blacklist
 from screening.whitelist import Whitelist
 import screening.utils
 import sqlite3
-import thread
+import _thread
 
 # Create the Flask micro web-framework application
 app = Flask(__name__)
@@ -229,12 +229,12 @@ def manage_caller(call_log_id):
             caller = {}
             caller['NMBR'] = number
             caller['NAME'] = request.form['name']
-            print "Adding " + caller['NAME'] + " to whitelist"
+            print("Adding " + caller['NAME'] + " to whitelist")
             whitelist = Whitelist(get_db())
             whitelist.add_caller(caller, request.form['reason'])
 
         elif request.form['action'] == 'RemovePermit':
-            print "Removing " + number + " from whitelist"
+            print("Removing " + number + " from whitelist")
             whitelist = Whitelist(get_db())
             whitelist.remove_number(number)
 
@@ -242,12 +242,12 @@ def manage_caller(call_log_id):
             caller = {}
             caller['NMBR'] = number
             caller['NAME'] = request.form['name']
-            print "Adding " + caller['NAME'] + " to blacklist"
+            print("Adding " + caller['NAME'] + " to blacklist")
             blacklist = Blacklist(get_db())
             blacklist.add_caller(caller, request.form['reason'])
 
         elif request.form['action'] == 'RemoveBlock':
-            print "Removing " + number + " from blacklist"
+            print("Removing " + number + " from blacklist")
             blacklist = Blacklist(get_db())
             blacklist.remove_number(number)
 
@@ -352,7 +352,7 @@ def runFlask():
     #with app.app_context():
     #    call_details()
 
-    print "calling app.run()"
+    print("calling app.run()")
     # debug mode prevents app from running in separate thread
     app.run(host='0.0.0.0', debug=False)
 

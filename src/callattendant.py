@@ -24,7 +24,7 @@
 
 import config
 import sqlite3
-from Queue import Queue
+import queue
 from screening.calllogger import CallLogger
 from screening.callscreener import CallScreener
 from hardware.modem import Modem
@@ -52,7 +52,7 @@ class CallAttendant(object):
         self.db = sqlite3.connect(config.DATABASE)
 
         # The current/last caller id
-        self._caller_queue = Queue()
+        self._caller_queue = queue.Queue()
 
         # Visual indicators (LEDs)
         self.approved_indicator = ApprovedIndicator()
@@ -80,14 +80,14 @@ class CallAttendant(object):
             whitelisted = False
             blacklisted = False
             if mode in ["whitelist_only", "whitelist_and_blacklist"]:
-                print "Checking whitelist(s)"
+                print("Checking whitelist(s)")
                 if self.screener.is_whitelisted(caller):
                     whitelisted = True
                     caller["NOTE"] = "Whitelisted"
                     self.approved_indicator.turn_on()
 
             if not whitelisted and mode in ["blacklist_only", "whitelist_and_blacklist"]:
-                print "Checking blacklist(s)"
+                print("Checking blacklist(s)")
                 if self.screener.is_blacklisted(caller):
                     blacklisted = True
                     caller["NOTE"] = "Blacklisted"
