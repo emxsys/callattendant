@@ -120,8 +120,6 @@ def call_details():
     g.cur.execute(sql)
     blocked = g.cur.fetchone()[0]
     percent_blocked = blocked / total * 100
-    print percent_blocked
-    print '{0:.0%}'.format(percent_blocked)
     # Render the resullts with pagination
     return render_template(
         'call_details.htm',
