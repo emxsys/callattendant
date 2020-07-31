@@ -22,6 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import config
 import sqlite3
 from Queue import Queue
 from screening.calllogger import CallLogger
@@ -47,15 +48,8 @@ class CallAttendant(object):
 
     def __init__(self):
         """The constructor initializes and starts the Call Attendant"""
-        self.settings = {}
-        self.settings["db_name"] = "callattendant.db"  # SQLite3 DB to store incoming call log, whitelist and blacklist
-        self.settings["screening_mode"] = "whitelist_and_blacklist"  # no_screening, whitelist_only, whitelist_and_blacklist, blacklist_only
-        self.settings["bad_cid_patterns"] = {"V[0-9]{15}": "Telemarketer CID"}  # Bad CID regex pattern dictionary
-        self.settings["ignore_private_numbers"] = False  # Ignore "P" CID names
-        self.settings["ignore_unknown_numbers"] = True  # Ignore "O" CID names
-        self.settings["block_calls"] = True
 
-        self.db = sqlite3.connect(self.settings["db_name"])
+        self.db = sqlite3.connect(config.DATABASE)
 
         # The current/last caller id
         self._caller_queue = Queue()
@@ -82,7 +76,7 @@ class CallAttendant(object):
             caller = self._caller_queue.get()
 
             # Perform the call screening
-            mode = self.settings["screening_mode"]
+            mode = config.SCREENING_MODE
             whitelisted = False
             blacklisted = False
             if mode in ["whitelist_only", "whitelist_and_blacklist"]:
@@ -94,11 +88,11 @@ class CallAttendant(object):
 
             if not whitelisted and mode in ["blacklist_only", "whitelist_and_blacklist"]:
                 print "Checking blacklist(s)"
-                if self.screener.is_blacklisted(caller, self.settings["bad_cid_patterns"]):
+                if self.screener.is_blacklisted(caller):
                     blacklisted = True
                     caller["NOTE"] = "Blacklisted"
                     self.blocked_indicator.turn_on()
-                    if self.settings["block_calls"]:
+                    if config.BLOCK_CALLS:
                         # self.modem.play_audio("sample.wav")
                         # self.modem.hang_up()
                         self.modem.block_call()
