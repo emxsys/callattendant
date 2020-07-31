@@ -22,8 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import config
 import sqlite3
+from config import Config
 from Queue import Queue
 from screening.calllogger import CallLogger
 from screening.callscreener import CallScreener
@@ -49,7 +49,7 @@ class CallAttendant(object):
     def __init__(self):
         """The constructor initializes and starts the Call Attendant"""
 
-        self.db = sqlite3.connect(config.DATABASE)
+        self.db = sqlite3.connect(config['DATABASE'])
 
         # The current/last caller id
         self._caller_queue = Queue()
@@ -76,7 +76,7 @@ class CallAttendant(object):
             caller = self._caller_queue.get()
 
             # Perform the call screening
-            mode = config.SCREENING_MODE
+            mode = config['SCREENING_MODE']
             whitelisted = False
             blacklisted = False
             if mode in ["whitelist_only", "whitelist_and_blacklist"]:
@@ -92,7 +92,7 @@ class CallAttendant(object):
                     blacklisted = True
                     caller["NOTE"] = "Blacklisted"
                     self.blocked_indicator.turn_on()
-                    if config.BLOCK_CALLS:
+                    if config['BLOCK_CALLS']:
                         # self.modem.play_audio("sample.wav")
                         # self.modem.hang_up()
                         self.modem.block_call()
@@ -100,14 +100,65 @@ class CallAttendant(object):
             # Log every call to the database
             self.logger.log_caller(caller)
 
+def make_config(root_path = '.', filename = 'callattendant.cfg'):
+    # Establish the default configuration settings
+    default_config = {
+        "ENV": 'production',
+        "DEBUG": False,
+        "TESTING": False,
+        "DATABASE": "callattendant.db",
+        "SCREENING_MODE": "whitelist_and_blacklist",
+        "IGNORE_NAME_PATTERNS":  { },
+        "IGNORE_NUMBER_PATTERNS": { },
+        "BLOCK_CALLS": True,
+        "PLAY_BLOCKED_MESSAGE": True,
+        "BLOCKED_MESSAGE_FILE": "sample.wav",
+    }
+    cfg = Config(root_path, default_config)
 
-def main(args):
+    # Load the externally defined settings which may overwrite defaults
+    if not filename == None:
+        cfg.from_pyfile(filename)
+
+    # Validate
+    return cfg
+
+
+def main(argv):
     """Create and run the call attendent"""
-    call_attendant = CallAttendant()
+
+    # Process command line arguments
+    import sys, getopt
+    syntax = 'Example: python callattendant.py -c <configfile>'
+    configfile = None
+    try:
+        opts, args = getopt.getopt(argv,"hc:",["config="])
+    except getopt.GetoptError:
+        print syntax
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
+            print syntax
+            print '-c, --config\tSpecifies a python configuration file'
+            print '-h, --help\tDisplays this help text'
+            sys.exit()
+        elif opt in ("-c", "--config"):
+            configfile = arg
+
+    # Load and validate the configuration
+    global config
+    if configfile == None or configfile == '' :
+        config = make_config()
+    else:
+        head_tail = os.path.split(configfile)
+        config = make_config(head_tail[0], head_tail[1])
+
+    # Start the application
+    app = CallAttendant()
     return 0
 
 
 if __name__ == '__main__':
     import sys
-    sys.exit(main(sys.argv))
+    sys.exit(main(sys.argv[1:]))
     print("Done")
