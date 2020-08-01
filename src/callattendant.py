@@ -100,7 +100,7 @@ class CallAttendant(object):
             # Log every call to the database
             self.logger.log_caller(caller)
 
-def make_config(root_path = '.', filename = 'callattendant.cfg'):
+def make_config(root_path = '.', filename = None):
     # Establish the default configuration settings
     default_config = {
         "ENV": 'production',
@@ -121,6 +121,8 @@ def make_config(root_path = '.', filename = 'callattendant.cfg'):
         cfg.from_pyfile(filename)
 
     # Validate
+
+
     return cfg
 
 

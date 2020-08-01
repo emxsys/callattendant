@@ -145,6 +145,9 @@ class Modem(object):
         try:
             if self._send(GO_OFF_HOOK):
                 time.sleep(2)
+                if config['PLAY_BLOCKED_MESSAGE']:
+                    self.play_audio(config['BLOCKED_MESSAGE_FILE'])
+                time.sleep(2)
                 self._send(GO_ON_HOOK)
             else:
                 print "Error: Failed to block the call."
@@ -435,6 +438,8 @@ class Modem(object):
 
 
 def test(args):
+    """Test the module"""
+    import os
 
     print "Running tests...."
     modem = Modem(None)  # No call attendent is set in tests
@@ -462,7 +467,8 @@ def test(args):
 
     modem._send(FACTORY_RESET)
 
-    modem.play_audio("sample.wav")
+    currentdir = os.path.dirname(os.path.realpath(__file__))
+    modem.play_audio(os.path.join(currentdir, "sample.wav"))
 
     modem.record_audio("message.wav")
 
@@ -470,6 +476,20 @@ def test(args):
 
 
 if __name__ == '__main__':
-    import sys
+    ''' Run the tests when this module is executed standalone'''
+
+    # Add the parent directory to the path so callattendant can be found
+    import os, sys
+    currentdir = os.path.dirname(os.path.realpath(__file__))
+    parentdir = os.path.dirname(currentdir)
+    sys.path.append(parentdir)
+
+    # Load the configuration
+    from callattendant import make_config
+    config = make_config(parentdir)
+    config['DEBUG'] = True
+    config['TESTING'] = True
+
+    # Run the tests
     sys.exit(test(sys.argv))
     print("Done")
