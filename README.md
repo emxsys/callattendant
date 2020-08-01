@@ -76,10 +76,10 @@ The development plan's [phase objectives](https://github.com/emxsys/callattendan
 ### [Elaboration Phase](https://github.com/emxsys/callattendant/projects/2)
 - Iteration #E1: [v0.2](https://github.com/emxsys/callattendant/releases/tag/v0.2)
 ### [Construction Phase](https://github.com/emxsys/callattendant/projects/3)
-- Iteration #C1: v0.3
-- Iteration #C2: v0.4
+- Iteration #C1: [v0.3](https://github.com/emxsys/callattendant/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Release+0.3%22)
+- Iteration #C2: [v0.4](https://github.com/emxsys/callattendant/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Release+0.4%22)
 ### [Transition Phase](https://github.com/emxsys/callattendant/projects/4)
-- Iteration #T1: v1.0
+- Iteration #T1: [v1.0](https://github.com/emxsys/callattendant/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Release+1.0%22)
 
 ---
 
