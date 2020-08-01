@@ -484,9 +484,9 @@ if __name__ == '__main__':
     parentdir = os.path.dirname(currentdir)
     sys.path.append(parentdir)
 
-    # Load the configuration
+    # Load and tweak the default config
     from callattendant import make_config
-    config = make_config(parentdir)
+    config = make_config()
     config['DEBUG'] = True
     config['TESTING'] = True
 
