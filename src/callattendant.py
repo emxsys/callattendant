@@ -50,7 +50,8 @@ class CallAttendant(object):
     def __init__(self):
         """The constructor initializes and starts the Call Attendant"""
 
-        self.db = sqlite3.connect(config['DATABASE'])
+        database = os.path.join(config['ROOT_PATH'], config['DATABASE'])
+        self.db = sqlite3.connect(database)
 
         # The current/last caller id
         self._caller_queue = Queue()
@@ -69,6 +70,12 @@ class CallAttendant(object):
         # User Interface subsystem
         webapp.start()
 
+        # Get relevant config settings
+        mode = config['SCREENING_MODE']
+        block = config.get_namespace("BLOCK_")
+        blocked = config.get_namespace("BLOCKED_")
+        blocked_message_file = os.path.join(config['ROOT_PATH'], blocked['message_file'])
+
         # Run the app
         while 1:
             """Processes incoming callers with logging and screening."""
@@ -77,7 +84,6 @@ class CallAttendant(object):
             caller = self._caller_queue.get()
 
             # Perform the call screening
-            mode = config['SCREENING_MODE']
             whitelisted = False
             blacklisted = False
             if mode in ["whitelist_only", "whitelist_and_blacklist"]:
@@ -93,9 +99,7 @@ class CallAttendant(object):
                     blacklisted = True
                     caller["NOTE"] = "Blacklisted"
                     self.blocked_indicator.turn_on()
-                    if config['BLOCK_CALLS']:
-                        # self.modem.play_audio("sample.wav")
-                        # self.modem.hang_up()
+                    if block['enabled']:
                         self.modem.block_call()
 
             # Log every call to the database
@@ -109,19 +113,20 @@ def make_config(filename = None):
         :return: a config dict'''
 
     # Establish the default configuration settings
+    root_path = os.path.dirname(os.path.realpath(__file__))
     default_config = {
         "ENV": 'production',
         "DEBUG": False,
         "TESTING": False,
+        "ROOT_PATH": root_path,
         "DATABASE": "callattendant.db",
         "SCREENING_MODE": "whitelist_and_blacklist",
-        "IGNORE_NAME_PATTERNS":  { },
-        "IGNORE_NUMBER_PATTERNS": { },
-        "BLOCK_CALLS": True,
-        "PLAY_BLOCKED_MESSAGE": True,
-        "BLOCKED_MESSAGE_FILE": "sample.wav",
+        "BLOCK_ENABED": True,
+        "BLOCK_NAME_PATTERNS":  { },
+        "BLOCK_NUMBER_PATTERNS": { },
+        "BLOCKED_MESSAGE_ENABLED": True,
+        "BLOCKED_MESSAGE_FILE": "hardware/sample.wav",
     }
-    root_path = os.path.dirname(os.path.realpath(__file__))
     cfg = Config(root_path, default_config)
 
     # Load the config file, which may overwrite defaults

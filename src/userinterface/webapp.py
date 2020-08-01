@@ -36,17 +36,20 @@ from screening.whitelist import Whitelist
 import screening.utils
 import sqlite3
 import thread
+import os
 
 # Create the Flask micro web-framework application
 app = Flask(__name__)
 app.config.from_pyfile('webapp.cfg')
 app.debug = False  # debug mode prevents app from running in separate thread
-
+currentdir = os.path.dirname(os.path.realpath(__file__))
+parentdir = os.path.dirname(currentdir)
+database = os.path.join(parentdir, app.config.get('DATABASE', 'callattendant.db'))
 
 @app.before_request
 def before_request():
     '''Establish a database connection for the current request'''
-    g.conn = sqlite3.connect(current_app.config.get('DATABASE', 'callattendant.db'))
+    g.conn = sqlite3.connect(database)
     g.conn.row_factory = sqlite3.Row
     g.cur = g.conn.cursor()
 
@@ -119,9 +122,7 @@ def call_details():
         where b.PhoneNo is null and c.PhoneNo is not null'''
     g.cur.execute(sql)
     blocked = g.cur.fetchone()[0]
-    percent_blocked = 0
-    if total > 0:
-        percent_blocked = blocked / total * 100
+    percent_blocked = blocked / total * 100
     # Render the resullts with pagination
     return render_template(
         'call_details.htm',
@@ -299,7 +300,7 @@ def get_db():
     # Flask template for database connections
     if 'db' not in g:
         g.db = sqlite3.connect(
-            current_app.config.get('DATABASE', 'callattendant.db'),
+            database,
             detect_types=sqlite3.PARSE_DECLTYPES
         )
         g.db.row_factory = sqlite3.Row

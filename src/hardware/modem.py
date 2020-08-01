@@ -140,13 +140,17 @@ class Modem(object):
     def block_call(self):
         """Block the current caller by answering and hanging up"""
         print "Blocking call..."
+        blocked = config.get_namespace("BLOCKED_")
         self._serial.cancel_read()
         self._lock.acquire()
         try:
             if self._send(GO_OFF_HOOK):
                 time.sleep(2)
-                if config['PLAY_BLOCKED_MESSAGE']:
-                    self.play_audio(config['BLOCKED_MESSAGE_FILE'])
+                if blocked['message_enabled']:
+                    blocked_message_file = os.path.join(
+                        config['ROOT_PATH'],
+                        blocked['message_file'])
+                    self.play_audio(blocked_message_file)
                 time.sleep(2)
                 self._send(GO_ON_HOOK)
             else:
