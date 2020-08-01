@@ -295,7 +295,7 @@ class Modem(object):
 
     def _send(self, command, expected_response=None, response_timeout=5):
         """Sends a command string (e.g., AT command) to the modem."""
-
+        
         # Disable processing while sending commands lest the response
         # get processed by the event processing thread.
         self._lock.acquire()
@@ -322,12 +322,13 @@ class Modem(object):
         Returns False if ERROR is returned or if it times out
         before the expected response is returned
         """
+
         start_time = datetime.now()
         try:
             while 1:
                 modem_data = self._serial.readline()
-                print(modem_data)
-                response = modem_data.strip(' \t\n\r' + DLE_CODE)
+                response = modem_data.strip(b' \t\n\r' + DLE_CODE.encode("utf-8")).decode()
+                print('expected response ' + response)
                 if expected_response == response:
                     return True
                 elif "ERROR" in response:
