@@ -23,13 +23,7 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-# Add the parent directory to the path so config.py can be found during tests
-import os, sys
-currentdir = os.path.dirname(os.path.realpath(__file__))
-parentdir = os.path.dirname(currentdir)
-sys.path.append(parentdir)
 
-import config
 from blacklist import Blacklist
 from whitelist import Whitelist
 from nomorobo import NomoroboService
@@ -48,6 +42,7 @@ class CallScreener(object):
         '''Returns true if the number is on a blacklist'''
         number = callerid['NMBR']
         name = callerid["NAME"]
+        block = config.get_namespace("BLOCK_")
         try:
             if self._blacklist.check_number(number):
                 print "Caller is blacklisted"
@@ -60,18 +55,18 @@ class CallScreener(object):
                     self.blacklist_caller(callerid, "{} with score {}".format(result["reason"], result["score"]))
                     return True
                 print "Checking CID patterns..."
-                for key in config.IGNORE_NAME_PATTERNS.keys():
+                for key in block["name_patterns"].keys():
                     match = re.search(key, name)
                     if match:
                         print "CID ignore name pattern detected"
-                        reason = config.IGNORE_NAME_PATTERNS[key]
+                        reason = block["name_patterns"][key]
                         self.blacklist_caller(callerid, reason)
                         return True
-                for key in config.IGNORE_NUMBER_PATTERNS.keys():
+                for key in block["number_patterns"].keys():
                     match = re.search(key, number)
                     if match:
                         print "CID ignore number pattern detected"
-                        reason = config.IGNORE_NUMBER_PATTERNS[key]
+                        reason = block["number_patterns"][key]
                         self.blacklist_caller(callerid, reason)
                         return True
                 print "Caller has been screened"
@@ -136,6 +131,22 @@ def test(args):
 
 
 if __name__ == '__main__':
-    import sys
+
+    # Add the parent directory to the path so callattendant can be found
+    import os, sys
+    currentdir = os.path.dirname(os.path.realpath(__file__))
+    parentdir = os.path.dirname(currentdir)
+    sys.path.append(parentdir)
+
+    # Load and tweak the default config
+    from callattendant import make_config
+    config = make_config()
+    config['DEBUG'] = True
+    config['TESTING'] = True
+    config['BLOCK_NAME_PATTERNS'] = {
+        "V[0-9]{15}": "Telemarketer Caller ID",
+        "O": "Unknown number"
+    }
+
     sys.exit(test(sys.argv))
     print("Done")

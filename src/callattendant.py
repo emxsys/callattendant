@@ -122,7 +122,7 @@ def make_config(filename = None):
         "DATABASE": "callattendant.db",
         "SCREENING_MODE": "whitelist_and_blacklist",
         "BLOCK_ENABED": True,
-        "BLOCK_NAME_PATTERNS":  { },
+        "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID",},
         "BLOCK_NUMBER_PATTERNS": { },
         "BLOCKED_MESSAGE_ENABLED": True,
         "BLOCKED_MESSAGE_FILE": "hardware/sample.wav",
