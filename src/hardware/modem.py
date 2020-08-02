@@ -69,8 +69,13 @@ class Modem(object):
     Raspberry Pi and a US Robotics 5637 modem.
     """
 
-    def __init__(self, call_attendant):
-        """Constructs a modem object for serial communications."""
+    def __init__(self, config, call_attendant):
+        """
+        Constructs a modem object for serial communications.
+            :param config: application configuration dict
+            :call_attendant: application object
+        """
+        self.config = config
         self.call_attendant = call_attendant
         # Thread synchronization object
         self._lock = threading.RLock()
@@ -140,7 +145,7 @@ class Modem(object):
     def block_call(self):
         """Block the current caller by answering and hanging up"""
         print "Blocking call..."
-        blocked = config.get_namespace("BLOCKED_")
+        blocked = self.config.get_namespace("BLOCKED_")
         self._serial.cancel_read()
         self._lock.acquire()
         try:
@@ -148,7 +153,7 @@ class Modem(object):
                 time.sleep(2)
                 if blocked['message_enabled']:
                     blocked_message_file = os.path.join(
-                        config['ROOT_PATH'],
+                        self.config['ROOT_PATH'],
                         blocked['message_file'])
                     self.play_audio(blocked_message_file)
                 time.sleep(2)
@@ -441,12 +446,12 @@ class Modem(object):
             sys.exit()
 
 
-def test(args):
+def test(config):
     """Test the module"""
     import os
 
     print "Running tests...."
-    modem = Modem(None)  # No call attendent is set in tests
+    modem = Modem(config, None)  # No call attendent is set in tests
 
     try:
         modem.open_serial_port()
@@ -495,5 +500,5 @@ if __name__ == '__main__':
     config['TESTING'] = True
 
     # Run the tests
-    sys.exit(test(sys.argv))
+    sys.exit(test(config))
     print("Done")
