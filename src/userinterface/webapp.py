@@ -119,7 +119,10 @@ def call_details():
         where b.PhoneNo is null and c.PhoneNo is not null'''
     g.cur.execute(sql)
     blocked = g.cur.fetchone()[0]
-    percent_blocked = blocked / total * 100
+    if total == 0:
+        percent_blocked = 0
+    else:
+        percent_blocked = blocked / total * 100
     # Render the resullts with pagination
     return render_template(
         'call_details.htm',
