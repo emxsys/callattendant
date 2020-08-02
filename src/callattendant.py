@@ -36,7 +36,7 @@ import userinterface.webapp as webapp
 class CallAttendant(object):
     """The CallAttendant provides call logging and call screening services."""
 
-    def handler_caller(self, caller):
+    def handle_caller(self, caller):
         """Places the caller record in synchronized queue for processing"""
         self._caller_queue.put(caller)
 
@@ -68,7 +68,7 @@ class CallAttendant(object):
         # Telephony subsystems
         self.logger = CallLogger(self.db)
         self.screener = CallScreener(self.db, self.config)
-        self.modem = Modem(self, self.config)
+        self.modem = Modem(self.config, self.phone_ringing, self.handle_caller)
         self.modem.handle_calls()
 
         # User Interface subsystem

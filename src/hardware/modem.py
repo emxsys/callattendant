@@ -69,14 +69,16 @@ class Modem(object):
     Raspberry Pi and a US Robotics 5637 modem.
     """
 
-    def __init__(self, config, call_attendant):
+    def __init__(self, config, phone_ringing, handle_caller):
         """
         Constructs a modem object for serial communications.
             :param config: application configuration dict
-            :call_attendant: application object
+            :param phone_ringing: function that takes a boolean
+            :param handle_caller: callback function that takes a caller
         """
         self.config = config
-        self.call_attendant = call_attendant
+        self.phone_ringing = phone_ringing
+        self.handle_caller = handle_caller
         # Thread synchronization object
         self._lock = threading.RLock()
         # Setup and open the serial port
@@ -89,11 +91,6 @@ class Modem(object):
 
     def _call_handler(self):
         """Thread function that processes the incoming modem data."""
-
-        # Prerequisites
-        if self.call_attendant is None:
-            print "No call attendant in call handler; calls will not be handled."
-            return
 
         # Handle incoming calls
         call_record = {}
@@ -110,7 +107,7 @@ class Modem(object):
                 print modem_data
 
                 if "RING" in modem_data.strip(DLE_CODE):
-                    self.call_attendant.phone_ringing(True)
+                    self.phone_ringing(True)
 
                 if ("DATE" in modem_data):
                     call_record['DATE'] = (modem_data[5:]).strip(' \t\n\r')
@@ -125,7 +122,7 @@ class Modem(object):
                 if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
                     print "Screening call..."
                     # print call_record
-                    self.call_attendant.handler_caller(call_record)
+                    self.handle_caller(call_record)
                     call_record = {}
                     # Sleep for a short duration to allow call attendant
                     # to screen call before resuming
@@ -446,12 +443,12 @@ class Modem(object):
             sys.exit()
 
 
-def test(config):
+def test(config, phone_ringing, handle_caller):
     """Test the module"""
     import os
 
     print "Running tests...."
-    modem = Modem(config, None)  # No call attendent is set in tests
+    modem = Modem(config, phone_ringing, handle_caller)
 
     try:
         modem.open_serial_port()
@@ -499,6 +496,10 @@ if __name__ == '__main__':
     config['DEBUG'] = True
     config['TESTING'] = True
 
+    # Dummy callback functions
+    phone_ringing = lambda is_ringing : is_ringing
+    handle_caller = lambda calller : caller
+
     # Run the tests
-    sys.exit(test(config))
+    sys.exit(test(config, phone_ringing, handle_caller))
     print("Done")
