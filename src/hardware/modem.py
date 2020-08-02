@@ -101,8 +101,8 @@ class Modem(object):
             finally:
                 self._lock.release()
 
-            if modem_data != "":
-                print(modem_data)
+            if modem_data != b'':
+                print(modem_data.decode())
 
                 if "RING".encode("utf-8") in modem_data.strip(DLE_CODE.encode("utf-8")):
                     self.call_attendant.phone_ringing(True)
@@ -328,7 +328,6 @@ class Modem(object):
             while 1:
                 modem_data = self._serial.readline()
                 response = modem_data.strip(b' \t\n\r' + DLE_CODE.encode("utf-8")).decode()
-                print('expected response ' + response)
                 if expected_response == response:
                     return True
                 elif "ERROR" in response:
