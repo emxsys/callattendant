@@ -1,0 +1,41 @@
+#!/usr/bin/env python
+#
+# file: app.cfg
+#
+# ==============================================================================
+# This file contains the configuration settings for the callattendant
+# ==============================================================================
+
+# ENV: production or development environment. development implies
+# incomplete features and/or debugging
+ENV = 'production'
+
+# DEBUG: If true additional assertions and output may be generated
+DEBUG = False
+
+# TESTING: If true test scaffolding/behavior may be implmented
+TESTING = False
+
+# DATABASE: Sqlite database for incoming call log, whitelist and blacklist
+DATABASE = "callattendant.db"
+
+# SCREENING_MODE: no_screening, whitelist_only, whitelist_and_blacklist, blacklist_only
+SCREENING_MODE = "whitelist_and_blacklist"
+
+# BLOCK_ENABED: if true calls that fail screening will be blocked
+BLOCK_ENABED = True
+
+# BLOCK_NAME_PATTERNS: A regex expression dict applied to the CID names
+# Example: {"V[0-9]{15}": "Telemarketer Caller ID", "O": "Unknownd caller"}
+BLOCK_NAME_PATTERNS = {"V[0-9]{15}": "Telemarketer Caller ID",}
+
+# BLOCK_NUMBER_PATTERNS: A regx expression dict applied to the CID numbers
+# Example: {"P": "Private number",}
+BLOCK_NUMBER_PATTERNS = { }
+
+# BLOCKED_MESSAGE_ENABLED: If true the blocked message file will be played to the caller
+BLOCKED_MESSAGE_ENABLED = False
+
+# BLOCKED_MESSAGE_FILE: The wav file to be played to blocked callers
+BLOCKED_MESSAGE_FILE = "hardware/sample.wav"
+
