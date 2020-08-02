@@ -359,4 +359,4 @@ def runFlask():
 
 def start():
     '''Start the Flask webapp in a separate thread'''
-    thread.start_new_thread(runFlask, ())
+    _thread.start_new_thread(runFlask, ())

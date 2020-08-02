@@ -104,16 +104,16 @@ class Modem(object):
             if modem_data != "":
                 print(modem_data)
 
-                if "RING" in modem_data.strip(DLE_CODE):
+                if "RING".encode("utf-8") in modem_data.strip(DLE_CODE.encode("utf-8")):
                     self.call_attendant.phone_ringing(True)
 
-                if ("DATE" in modem_data):
+                if ("DATE".encode("utf-8") in modem_data):
                     call_record['DATE'] = (modem_data[5:]).strip(' \t\n\r')
-                if ("TIME" in modem_data):
+                if ("TIME".encode("utf-8")in modem_data):
                     call_record['TIME'] = (modem_data[5:]).strip(' \t\n\r')
-                if ("NAME" in modem_data):
+                if ("NAME".encode("utf-8") in modem_data):
                     call_record['NAME'] = (modem_data[5:]).strip(' \t\n\r')
-                if ("NMBR" in modem_data):
+                if ("NMBR".encode("utf-8") in modem_data):
                     call_record['NMBR'] = (modem_data[5:]).strip(' \t\n\r')
 
                 # https://stackoverflow.com/questions/1285911/how-do-i-check-that-multiple-keys-are-in-a-dict-in-a-single-pass
