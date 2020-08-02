@@ -78,7 +78,7 @@ class CallAttendant(object):
         """Processes incoming callers with logging and screening."""
 
         # Get relevant config settings
-        mode = self.config['SCREENING_MODE']
+        screening_mode = self.config['SCREENING_MODE']
         block = self.config.get_namespace("BLOCK_")
         blocked = self.config.get_namespace("BLOCKED_")
         blocked_message_file = os.path.join(self.config['ROOT_PATH'], blocked['message_file'])
@@ -95,14 +95,14 @@ class CallAttendant(object):
             # Perform the call screening
             whitelisted = False
             blacklisted = False
-            if mode in ["whitelist_only", "whitelist_and_blacklist"]:
+            if "whitelist" in screening_mode:
                 print "Checking whitelist(s)"
                 if self.screener.is_whitelisted(caller):
                     whitelisted = True
                     caller["NOTE"] = "Whitelisted"
                     self.approved_indicator.turn_on()
 
-            if not whitelisted and mode in ["blacklist_only", "whitelist_and_blacklist"]:
+            if not whitelisted and "blacklist" in screening_mode:
                 print "Checking blacklist(s)"
                 if self.screener.is_blacklisted(caller):
                     blacklisted = True
@@ -130,7 +130,7 @@ def make_config(filename = None):
         "TESTING": False,
         "ROOT_PATH": root_path,
         "DATABASE": "callattendant.db",
-        "SCREENING_MODE": "whitelist_and_blacklist",
+        "SCREENING_MODE": ("whitelist", "blacklist"),
         "BLOCK_ENABLED": True,
         "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID",},
         "BLOCK_NUMBER_PATTERNS": { },
@@ -140,7 +140,7 @@ def make_config(filename = None):
     # Create the default configuration
     cfg = Config(root_path, default_config)
     # Load the config file, which may overwrite defaults
-    if not filename == None:
+    if not filename is None:
         cfg.from_pyfile(filename)
 
     if cfg["DEBUG"]:
