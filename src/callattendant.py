@@ -130,7 +130,7 @@ def make_config(filename = None):
         "BLOCK_ENABED": True,
         "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID",},
         "BLOCK_NUMBER_PATTERNS": { },
-        "BLOCKED_MESSAGE_ENABLED": True,
+        "BLOCKED_MESSAGE_ENABLED": False,
         "BLOCKED_MESSAGE_FILE": "hardware/sample.wav",
     }
     # Create the default configuration
