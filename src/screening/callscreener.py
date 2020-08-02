@@ -42,7 +42,7 @@ class CallScreener(object):
         '''Returns true if the number is on a blacklist'''
         number = callerid['NMBR']
         name = callerid["NAME"]
-        block = config.get_namespace("BLOCK_")
+        block = self.config.get_namespace("BLOCK_")
         try:
             if self._blacklist.check_number(number):
                 print "Caller is blacklisted"
@@ -80,22 +80,18 @@ class CallScreener(object):
     def blacklist_caller(self, callerid, reason):
         self._blacklist.add_caller(callerid, reason)
 
-    def __init__(self, db):
+    def __init__(self, db, config):
         self._db = db
+        self.config = config
         self._blacklist = Blacklist(db)
         self._whitelist = Whitelist(db)
         self._nomorobo = NomoroboService()
 
 
-def test(args):
-    import sqlite3
-
-    # Create the test db in RAM
-    db = sqlite3.connect(":memory:")
-    # db.text_factory = str
+def test(db, config):
 
     # Create the screener to be tested
-    screener = CallScreener(db)
+    screener = CallScreener(db, config)
 
     # Add a record to the blacklist
     caller1 = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
@@ -148,5 +144,9 @@ if __name__ == '__main__':
         "O": "Unknown number"
     }
 
-    sys.exit(test(sys.argv))
+    # Create the test db in RAM
+    import sqlite3
+    db = sqlite3.connect(":memory:")
+
+    sys.exit(test(db, config))
     print("Done")

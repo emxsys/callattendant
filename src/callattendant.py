@@ -63,7 +63,7 @@ class CallAttendant(object):
 
         # Telephony subsystems
         self.logger = CallLogger(self.db)
-        self.screener = CallScreener(self.db)
+        self.screener = CallScreener(self.db, config)
         self.modem = Modem(self)
         self.modem.handle_calls()
 
