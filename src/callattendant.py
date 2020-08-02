@@ -68,7 +68,7 @@ class CallAttendant(object):
         self.modem.handle_calls()
 
         # User Interface subsystem
-        webapp.start()
+        webapp.start(database)
 
         # Get relevant config settings
         mode = config['SCREENING_MODE']
@@ -104,6 +104,7 @@ class CallAttendant(object):
 
             # Log every call to the database
             self.logger.log_caller(caller)
+
 
 def make_config(filename = None):
     '''Creates the config dictionary for this application/module.

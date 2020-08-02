@@ -42,14 +42,11 @@ import os
 app = Flask(__name__)
 app.config.from_pyfile('webapp.cfg')
 app.debug = False  # debug mode prevents app from running in separate thread
-currentdir = os.path.dirname(os.path.realpath(__file__))
-parentdir = os.path.dirname(currentdir)
-database = os.path.join(parentdir, app.config.get('DATABASE', 'callattendant.db'))
 
 @app.before_request
 def before_request():
     '''Establish a database connection for the current request'''
-    g.conn = sqlite3.connect(database)
+    g.conn = sqlite3.connect(current_app.config.get("DATABASE"))
     g.conn.row_factory = sqlite3.Row
     g.cur = g.conn.cursor()
 
@@ -300,7 +297,7 @@ def get_db():
     # Flask template for database connections
     if 'db' not in g:
         g.db = sqlite3.connect(
-            database,
+            current_app.config.get("DATABASE"),
             detect_types=sqlite3.PARSE_DECLTYPES
         )
         g.db.row_factory = sqlite3.Row
@@ -351,15 +348,22 @@ def get_pagination(**kwargs):
     )
 
 
-def runFlask():
-    #with app.app_context():
-    #    call_details()
+def run_flask(database):
+    '''
+    Runs the Flask webapp.
+        :param database: full path to the callattendant database file
+    '''
+    with app.app_context():
+        app.config["DATABASE"] = database
 
-    print "calling app.run()"
+    print "Running Flask webapp"
     # debug mode prevents app from running in separate thread
     app.run(host='0.0.0.0', debug=False)
 
 
-def start():
-    '''Start the Flask webapp in a separate thread'''
-    thread.start_new_thread(runFlask, ())
+def start(database):
+    '''
+    Starts the Flask webapp in a separate thread.
+        :param database: full path to the callattendant database file
+    '''
+    thread.start_new_thread(run_flask, (database,))
