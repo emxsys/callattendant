@@ -76,6 +76,7 @@ class CallAttendant(object):
         blocked = config.get_namespace("BLOCKED_")
         blocked_message_file = os.path.join(config['ROOT_PATH'], blocked['message_file'])
 
+    def run(self):
         # Run the app
         while 1:
             """Processes incoming callers with logging and screening."""
@@ -128,27 +129,24 @@ def make_config(filename = None):
         "BLOCKED_MESSAGE_ENABLED": True,
         "BLOCKED_MESSAGE_FILE": "hardware/sample.wav",
     }
+    # Create the default configuration
     cfg = Config(root_path, default_config)
-
     # Load the config file, which may overwrite defaults
     if not filename == None:
         cfg.from_pyfile(filename)
-
-    # Validate
-
-
     return cfg
 
 
-def main(argv):
-    """Create and run the call attendent"""
-
-    # Process command line arguments
+def get_args(argv):
+    """Get arguments from the command line
+        :param argv: sys.argv
+        :return: configfile
+    """
     import sys, getopt
     syntax = 'Usage: python callattendant.py -c [FILE]'
     configfile = None
     try:
-        opts, args = getopt.getopt(argv,"hc:",["help","config="])
+        opts, args = getopt.getopt(argv[1:], "hc:",["help","config="])
     except getopt.GetoptError:
         print syntax
         sys.exit(2)
@@ -160,6 +158,14 @@ def main(argv):
             sys.exit()
         elif opt in ("-c", "--config"):
             configfile = arg
+    return configfile
+
+
+def main(argv):
+    """Create and run the call attendent application"""
+
+    # Process command line arguments
+    configfile = get_args(argv)
 
     # Create the global config dict
     global config
@@ -167,10 +173,12 @@ def main(argv):
 
     # Start the application
     app = CallAttendant()
+    app.run()
+
     return 0
 
 
 if __name__ == '__main__':
     import sys
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main(sys.argv))
     print("Done")
