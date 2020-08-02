@@ -47,10 +47,14 @@ class CallAttendant(object):
         else:
             self.ring_indicator.turn_off()
 
-    def __init__(self):
-        """The constructor initializes and starts the Call Attendant"""
+    def __init__(self, config):
+        """
+        The constructor initializes and starts the Call Attendant
+            :param config: the application config dict
+        """
+        self.config = config
 
-        database = os.path.join(config['ROOT_PATH'], config['DATABASE'])
+        database = os.path.join(self.config['ROOT_PATH'], self.config['DATABASE'])
         self.db = sqlite3.connect(database)
 
         # The current/last caller id
@@ -63,18 +67,18 @@ class CallAttendant(object):
 
         # Telephony subsystems
         self.logger = CallLogger(self.db)
-        self.screener = CallScreener(self.db, config)
-        self.modem = Modem(self, config)
+        self.screener = CallScreener(self.db, self.config)
+        self.modem = Modem(self, self.config)
         self.modem.handle_calls()
 
         # User Interface subsystem
         webapp.start(database)
 
         # Get relevant config settings
-        mode = config['SCREENING_MODE']
-        block = config.get_namespace("BLOCK_")
-        blocked = config.get_namespace("BLOCKED_")
-        blocked_message_file = os.path.join(config['ROOT_PATH'], blocked['message_file'])
+        mode = self.config['SCREENING_MODE']
+        block = self.config.get_namespace("BLOCK_")
+        blocked = self.config.get_namespace("BLOCKED_")
+        blocked_message_file = os.path.join(self.config['ROOT_PATH'], blocked['message_file'])
 
     def run(self):
         # Run the app
@@ -167,12 +171,11 @@ def main(argv):
     # Process command line arguments
     configfile = get_args(argv)
 
-    # Create the global config dict
-    global config
+    # Create the application config dict
     config = make_config(configfile)
 
-    # Start the application
-    app = CallAttendant()
+    # Create and start the application
+    app = CallAttendant(config)
     app.run()
 
     return 0
