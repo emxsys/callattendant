@@ -69,10 +69,13 @@ class CallAttendant(object):
         self.logger = CallLogger(self.db)
         self.screener = CallScreener(self.db, self.config)
         self.modem = Modem(self.config, self.phone_ringing, self.handle_caller)
-        self.modem.handle_calls()
 
-        # User Interface subsystem
+        # Start the User Interface subsystem
         webapp.start(database)
+
+
+    def run(self):
+        """Processes incoming callers with logging and screening."""
 
         # Get relevant config settings
         mode = self.config['SCREENING_MODE']
@@ -80,10 +83,11 @@ class CallAttendant(object):
         blocked = self.config.get_namespace("BLOCKED_")
         blocked_message_file = os.path.join(self.config['ROOT_PATH'], blocked['message_file'])
 
-    def run(self):
-        # Run the app
+        # Instruct the modem to feed calls into the caller queue
+        self.modem.handle_calls()
+
+        # Process incoming calls
         while 1:
-            """Processes incoming callers with logging and screening."""
 
             # Wait (blocking) for a caller
             caller = self._caller_queue.get()
@@ -127,7 +131,7 @@ def make_config(filename = None):
         "ROOT_PATH": root_path,
         "DATABASE": "callattendant.db",
         "SCREENING_MODE": "whitelist_and_blacklist",
-        "BLOCK_ENABED": True,
+        "BLOCK_ENABLED": True,
         "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID",},
         "BLOCK_NUMBER_PATTERNS": { },
         "BLOCKED_MESSAGE_ENABLED": False,
@@ -138,6 +142,12 @@ def make_config(filename = None):
     # Load the config file, which may overwrite defaults
     if not filename == None:
         cfg.from_pyfile(filename)
+
+    if cfg["DEBUG"]:
+        print "[Configuration]"
+        for key, val in cfg.iteritems():
+            print "{} = {}".format(key, val)
+
     return cfg
 
 

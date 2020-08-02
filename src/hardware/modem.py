@@ -31,6 +31,7 @@
 
 from datetime import datetime
 import atexit
+import os
 import serial
 import subprocess
 import sys
