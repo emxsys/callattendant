@@ -31,6 +31,7 @@
 
 import utils
 from datetime import datetime
+from pprint import pprint
 
 
 class Blacklist(object):
@@ -50,7 +51,9 @@ class Blacklist(object):
         self.db.execute(query, arguments)
         self.db.commit()
 
-        print "New blacklist entry added"
+        if self.config["DEBUG"]:
+            print("New blacklist entry added")
+            pprint(arguments)
 
     def remove_number(self, phone_no):
         '''Removes records for the given number (without dashes or formatting)'''
@@ -59,7 +62,9 @@ class Blacklist(object):
         self.db.execute(query, arguments)
         self.db.commit()
 
-        print "blacklist entry removed"
+        if self.config["DEBUG"]:
+            print("blacklist entry removed")
+            pprint(arguments)
 
     def check_number(self, number):
         query = "SELECT COUNT(*) FROM Blacklist WHERE PhoneNo=:number"
@@ -73,9 +78,14 @@ class Blacklist(object):
         results = utils.query_db(self.db, query, args, False)
         return results
 
-    def __init__(self, db):
+    def __init__(self, db, config):
         """Ensures database access to the Blacklist table"""
         self.db = db
+        self.config = config
+
+        if self.config["DEBUG"]:
+            print("Initializing Blacklist")
+
         sql = '''
             CREATE TABLE IF NOT EXISTS Blacklist (
                 PhoneNo TEXT PRIMARY KEY,
@@ -94,18 +104,27 @@ class Blacklist(object):
         curs.executescript(sql)
         curs.close()
 
-        print "Blacklist initialized"
+        if self.config["TESTING"]:
+            # Add a record to the test db;
+            # The number should match a value in the Modem's TEST_DATA
+            caller = {
+                "NAME": "Bruce",
+                "NMBR": "3605554567",
+                "DATE": "0801",
+                "TIME": "1802",
+                "REASON": "Blacklist test",
+            }
+            self.add_caller(caller)
+
+        if self.config["DEBUG"]:
+            print("Blacklist initialized")
 
 
-def test(args):
-    import sqlite3
-
-    # Create the test db in RAM
-    db = sqlite3.connect(":memory:")
-    # db.text_factory = str
+def test(db, config):
+    """ Unit Tests """
 
     # Create the blacklist to be tested
-    blacklist = Blacklist(db)
+    blacklist = Blacklist(db, config)
 
     # Add a record
     callerid = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
@@ -114,21 +133,45 @@ def test(args):
     # List the records
     query = 'select * from Blacklist'
     results = utils.query_db(db, query)
-    print "Query results:"
-    print results
+    print(query + " results:")
+    pprint(results)
 
     number = "1234567890"
-    print "Check number: " + number
-    print blacklist.check_number(number)
-    print "Check wrong number:"
-    print blacklist.check_number("1111111111")
-    print "Get number:"
-    print blacklist.get_number(number)
+    print("Assert is blacklisted: " + number)
+    assert blacklist.check_number(number)
+
+    number = "1111111111"
+    print("Assert not blacklisted: " + number)
+    assert not blacklist.check_number(number)
+
+    number = "1234567890"
+    print("Get number: " + number)
+    pprint(blacklist.get_number(number))
 
     return 0
 
 
 if __name__ == '__main__':
+    """ Run the unit tests """
+
+    # Create the test db in RAM
+    import sqlite3
+    db = sqlite3.connect(":memory:")
+
+    # Add the parent directory to the path so callattendant can be found
+    import os
     import sys
-    sys.exit(test(sys.argv))
-    print("Done")
+    currentdir = os.path.dirname(os.path.realpath(__file__))
+    parentdir = os.path.dirname(currentdir)
+    sys.path.append(parentdir)
+
+    # Create and tweak a default config suitable for unit testing
+    from callattendant import make_config, print_config
+    config = make_config()
+    config['DEBUG'] = True
+    print_config(config)
+
+    # Run the tests
+    sys.exit(test(db, config))
+
+    print("Tests complete")

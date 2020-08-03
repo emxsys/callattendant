@@ -35,7 +35,8 @@ from screening.blacklist import Blacklist
 from screening.whitelist import Whitelist
 import screening.utils
 import sqlite3
-import thread
+import _thread
+import os
 
 # Create the Flask micro web-framework application
 app = Flask(__name__)
@@ -46,7 +47,7 @@ app.debug = False  # debug mode prevents app from running in separate thread
 @app.before_request
 def before_request():
     '''Establish a database connection for the current request'''
-    g.conn = sqlite3.connect(current_app.config.get('DATABASE', 'callattendant.db'))
+    g.conn = sqlite3.connect(current_app.config.get("DATABASE"))
     g.conn.row_factory = sqlite3.Row
     g.cur = g.conn.cursor()
 
@@ -178,7 +179,6 @@ def blacklist():
     )
 
 
-
 @app.route('/permitted')
 def whitelist():
     '''Display the permitted numbers from the whitelist table'''
@@ -232,12 +232,12 @@ def manage_caller(call_log_id):
             caller = {}
             caller['NMBR'] = number
             caller['NAME'] = request.form['name']
-            print "Adding " + caller['NAME'] + " to whitelist"
+            print("Adding " + caller['NAME'] + " to whitelist")
             whitelist = Whitelist(get_db())
             whitelist.add_caller(caller, request.form['reason'])
 
         elif request.form['action'] == 'RemovePermit':
-            print "Removing " + number + " from whitelist"
+            print("Removing " + number + " from whitelist")
             whitelist = Whitelist(get_db())
             whitelist.remove_number(number)
 
@@ -245,12 +245,12 @@ def manage_caller(call_log_id):
             caller = {}
             caller['NMBR'] = number
             caller['NAME'] = request.form['name']
-            print "Adding " + caller['NAME'] + " to blacklist"
+            print("Adding " + caller['NAME'] + " to blacklist")
             blacklist = Blacklist(get_db())
             blacklist.add_caller(caller, request.form['reason'])
 
         elif request.form['action'] == 'RemoveBlock':
-            print "Removing " + number + " from blacklist"
+            print("Removing " + number + " from blacklist")
             blacklist = Blacklist(get_db())
             blacklist.remove_number(number)
 
@@ -294,13 +294,12 @@ def manage_caller(call_log_id):
     return render_template('manage_caller.htm', caller=caller)
 
 
-
 def get_db():
     '''Get a connection to the database'''
     # Flask template for database connections
     if 'db' not in g:
         g.db = sqlite3.connect(
-            current_app.config.get('DATABASE', 'callattendant.db'),
+            current_app.config.get("DATABASE"),
             detect_types=sqlite3.PARSE_DECLTYPES
         )
         g.db.row_factory = sqlite3.Row
@@ -316,6 +315,7 @@ def close_db(e=None):
     if db is not None:
         db.close()
 
+
 def get_row_count(table_name):
     '''Returns the row count for the given table'''
     # Using the current request's db connection
@@ -323,6 +323,7 @@ def get_row_count(table_name):
     g.cur.execute(sql)
     total = g.cur.fetchone()[0]
     return total
+
 
 def get_css_framework():
     return current_app.config.get("CSS_FRAMEWORK", "bootstrap4")
@@ -351,15 +352,22 @@ def get_pagination(**kwargs):
     )
 
 
-def runFlask():
-    #with app.app_context():
-    #    call_details()
+def run_flask(db_path):
+    '''
+    Runs the Flask webapp.
+        :param database: full path to the callattendant database file
+    '''
+    with app.app_context():
+        app.config["DATABASE"] = db_path
 
-    print "calling app.run()"
+    print("Running Flask webapp")
     # debug mode prevents app from running in separate thread
     app.run(host='0.0.0.0', debug=False)
 
 
-def start():
-    '''Start the Flask webapp in a separate thread'''
-    thread.start_new_thread(runFlask, ())
+def start(database):
+    '''
+    Starts the Flask webapp in a separate thread.
+        :param database: full path to the callattendant database file
+    '''
+    _thread.start_new_thread(run_flask, (database,))

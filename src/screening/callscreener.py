@@ -23,18 +23,14 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-# Add the parent directory to the path so config.py can be found during tests
-import os, sys
-currentdir = os.path.dirname(os.path.realpath(__file__))
-parentdir = os.path.dirname(currentdir)
-sys.path.append(parentdir)
 
-import config
 from blacklist import Blacklist
 from whitelist import Whitelist
 from nomorobo import NomoroboService
+from pprint import pprint
 import re
 import sys
+import os
 
 
 class CallScreener(object):
@@ -48,33 +44,32 @@ class CallScreener(object):
         '''Returns true if the number is on a blacklist'''
         number = callerid['NMBR']
         name = callerid["NAME"]
+        block = self.config.get_namespace("BLOCK_")
         try:
             if self._blacklist.check_number(number):
-                print "Caller is blacklisted"
+                print("Caller is blacklisted")
                 return True
             else:
-                print "Checking nomorobo..."
-                result = self._nomorobo.lookup_number(number)
-                if result["spam"]:
-                    print "Caller is robocaller"
-                    self.blacklist_caller(callerid, "{} with score {}".format(result["reason"], result["score"]))
-                    return True
-                print "Checking CID patterns..."
-                for key in config.IGNORE_NAME_PATTERNS.keys():
+                print("Checking blocked CID patterns...")
+                for key in block["name_patterns"].keys():
                     match = re.search(key, name)
                     if match:
-                        print "CID ignore name pattern detected"
-                        reason = config.IGNORE_NAME_PATTERNS[key]
-                        self.blacklist_caller(callerid, reason)
+                        print("CID blocked name pattern detected")
+                        reason = block["name_patterns"][key]
                         return True
-                for key in config.IGNORE_NUMBER_PATTERNS.keys():
+                for key in block["number_patterns"].keys():
                     match = re.search(key, number)
                     if match:
-                        print "CID ignore number pattern detected"
-                        reason = config.IGNORE_NUMBER_PATTERNS[key]
-                        self.blacklist_caller(callerid, reason)
+                        print("CID blocked number pattern detected")
+                        reason = block["number_patterns"][key]
                         return True
-                print "Caller has been screened"
+                print("Checking nomorobo...")
+                result = self._nomorobo.lookup_number(number)
+                if result["spam"]:
+                    print("Caller is robocaller")
+                    self.blacklist_caller(callerid, "{} with score {}".format(result["reason"], result["score"]))
+                    return True
+                print("Caller has been screened")
                 return False
         finally:
             sys.stdout.flush()
@@ -85,22 +80,25 @@ class CallScreener(object):
     def blacklist_caller(self, callerid, reason):
         self._blacklist.add_caller(callerid, reason)
 
-    def __init__(self, db):
+    def __init__(self, db, config):
         self._db = db
-        self._blacklist = Blacklist(db)
-        self._whitelist = Whitelist(db)
+        self.config = config
+        if self.config["DEBUG"]:
+            print("Initializing CallScreener")
+
+        self._blacklist = Blacklist(db, config)
+        self._whitelist = Whitelist(db, config)
         self._nomorobo = NomoroboService()
 
+        if self.config["DEBUG"]:
+            print("CallScreener initialized")
 
-def test(args):
-    import sqlite3
 
-    # Create the test db in RAM
-    db = sqlite3.connect(":memory:")
-    # db.text_factory = str
+def test(db, config):
+    """ Unit Tests """
 
     # Create the screener to be tested
-    screener = CallScreener(db)
+    screener = CallScreener(db, config)
 
     # Add a record to the blacklist
     caller1 = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
@@ -112,30 +110,59 @@ def test(args):
     caller3 = {"NAME": "V123456789012345", "NMBR": "80512345678", "DATE": "1012", "TIME": "0600"}
     # Create a robocaller
     caller4 = {"NAME": "Robocaller", "NMBR": "3105241189", "DATE": "1012", "TIME": "0600"}
+    # Create a Private Number
+    caller5 = {"NAME": "O", "NMBR": "P", "DATE": "1012", "TIME": "0600"}
 
     # Perform tests
-    print "Assert is blacklisted: " + caller1['NMBR']
+    print("Assert is blacklisted: " + caller1['NMBR'])
     assert screener.is_blacklisted(caller1)
 
-    print "Assert not is whitelisted: " + caller1['NMBR']
+    print("Assert not is whitelisted: " + caller1['NMBR'])
     assert not screener.is_whitelisted(caller1)
 
-    print "Assert not is blacklisted: " + caller2['NMBR']
+    print("Assert not is blacklisted: " + caller2['NMBR'])
     assert not screener.is_blacklisted(caller2)
 
-    print "Assert is whitelisted: " + caller2['NMBR']
+    print("Assert is whitelisted: " + caller2['NMBR'])
     assert screener.is_whitelisted(caller2)
 
-    print "Assert a bad name pattern: " + caller3['NMBR']
+    print("Assert a blocked name pattern: " + caller3['NAME'])
     assert screener.is_blacklisted(caller3)
 
-    print "Assert is blacklisted by nomorobo: " + caller4['NMBR']
+    print("Assert is blacklisted by nomorobo: " + caller4['NMBR'])
     assert screener.is_blacklisted(caller4)
+
+    print("Assert a blocked number pattern: " + caller5['NMBR'])
+    assert screener.is_blacklisted(caller5)
 
     return 0
 
 
 if __name__ == '__main__':
+    """ Run Unit Tests """
+
+    # Add the parent directory to the path so callattendant can be found
+    import os
     import sys
-    sys.exit(test(sys.argv))
+    currentdir = os.path.dirname(os.path.realpath(__file__))
+    parentdir = os.path.dirname(currentdir)
+    sys.path.append(parentdir)
+
+    # Load and tweak the default config
+    from callattendant import make_config, print_config
+    config = make_config()
+    config['DEBUG'] = True
+    config['BLOCK_NAME_PATTERNS'] = {
+        "V[0-9]{15}": "Telemarketer Caller ID",
+    }
+    config['BLOCK_NUMBER_PATTERNS'] = {
+        "P": "Private number",
+    }
+    print_config(config)
+
+    # Create the test db in RAM
+    import sqlite3
+    db = sqlite3.connect(":memory:")
+
+    sys.exit(test(db, config))
     print("Done")
