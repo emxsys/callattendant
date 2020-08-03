@@ -71,6 +71,7 @@ TEST_DATA = [
     "RING", "DATE=0801", "TIME=1802", "NMBR=3605554567", "NAME=V123456789012345",
 ]
 
+
 class Modem(object):
     """
     This class is responsible for serial communications between the
@@ -99,15 +100,7 @@ class Modem(object):
 
     def _call_handler(self):
         """Thread function that processes the incoming modem data."""
-<<<<<<< HEAD
-=======
 
-        # Prerequisites
-        if self.call_attendant is None:
-            print("No call attendant in call handler; calls will not be handled.")
-            return
-
->>>>>>> 072f569b1f8ebc8122928d0e4f28fdc390a843bb
         # Handle incoming calls
         call_record = {}
         text_index = 0
@@ -126,21 +119,13 @@ class Modem(object):
             finally:
                 self._lock.release()
 
-<<<<<<< HEAD
-            if modem_data != "":
-                if self.config["DEBUG"]:
-                    pprint(modem_data)
-
-                if "RING" in modem_data.strip(DLE_CODE):
-                    self.phone_ringing(True)
-=======
             if modem_data != b'':
-                print(modem_data.decode())
+                if self.config["DEBUG"]:
+                    # pprint(modem_data.decode())
+                    pass
 
                 if "RING".encode("utf-8") in modem_data.strip(DLE_CODE.encode("utf-8")):
-                    self.call_attendant.phone_ringing(True)
->>>>>>> 072f569b1f8ebc8122928d0e4f28fdc390a843bb
-
+                    self.phone_ringing(True)
                 if ("DATE".encode("utf-8") in modem_data):
                     call_record['DATE'] = (modem_data[5:]).strip(' \t\n\r')
                 if ("TIME".encode("utf-8")in modem_data):
@@ -173,12 +158,8 @@ class Modem(object):
 
     def block_call(self):
         """Block the current caller by answering and hanging up"""
-<<<<<<< HEAD
-        print "Blocking call..."
-        blocked = self.config.get_namespace("BLOCKED_")
-=======
         print("Blocking call...")
->>>>>>> 072f569b1f8ebc8122928d0e4f28fdc390a843bb
+        blocked = self.config.get_namespace("BLOCKED_")
         self._serial.cancel_read()
         self._lock.acquire()
         try:
@@ -340,7 +321,7 @@ class Modem(object):
 
     def _send(self, command, expected_response=None, response_timeout=5):
         """Sends a command string (e.g., AT command) to the modem."""
-        
+
         # Disable processing while sending commands lest the response
         # get processed by the event processing thread.
         self._lock.acquire()
@@ -352,7 +333,8 @@ class Modem(object):
             else:
                 execution_status = self._read_response(expected_response, response_timeout)
                 return execution_status
-        except:
+        except Exception as e:
+            print(e)
             print("Error: Failed to execute the command")
             return False
 
@@ -379,7 +361,8 @@ class Modem(object):
                     return False
                 elif (datetime.now() - start_time).seconds > response_timeout_secs:
                     return False
-        except:
+        except Exception as e:
+            print(e)
             print("Error in read_response function...")
             return False
 
@@ -388,7 +371,8 @@ class Modem(object):
         # Detect and open the Modem Serial COM Port
         try:
             self.open_serial_port()
-        except:
+        except Exception as e:
+            print(e)
             print("Error: Unable to open the Serial Port.")
             sys.exit()
 
@@ -419,7 +403,8 @@ class Modem(object):
             # Automatically close the serial port at program termination
             atexit.register(self.close_serial_port)
 
-        except:
+        except Exception as e:
+            print(e)
             print("Error: unable to Initialize the Modem")
             sys.exit()
 
@@ -439,7 +424,8 @@ class Modem(object):
                     # Initialize the serial port and attempt to open
                     self._init_serial_port(com_port.decode("utf-8"))
                     self._serial.open()
-                except:
+                except Exception as e:
+                    print(e)
                     print("Unable to open COM Port: " + str(com_port.decode("utf-8")))
                     pass
                 else:
@@ -475,7 +461,8 @@ class Modem(object):
             if self._serial.isOpen():
                 self._serial.close()
                 print("Serial Port closed...")
-        except:
+        except Exception as e:
+            print(e)
             print("Error: Unable to close the Serial Port.")
             sys.exit()
 
@@ -484,21 +471,16 @@ def test(config, phone_ringing, handle_caller):
     """ Unit Tests """
     import os
 
-<<<<<<< HEAD
     print("Running Unit Tests....")
     modem = Modem(config, phone_ringing, handle_caller)
-=======
-    print("Running tests....")
-    modem = Modem(None)  # No call attendent is set in tests
->>>>>>> 072f569b1f8ebc8122928d0e4f28fdc390a843bb
 
     try:
         modem.open_serial_port()
-    except:
+    except Exception as e:
+        print(e)
         print("Error: Unable to open the Serial Port.")
         return 1
 
-<<<<<<< HEAD
     print("Assert factory reset")
     assert modem._send(FACTORY_RESET, "OK")
 
@@ -519,22 +501,6 @@ def test(config, phone_ringing, handle_caller):
 
     print("Assert cancel data transmit state.")
     assert modem._send(END_VOICE_TRANSMIT_DATA_STATE, "OK")
-=======
-    if not modem._send(FACTORY_RESET, "OK"):
-        print("Factory reset failed.")
-    if not modem._send(DISPLAY_MODEM_SETTINGS, "OK"):
-        print("Display modem settings failed.")
-    if not modem._send(ENTER_VOICE_MODE, "OK"):
-        print("Error: Failed to put modem into voice mode.")
-    if not modem._send(SET_VOICE_COMPRESSION_METHOD, "OK"):
-        print("Error: Failed to set compression method and sampling rate specifications.")
-    if not modem._send(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE, "OK"):
-        print("Error: Unable to put modem into TAD mode.")
-    if not modem._send(ENTER_VOICE_TRANSMIT_DATA_STATE, "CONNECT"):
-        print("Error: Unable to put modem into data transmit state.")
-    if not modem._send(END_VOICE_TRANSMIT_DATA_STATE, "OK"):
-        print("Error: Unable to cancel data transmit state.")
->>>>>>> 072f569b1f8ebc8122928d0e4f28fdc390a843bb
 
     modem._send(FACTORY_RESET)
 
@@ -550,20 +516,22 @@ if __name__ == '__main__':
     """ Run the Unit Tests """
 
     # Add the parent directory to the path so callattendant can be found
-    import os, sys
+    import os
+    import sys
     currentdir = os.path.dirname(os.path.realpath(__file__))
     parentdir = os.path.dirname(currentdir)
     sys.path.append(parentdir)
+    sys.path.append(os.path.join(parentdir, "screening"))
 
     # Load and tweak the default config
     from callattendant import make_config, print_config
     config = make_config()
-    config['DEBUG'] = True
+    config['DEBUGs'] = True
     print_config(config)
 
     # Dummy callback functions
-    phone_ringing = lambda is_ringing : pprint(is_ringing)
-    handle_caller = lambda caller : pprint(caller)
+    phone_ringing = lambda is_ringing: pprint(is_ringing)
+    handle_caller = lambda caller: pprint(caller)
 
     # Run the tests
     sys.exit(test(config, phone_ringing, handle_caller))

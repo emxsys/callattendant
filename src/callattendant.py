@@ -23,20 +23,21 @@
 # SOFTWARE.
 
 import os
-import sqlite3
-<<<<<<< HEAD
-from config import Config
-from Queue import Queue
-from pprint import pprint
-=======
+import sys
+
+currentdir = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.join(currentdir,"screening"))
+sys.path.append(os.path.join(currentdir,"hardware"))
+
 import queue
->>>>>>> 072f569b1f8ebc8122928d0e4f28fdc390a843bb
+import sqlite3
+from pprint import pprint
+from config import Config
 from screening.calllogger import CallLogger
 from screening.callscreener import CallScreener
 from hardware.modem import Modem
 from hardware.indicators import RingIndicator, ApprovedIndicator, BlockedIndicator
 import userinterface.webapp as webapp
-
 
 class CallAttendant(object):
     """The CallAttendant provides call logging and call screening services."""
@@ -101,8 +102,6 @@ class CallAttendant(object):
 
         # Process incoming calls
         while 1:
-<<<<<<< HEAD
-
             try:
                 # Wait (blocking) for a caller
                 caller = self._caller_queue.get()
@@ -111,14 +110,14 @@ class CallAttendant(object):
                 whitelisted = False
                 blacklisted = False
                 if "whitelist" in screening_mode:
-                    print "Checking whitelist(s)"
+                    print("Checking whitelist(s)")
                     if self.screener.is_whitelisted(caller):
                         whitelisted = True
                         caller["NOTE"] = "Whitelisted"
                         self.approved_indicator.turn_on()
 
                 if not whitelisted and "blacklist" in screening_mode:
-                    print "Checking blacklist(s)"
+                    print("Checking blacklist(s)")
                     if self.screener.is_blacklisted(caller):
                         blacklisted = True
                         caller["NOTE"] = "Blacklisted"
@@ -129,8 +128,7 @@ class CallAttendant(object):
                 # Log every call to the database
                 self.logger.log_caller(caller)
             except Exception as e:
-                print e
-                logging.exception(e)
+                print(e)
                 return 1
 
 
@@ -170,10 +168,10 @@ def make_config(filename=None):
 
 def print_config(config):
     """ Pretty print the given configuration dict """
-    print "[Configuration]"
+    print("[Configuration]")
     keys = sorted(config.keys())
     for key in keys:
-        print "  {} = {}".format(key, config[key])
+        print("  {} = {}".format(key, config[key]))
 
 
 def get_args(argv):
@@ -188,13 +186,13 @@ def get_args(argv):
     try:
         opts, args = getopt.getopt(argv[1:], "hc:", ["help", "config="])
     except getopt.GetoptError:
-        print syntax
+        print(syntax)
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            print syntax
-            print '-c, --config=[FILE]\tload a python configuration file'
-            print '-h, --help\t\tdisplays this help text'
+            print(syntax)
+            print("-c, --config=[FILE]\tload a python configuration file")
+            print("-h, --help\t\tdisplays this help text")
             sys.exit()
         elif opt in ("-c", "--config"):
             configfile = arg
@@ -214,46 +212,10 @@ def main(argv):
     app = CallAttendant(config)
     app.run()
 
-=======
-            """Processes incoming callers with logging and screening."""
-
-            # Wait (blocking) for a caller
-            caller = self._caller_queue.get()
-
-            # Perform the call screening
-            mode = config.SCREENING_MODE
-            whitelisted = False
-            blacklisted = False
-            if mode in ["whitelist_only", "whitelist_and_blacklist"]:
-                print("Checking whitelist(s)")
-                if self.screener.is_whitelisted(caller):
-                    whitelisted = True
-                    caller["NOTE"] = "Whitelisted"
-                    self.approved_indicator.turn_on()
-
-            if not whitelisted and mode in ["blacklist_only", "whitelist_and_blacklist"]:
-                print("Checking blacklist(s)")
-                if self.screener.is_blacklisted(caller):
-                    blacklisted = True
-                    caller["NOTE"] = "Blacklisted"
-                    self.blocked_indicator.turn_on()
-                    if config.BLOCK_CALLS:
-                        # self.modem.play_audio("sample.wav")
-                        # self.modem.hang_up()
-                        self.modem.block_call()
-
-            # Log every call to the database
-            self.logger.log_caller(caller)
-
-
-def main(args):
-    """Create and run the call attendent"""
-    call_attendant = CallAttendant()
->>>>>>> 072f569b1f8ebc8122928d0e4f28fdc390a843bb
     return 0
 
 
 if __name__ == '__main__':
-    import sys
+
     sys.exit(main(sys.argv))
     print("Done")

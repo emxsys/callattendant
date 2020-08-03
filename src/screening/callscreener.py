@@ -24,12 +24,13 @@
 #  SOFTWARE.
 
 
-from screening.blacklist import Blacklist
-from screening.whitelist import Whitelist
-from screening.nomorobo import NomoroboService
+from blacklist import Blacklist
+from whitelist import Whitelist
+from nomorobo import NomoroboService
 from pprint import pprint
 import re
 import sys
+import os
 
 
 class CallScreener(object):
@@ -59,7 +60,7 @@ class CallScreener(object):
                 for key in block["number_patterns"].keys():
                     match = re.search(key, number)
                     if match:
-                        print( "CID blocked number pattern detected")
+                        print("CID blocked number pattern detected")
                         reason = block["number_patterns"][key]
                         return True
                 print("Checking nomorobo...")
@@ -68,7 +69,7 @@ class CallScreener(object):
                     print("Caller is robocaller")
                     self.blacklist_caller(callerid, "{} with score {}".format(result["reason"], result["score"]))
                     return True
-                print "Caller has been screened"
+                print("Caller has been screened")
                 return False
         finally:
             sys.stdout.flush()
@@ -125,7 +126,7 @@ def test(db, config):
     print("Assert is whitelisted: " + caller2['NMBR'])
     assert screener.is_whitelisted(caller2)
 
-    print "Assert a blocked name pattern: " + caller3['NAME']
+    print("Assert a blocked name pattern: " + caller3['NAME'])
     assert screener.is_blacklisted(caller3)
 
     print("Assert is blacklisted by nomorobo: " + caller4['NMBR'])

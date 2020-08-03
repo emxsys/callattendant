@@ -26,7 +26,7 @@
 
 import sys
 import argparse
-import urllib
+import urllib.request
 from bs4 import BeautifulSoup
 
 
@@ -71,11 +71,12 @@ class NomoroboService(object):
         return result
 
     def http_get(self, url, add_headers={}, allowed_codes=[]):
+        data = ""
         try:
             request = urllib.request.Request(url, headers=add_headers)
             response = urllib.request.urlopen(request, timeout=5)
             data = response.read()
-        except urllib2.HTTPError as e:
+        except urllib.error.HTTPError as e:
             code = e.getcode()
             if code not in allowed_codes:
                 raise

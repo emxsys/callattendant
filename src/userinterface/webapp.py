@@ -35,13 +35,14 @@ from screening.blacklist import Blacklist
 from screening.whitelist import Whitelist
 import screening.utils
 import sqlite3
-import thread
+import _thread
 import os
 
 # Create the Flask micro web-framework application
 app = Flask(__name__)
 app.config.from_pyfile('webapp.cfg')
 app.debug = False  # debug mode prevents app from running in separate thread
+
 
 @app.before_request
 def before_request():
@@ -178,7 +179,6 @@ def blacklist():
     )
 
 
-
 @app.route('/permitted')
 def whitelist():
     '''Display the permitted numbers from the whitelist table'''
@@ -294,7 +294,6 @@ def manage_caller(call_log_id):
     return render_template('manage_caller.htm', caller=caller)
 
 
-
 def get_db():
     '''Get a connection to the database'''
     # Flask template for database connections
@@ -316,6 +315,7 @@ def close_db(e=None):
     if db is not None:
         db.close()
 
+
 def get_row_count(table_name):
     '''Returns the row count for the given table'''
     # Using the current request's db connection
@@ -323,6 +323,7 @@ def get_row_count(table_name):
     g.cur.execute(sql)
     total = g.cur.fetchone()[0]
     return total
+
 
 def get_css_framework():
     return current_app.config.get("CSS_FRAMEWORK", "bootstrap4")
