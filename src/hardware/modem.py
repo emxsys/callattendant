@@ -104,46 +104,67 @@ class Modem(object):
         # Handle incoming calls
         call_record = {}
         text_index = 0
-        while 1:
-            modem_data = ""
 
-            self._lock.acquire()
-            try:
-                if self.config["TESTING"]:
-                    if text_index >= len(TEST_DATA):
-                        break
-                    modem_data = TEST_DATA[text_index]
-                    text_index += 1
-                else:
-                    modem_data = self._serial.readline()
-            finally:
-                self._lock.release()
+        debugging = self.config["DEBUG"]
+        testing = self.config["TESTING"]
+        logging = False
+        logfile = None
+        # Save the modem data to a file for development purposes
+        if self.config["ENV"] == "development":
+            print("Saving raw modem data to modem.log")
+            logfile = open("modem.log", 'wb')
+            logging = True
 
-            if modem_data != b'':
-                if self.config["DEBUG"]:
-                    # pprint(modem_data.decode())
-                    pass
+        try:
+            while 1:
+                modem_data = b''
 
-                if "RING".encode("utf-8") in modem_data.strip(DLE_CODE.encode("utf-8")):
-                    self.phone_ringing(True)
-                if ("DATE".encode("utf-8") in modem_data):
-                    call_record['DATE'] = (modem_data[5:]).strip(' \t\n\r')
-                if ("TIME".encode("utf-8")in modem_data):
-                    call_record['TIME'] = (modem_data[5:]).strip(' \t\n\r')
-                if ("NAME".encode("utf-8") in modem_data):
-                    call_record['NAME'] = (modem_data[5:]).strip(' \t\n\r')
-                if ("NMBR".encode("utf-8") in modem_data):
-                    call_record['NMBR'] = (modem_data[5:]).strip(' \t\n\r')
+                self._lock.acquire()
+                try:
+                    if testing:
+                        # Iterate thru the test data
+                        if text_index >= len(TEST_DATA):
+                            break
+                        modem_data = TEST_DATA[text_index]
+                        text_index += 1
+                    else:
+                        # Read a line of data from the serial port
+                        modem_data = self._serial.readline()
+                finally:
+                    self._lock.release()
 
-                # https://stackoverflow.com/questions/1285911/how-do-i-check-that-multiple-keys-are-in-a-dict-in-a-single-pass
-                if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
-                    print("Screening call...")
-                    # print call_record
-                    self.handle_caller(call_record)
-                    call_record = {}
-                    # Sleep for a short duration to allow call attendant
-                    # to screen call before resuming
-                    time.sleep(2)
+                if modem_data != b'':
+                    if debugging:
+                        print(modem_data)
+
+                    if logging:
+                        logfile.write(modem_data)
+                        logfile.flush()
+
+                    if "RING".encode("utf-8") in modem_data.strip(DLE_CODE.encode("utf-8")):
+                        self.phone_ringing(True)
+                    if ("DATE".encode("utf-8") in modem_data):
+                        call_record['DATE'] = decode(modem_data[5:])
+                    if ("TIME".encode("utf-8")in modem_data):
+                        call_record['TIME'] = decode(modem_data[5:])
+                    if ("NAME".encode("utf-8") in modem_data):
+                        call_record['NAME'] = decode(modem_data[5:])
+                    if ("NMBR".encode("utf-8") in modem_data):
+                        call_record['NMBR'] = decode(modem_data[5:])
+
+                    # https://stackoverflow.com/questions/1285911/how-do-i-check-that-multiple-keys-are-in-a-dict-in-a-single-pass
+                    if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
+                        print("Screening call...")
+                        self.handle_caller(call_record)
+                        call_record = {}
+                        # Sleep for a short duration to allow call attendant
+                        # to screen call before resuming
+                        time.sleep(2)
+        finally:
+            if logging:
+                print("Closing modem log file")
+                logfile.close()
+
 
     def hang_up(self):
         """Terminate an active call, e.g., hang up."""
@@ -465,6 +486,11 @@ class Modem(object):
             print(e)
             print("Error: Unable to close the Serial Port.")
             sys.exit()
+
+
+def decode(bytestr):
+    string = bytestr.decode("utf-8").strip(' \t\n\r')
+    return string
 
 
 def test(config, phone_ringing, handle_caller):
