@@ -42,7 +42,7 @@ class Whitelist(object):
         self.config = config
 
         if self.config["DEBUG"]:
-            print "Initializing Whitelist"
+            print("Initializing Whitelist")
 
         sql = '''CREATE TABLE IF NOT EXISTS Whitelist (
             PhoneNo TEXT PRIMARY KEY,
@@ -66,7 +66,7 @@ class Whitelist(object):
             self.add_caller(caller)
 
         if self.config["DEBUG"]:
-            print "Whitelist initialized"
+            print("Whitelist initialized")
 
     def add_caller(self, call_record, reason=""):
         query = '''INSERT INTO Whitelist(
@@ -84,7 +84,7 @@ class Whitelist(object):
         self.db.commit()
 
         if self.config["DEBUG"]:
-            print "New whitelist entry added"
+            print("New whitelist entry added")
             pprint(arguments)
 
     def remove_number(self, phone_no):
@@ -95,7 +95,7 @@ class Whitelist(object):
         self.db.commit()
 
         if self.config["DEBUG"]:
-            print "whitelist entry removed"
+            print("whitelist entry removed")
             pprint(arguments)
 
     def check_number(self, number):
@@ -124,19 +124,19 @@ def test(db, config):
     # List the records
     query = 'SELECT * from Whitelist'
     results = utils.query_db(db, query)
-    print query + " results:"
+    print(query + " results:")
     pprint(results)
 
     number = "1234567890"
-    print "Assert is whitelisted: " + number
+    print("Assert is whitelisted: " + number)
     assert whitelist.check_number(number)
 
     number = "1111111111"
-    print "Assert not whitelisted: " + number
+    print("Assert not whitelisted: " + number)
     assert not whitelist.check_number(number)
 
     number = "1234567890"
-    print "Get number: " + number
+    print("Get number: " + number)
     pprint(whitelist.get_number(number))
 
     return 0

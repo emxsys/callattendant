@@ -99,6 +99,15 @@ class Modem(object):
 
     def _call_handler(self):
         """Thread function that processes the incoming modem data."""
+<<<<<<< HEAD
+=======
+
+        # Prerequisites
+        if self.call_attendant is None:
+            print("No call attendant in call handler; calls will not be handled.")
+            return
+
+>>>>>>> 072f569b1f8ebc8122928d0e4f28fdc390a843bb
         # Handle incoming calls
         call_record = {}
         text_index = 0
@@ -117,25 +126,33 @@ class Modem(object):
             finally:
                 self._lock.release()
 
+<<<<<<< HEAD
             if modem_data != "":
                 if self.config["DEBUG"]:
                     pprint(modem_data)
 
                 if "RING" in modem_data.strip(DLE_CODE):
                     self.phone_ringing(True)
+=======
+            if modem_data != b'':
+                print(modem_data.decode())
 
-                if ("DATE" in modem_data):
+                if "RING".encode("utf-8") in modem_data.strip(DLE_CODE.encode("utf-8")):
+                    self.call_attendant.phone_ringing(True)
+>>>>>>> 072f569b1f8ebc8122928d0e4f28fdc390a843bb
+
+                if ("DATE".encode("utf-8") in modem_data):
                     call_record['DATE'] = (modem_data[5:]).strip(' \t\n\r')
-                if ("TIME" in modem_data):
+                if ("TIME".encode("utf-8")in modem_data):
                     call_record['TIME'] = (modem_data[5:]).strip(' \t\n\r')
-                if ("NAME" in modem_data):
+                if ("NAME".encode("utf-8") in modem_data):
                     call_record['NAME'] = (modem_data[5:]).strip(' \t\n\r')
-                if ("NMBR" in modem_data):
+                if ("NMBR".encode("utf-8") in modem_data):
                     call_record['NMBR'] = (modem_data[5:]).strip(' \t\n\r')
 
                 # https://stackoverflow.com/questions/1285911/how-do-i-check-that-multiple-keys-are-in-a-dict-in-a-single-pass
                 if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
-                    print "Screening call..."
+                    print("Screening call...")
                     # print call_record
                     self.handle_caller(call_record)
                     call_record = {}
@@ -145,19 +162,23 @@ class Modem(object):
 
     def hang_up(self):
         """Terminate an active call, e.g., hang up."""
-        print "Terminating call..."
+        print("Terminating call...")
         self._serial.cancel_read()
         self._lock.acquire()
         try:
             if not self._send(TERMINATE_CALL):
-                print "Error: Failed to terminate the call."
+                print("Error: Failed to terminate the call.")
         finally:
             self._lock.release()
 
     def block_call(self):
         """Block the current caller by answering and hanging up"""
+<<<<<<< HEAD
         print "Blocking call..."
         blocked = self.config.get_namespace("BLOCKED_")
+=======
+        print("Blocking call...")
+>>>>>>> 072f569b1f8ebc8122928d0e4f28fdc390a843bb
         self._serial.cancel_read()
         self._lock.acquire()
         try:
@@ -171,34 +192,34 @@ class Modem(object):
                 time.sleep(2)
                 self._send(GO_ON_HOOK)
             else:
-                print "Error: Failed to block the call."
+                print("Error: Failed to block the call.")
         finally:
             self._lock.release()
 
     def play_audio(self, audio_file_name):
         """Play an audio file with 8-bit linear compression at 8.0 kHz sampling"""
-        print "Play Audio Msg - Start"
+        print("Play Audio Msg - Start")
 
         self._serial.cancel_read()
         self._lock.acquire()
         try:
             if not self._send(ENTER_VOICE_MODE):
-                print "Error: Failed to put modem into voice mode."
+                print("Error: Failed to put modem into voice mode.")
                 return
             if not self._send(SET_VOICE_COMPRESSION_METHOD):
-                print "Error: Failed to set compression method and sampling rate specifications."
+                print("Error: Failed to set compression method and sampling rate specifications.")
                 return
             if not self._send(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE):
-                print "Error: Unable put modem into TAD mode."
+                print("Error: Unable put modem into TAD mode.")
                 return
             if not self._send(ENTER_VOICE_TRANSMIT_DATA_STATE, "CONNECT"):
-                print "Error: Unable put modem into TAD data transmit state."
+                print("Error: Unable put modem into TAD data transmit state.")
                 return
 
             time.sleep(1)
 
             # Play Audio File
-            print "Play Audio Msg - playing wav file"
+            print("Play Audio Msg - playing wav file")
 
             wf = wave.open(audio_file_name, 'rb')
             chunk = 1024
@@ -219,10 +240,10 @@ class Modem(object):
         finally:
             self._lock.release()
 
-        print "Play Audio Msg - END"
+        print("Play Audio Msg - END")
 
     def record_audio(self, audio_file_name):
-        print "Record Audio Msg - Start"
+        print("Record Audio Msg - Start")
 
         self._serial.cancel_read()
         self._lock.acquire()
@@ -255,7 +276,7 @@ class Modem(object):
                     raise RuntimeError("Error: Unable put modem into voice receive mode.")
 
             except RuntimeError as error:
-                print "Modem initialization error: ", error
+                print("Modem initialization error: ", error)
                 return
 
             # Record Audio File
@@ -271,22 +292,22 @@ class Modem(object):
 
                 # Check if <DLE>b is in the stream
                 if ((chr(16) + chr(98)) in audio_data):
-                    print "Busy Tone... Call will be disconnected."
+                    print("Busy Tone... Call will be disconnected.")
                     break
 
                 # Check if <DLE>s is in the stream
                 if ((chr(16) + chr(115)) in audio_data):
-                    print "Silence Detected... Call will be disconnected."
+                    print("Silence Detected... Call will be disconnected.")
                     break
 
                 # Check if <DLE><ETX> is in the stream
                 if (("<DLE><ETX>").encode() in audio_data):
-                    print "<DLE><ETX> Char Recieved... Call will be disconnected."
+                    print("<DLE><ETX> Char Recieved... Call will be disconnected.")
                     break
 
                 # Timeout
                 elif ((datetime.now() - start_time).seconds) > REC_VM_MAX_DURATION:
-                    print "Timeout - Max recording limit reached."
+                    print("Timeout - Max recording limit reached.")
                     break
 
                 # Add Audio Data to Audio Buffer
@@ -305,21 +326,21 @@ class Modem(object):
 
             # Send End of Voice Recieve state by passing "<DLE>!"
             if not self._send((chr(16) + chr(33)), "OK"):
-                print "Error: Unable to signal end of voice receive state"
+                print("Error: Unable to signal end of voice receive state")
 
             # Hangup the Call
             if not self._send("ATH", "OK"):
-                print "Error: Unable to hang-up the call"
+                print("Error: Unable to hang-up the call")
 
         finally:
             self._lock.release()
 
-        print "Record Audio Msg - END"
+        print("Record Audio Msg - END")
         return
 
     def _send(self, command, expected_response=None, response_timeout=5):
         """Sends a command string (e.g., AT command) to the modem."""
-
+        
         # Disable processing while sending commands lest the response
         # get processed by the event processing thread.
         self._lock.acquire()
@@ -332,7 +353,7 @@ class Modem(object):
                 execution_status = self._read_response(expected_response, response_timeout)
                 return execution_status
         except:
-            print "Error: Failed to execute the command"
+            print("Error: Failed to execute the command")
             return False
 
         finally:
@@ -346,12 +367,12 @@ class Modem(object):
         Returns False if ERROR is returned or if it times out
         before the expected response is returned
         """
+
         start_time = datetime.now()
         try:
             while 1:
                 modem_data = self._serial.readline()
-                print modem_data
-                response = modem_data.strip(' \t\n\r' + DLE_CODE)
+                response = modem_data.strip(b' \t\n\r' + DLE_CODE.encode("utf-8")).decode()
                 if expected_response == response:
                     return True
                 elif "ERROR" in response:
@@ -359,7 +380,7 @@ class Modem(object):
                 elif (datetime.now() - start_time).seconds > response_timeout_secs:
                     return False
         except:
-            print "Error in read_response function..."
+            print("Error in read_response function...")
             return False
 
     def _init_modem(self):
@@ -368,7 +389,7 @@ class Modem(object):
         try:
             self.open_serial_port()
         except:
-            print "Error: Unable to open the Serial Port."
+            print("Error: Unable to open the Serial Port.")
             sys.exit()
 
         # Initialize the Modem
@@ -379,15 +400,15 @@ class Modem(object):
 
             # Test Modem connection, using basic AT command.
             if not self._send("AT", "OK"):
-                print "Error: Unable to access the Modem"
+                print("Error: Unable to access the Modem")
             if not self._send(FACTORY_RESET, "OK"):
-                print "Error: Unable reset to factory default"
+                print("Error: Unable reset to factory default")
             if not self._send(ENABLE_VERBOSE_CODES, "OK"):
-                print "Error: Unable set response in verbose form"
+                print("Error: Unable set response in verbose form")
             if not self._send(ENABLE_ECHO_COMMANDS, "OK"):
-                print "Error: Failed to enable local echo mode"
+                print("Error: Failed to enable local echo mode")
             if not self._send(ENABLE_FORMATTED_CID, "OK"):
-                print "Error: Failed to enable formatted caller report."
+                print("Error: Failed to enable formatted caller report.")
 
             self._send(DISPLAY_MODEM_SETTINGS)
 
@@ -399,7 +420,7 @@ class Modem(object):
             atexit.register(self.close_serial_port)
 
         except:
-            print "Error: unable to Initialize the Modem"
+            print("Error: unable to Initialize the Modem")
             sys.exit()
 
     def open_serial_port(self):
@@ -407,28 +428,29 @@ class Modem(object):
         # List all the Serial COM Ports on Raspberry Pi
         proc = subprocess.Popen(['ls /dev/tty[A-Za-z]*'], shell=True, stdout=subprocess.PIPE)
         com_ports = proc.communicate()[0]
-        com_ports_list = com_ports.split('\n')
+        # In order to split, need to pass a bytes-like object
+        com_ports_list = com_ports.split(b'\n')
 
         # Find the right port associated with the Voice Modem
         for com_port in com_ports_list:
-            if 'tty' in com_port:
+            if b'tty' in com_port:
                 # Try to open the COM Port and execute AT Command
                 try:
                     # Initialize the serial port and attempt to open
-                    self._init_serial_port(com_port)
+                    self._init_serial_port(com_port.decode("utf-8"))
                     self._serial.open()
                 except:
-                    print "Unable to open COM Port: " + com_port
+                    print("Unable to open COM Port: " + str(com_port.decode("utf-8")))
                     pass
                 else:
                     # Validate modem selection by trying to put it in Voice Mode
                     if not self._send(ENTER_VOICE_MODE, "OK"):
-                        print "Error: Failed to put modem into voice mode."
+                        print("Error: Failed to put modem into voice mode.")
                         if self._serial.isOpen():
                             self._serial.close()
                     else:
                         # Found the COM Port exit the loop
-                        print "Modem COM Port is: " + com_port
+                        print("Modem COM Port is: " + com_port.decode("utf-8"))
                         self._serial.flushInput()
                         self._serial.flushOutput()
                         break
@@ -454,7 +476,7 @@ class Modem(object):
                 self._serial.close()
                 print("Serial Port closed...")
         except:
-            print "Error: Unable to close the Serial Port."
+            print("Error: Unable to close the Serial Port.")
             sys.exit()
 
 
@@ -462,8 +484,13 @@ def test(config, phone_ringing, handle_caller):
     """ Unit Tests """
     import os
 
+<<<<<<< HEAD
     print("Running Unit Tests....")
     modem = Modem(config, phone_ringing, handle_caller)
+=======
+    print("Running tests....")
+    modem = Modem(None)  # No call attendent is set in tests
+>>>>>>> 072f569b1f8ebc8122928d0e4f28fdc390a843bb
 
     try:
         modem.open_serial_port()
@@ -471,6 +498,7 @@ def test(config, phone_ringing, handle_caller):
         print("Error: Unable to open the Serial Port.")
         return 1
 
+<<<<<<< HEAD
     print("Assert factory reset")
     assert modem._send(FACTORY_RESET, "OK")
 
@@ -491,6 +519,22 @@ def test(config, phone_ringing, handle_caller):
 
     print("Assert cancel data transmit state.")
     assert modem._send(END_VOICE_TRANSMIT_DATA_STATE, "OK")
+=======
+    if not modem._send(FACTORY_RESET, "OK"):
+        print("Factory reset failed.")
+    if not modem._send(DISPLAY_MODEM_SETTINGS, "OK"):
+        print("Display modem settings failed.")
+    if not modem._send(ENTER_VOICE_MODE, "OK"):
+        print("Error: Failed to put modem into voice mode.")
+    if not modem._send(SET_VOICE_COMPRESSION_METHOD, "OK"):
+        print("Error: Failed to set compression method and sampling rate specifications.")
+    if not modem._send(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE, "OK"):
+        print("Error: Unable to put modem into TAD mode.")
+    if not modem._send(ENTER_VOICE_TRANSMIT_DATA_STATE, "CONNECT"):
+        print("Error: Unable to put modem into data transmit state.")
+    if not modem._send(END_VOICE_TRANSMIT_DATA_STATE, "OK"):
+        print("Error: Unable to cancel data transmit state.")
+>>>>>>> 072f569b1f8ebc8122928d0e4f28fdc390a843bb
 
     modem._send(FACTORY_RESET)
 

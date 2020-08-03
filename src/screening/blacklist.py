@@ -29,8 +29,12 @@
 # https://iotbytes.wordpress.com/incoming-call-details-logger-with-raspberry-pi/
 # ==============================================================================
 
+<<<<<<< HEAD
 import utils
 from pprint import pprint
+=======
+import screening.utils
+>>>>>>> 072f569b1f8ebc8122928d0e4f28fdc390a843bb
 from datetime import datetime
 
 
@@ -51,9 +55,13 @@ class Blacklist(object):
         self.db.execute(query, arguments)
         self.db.commit()
 
+<<<<<<< HEAD
         if self.config["DEBUG"]:
             print "New blacklist entry added"
             pprint(arguments)
+=======
+        print("New blacklist entry added")
+>>>>>>> 072f569b1f8ebc8122928d0e4f28fdc390a843bb
 
     def remove_number(self, phone_no):
         '''Removes records for the given number (without dashes or formatting)'''
@@ -62,9 +70,13 @@ class Blacklist(object):
         self.db.execute(query, arguments)
         self.db.commit()
 
+<<<<<<< HEAD
         if self.config["DEBUG"]:
             print "blacklist entry removed"
             pprint(arguments)
+=======
+        print("blacklist entry removed")
+>>>>>>> 072f569b1f8ebc8122928d0e4f28fdc390a843bb
 
     def check_number(self, number):
         query = "SELECT COUNT(*) FROM Blacklist WHERE PhoneNo=:number"
@@ -104,6 +116,7 @@ class Blacklist(object):
         curs.executescript(sql)
         curs.close()
 
+<<<<<<< HEAD
         if self.config["TESTING"]:
             # Add a record to the test db;
             # The number should match a value in the Modem's TEST_DATA
@@ -115,6 +128,9 @@ class Blacklist(object):
                 "REASON": "Blacklist test",
             }
             self.add_caller(caller)
+=======
+        print("Blacklist initialized")
+>>>>>>> 072f569b1f8ebc8122928d0e4f28fdc390a843bb
 
         if self.config["DEBUG"]:
             print "Blacklist initialized"
@@ -133,6 +149,7 @@ def test(db, config):
     # List the records
     query = 'select * from Blacklist'
     results = utils.query_db(db, query)
+<<<<<<< HEAD
     print query + " results:"
     pprint(results)
 
@@ -147,6 +164,18 @@ def test(db, config):
     number = "1234567890"
     print "Get number: " + number
     pprint(blacklist.get_number(number))
+=======
+    print("Query results:")
+    print(results)
+
+    number = "1234567890"
+    print("Check number: " + number)
+    print(blacklist.check_number(number))
+    print("Check wrong number:")
+    print(blacklist.check_number("1111111111"))
+    print("Get number:")
+    print(blacklist.get_number(number))
+>>>>>>> 072f569b1f8ebc8122928d0e4f28fdc390a843bb
 
     return 0
 
