@@ -30,6 +30,7 @@
 # ==============================================================================
 
 from datetime import datetime
+from pprint import pprint
 import atexit
 import os
 import serial
@@ -63,6 +64,12 @@ TERMINATE_CALL = "ATH"
 # Record Voice Mail variables
 REC_VM_MAX_DURATION = 120  # Time in Seconds
 
+TEST_DATA = [
+    "RING", "DATE=0801", "TIME=1800", "NMBR=5551234567", "NAME=Test1 - Spammer",
+    "RING", "DATE=0801", "TIME=1801", "NMBR=8055554567", "NAME=Test2 - Permitted",
+    "RING", "DATE=0801", "TIME=1802", "NMBR=3605554567", "NAME=Test3 - Blocked",
+    "RING", "DATE=0801", "TIME=1802", "NMBR=3605554567", "NAME=V123456789012345",
+]
 
 class Modem(object):
     """
@@ -94,17 +101,25 @@ class Modem(object):
         """Thread function that processes the incoming modem data."""
         # Handle incoming calls
         call_record = {}
+        text_index = 0
         while 1:
             modem_data = ""
 
             self._lock.acquire()
             try:
-                modem_data = self._serial.readline()
+                if self.config["TESTING"]:
+                    if text_index >= len(TEST_DATA):
+                        break
+                    modem_data = TEST_DATA[text_index]
+                    text_index += 1
+                else:
+                    modem_data = self._serial.readline()
             finally:
                 self._lock.release()
 
             if modem_data != "":
-                print modem_data
+                if self.config["DEBUG"]:
+                    pprint(modem_data)
 
                 if "RING" in modem_data.strip(DLE_CODE):
                     self.phone_ringing(True)
@@ -444,32 +459,38 @@ class Modem(object):
 
 
 def test(config, phone_ringing, handle_caller):
-    """Test the module"""
+    """ Unit Tests """
     import os
 
-    print "Running tests...."
+    print("Running Unit Tests....")
     modem = Modem(config, phone_ringing, handle_caller)
 
     try:
         modem.open_serial_port()
     except:
-        print "Error: Unable to open the Serial Port."
+        print("Error: Unable to open the Serial Port.")
         return 1
 
-    if not modem._send(FACTORY_RESET, "OK"):
-        print "Factory reset failed."
-    if not modem._send(DISPLAY_MODEM_SETTINGS, "OK"):
-        print "Display modem settings failed."
-    if not modem._send(ENTER_VOICE_MODE, "OK"):
-        print "Error: Failed to put modem into voice mode."
-    if not modem._send(SET_VOICE_COMPRESSION_METHOD, "OK"):
-        print "Error: Failed to set compression method and sampling rate specifications."
-    if not modem._send(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE, "OK"):
-        print "Error: Unable to put modem into TAD mode."
-    if not modem._send(ENTER_VOICE_TRANSMIT_DATA_STATE, "CONNECT"):
-        print "Error: Unable to put modem into data transmit state."
-    if not modem._send(END_VOICE_TRANSMIT_DATA_STATE, "OK"):
-        print "Error: Unable to cancel data transmit state."
+    print("Assert factory reset")
+    assert modem._send(FACTORY_RESET, "OK")
+
+    print("Assert display modem settings")
+    assert modem._send(DISPLAY_MODEM_SETTINGS, "OK")
+
+    print("Assert put modem into voice mode.")
+    assert modem._send(ENTER_VOICE_MODE, "OK")
+
+    print("Assert set compression method and sampling rate specifications.")
+    assert modem._send(SET_VOICE_COMPRESSION_METHOD, "OK")
+
+    print("Assert put modem into TAD mode.")
+    assert modem._send(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE, "OK")
+
+    print("Assert put modem into data transmit state.")
+    assert modem._send(ENTER_VOICE_TRANSMIT_DATA_STATE, "CONNECT")
+
+    print("Assert cancel data transmit state.")
+    assert modem._send(END_VOICE_TRANSMIT_DATA_STATE, "OK")
 
     modem._send(FACTORY_RESET)
 
@@ -482,7 +503,7 @@ def test(config, phone_ringing, handle_caller):
 
 
 if __name__ == '__main__':
-    ''' Run the tests when this module is executed standalone'''
+    """ Run the Unit Tests """
 
     # Add the parent directory to the path so callattendant can be found
     import os, sys
@@ -491,14 +512,14 @@ if __name__ == '__main__':
     sys.path.append(parentdir)
 
     # Load and tweak the default config
-    from callattendant import make_config
+    from callattendant import make_config, print_config
     config = make_config()
     config['DEBUG'] = True
-    config['TESTING'] = True
+    print_config(config)
 
     # Dummy callback functions
-    phone_ringing = lambda is_ringing : is_ringing
-    handle_caller = lambda calller : caller
+    phone_ringing = lambda is_ringing : pprint(is_ringing)
+    handle_caller = lambda caller : pprint(caller)
 
     # Run the tests
     sys.exit(test(config, phone_ringing, handle_caller))

@@ -27,6 +27,7 @@
 from blacklist import Blacklist
 from whitelist import Whitelist
 from nomorobo import NomoroboService
+from pprint import pprint
 import re
 import sys
 
@@ -48,27 +49,25 @@ class CallScreener(object):
                 print "Caller is blacklisted"
                 return True
             else:
+                print "Checking blocked CID patterns..."
+                for key in block["name_patterns"].keys():
+                    match = re.search(key, name)
+                    if match:
+                        print "CID blocked name pattern detected"
+                        reason = block["name_patterns"][key]
+                        return True
+                for key in block["number_patterns"].keys():
+                    match = re.search(key, number)
+                    if match:
+                        print "CID blocked number pattern detected"
+                        reason = block["number_patterns"][key]
+                        return True
                 print "Checking nomorobo..."
                 result = self._nomorobo.lookup_number(number)
                 if result["spam"]:
                     print "Caller is robocaller"
                     self.blacklist_caller(callerid, "{} with score {}".format(result["reason"], result["score"]))
                     return True
-                print "Checking CID patterns..."
-                for key in block["name_patterns"].keys():
-                    match = re.search(key, name)
-                    if match:
-                        print "CID ignore name pattern detected"
-                        reason = block["name_patterns"][key]
-                        self.blacklist_caller(callerid, reason)
-                        return True
-                for key in block["number_patterns"].keys():
-                    match = re.search(key, number)
-                    if match:
-                        print "CID ignore number pattern detected"
-                        reason = block["number_patterns"][key]
-                        self.blacklist_caller(callerid, reason)
-                        return True
                 print "Caller has been screened"
                 return False
         finally:
@@ -83,12 +82,19 @@ class CallScreener(object):
     def __init__(self, db, config):
         self._db = db
         self.config = config
-        self._blacklist = Blacklist(db)
-        self._whitelist = Whitelist(db)
+        if self.config["DEBUG"]:
+            print "Initializing CallScreener"
+
+        self._blacklist = Blacklist(db, config)
+        self._whitelist = Whitelist(db, config)
         self._nomorobo = NomoroboService()
+
+        if self.config["DEBUG"]:
+            print "CallScreener initialized"
 
 
 def test(db, config):
+    """ Unit Tests """
 
     # Create the screener to be tested
     screener = CallScreener(db, config)
@@ -103,6 +109,8 @@ def test(db, config):
     caller3 = {"NAME": "V123456789012345", "NMBR": "80512345678", "DATE": "1012", "TIME": "0600"}
     # Create a robocaller
     caller4 = {"NAME": "Robocaller", "NMBR": "3105241189", "DATE": "1012", "TIME": "0600"}
+    # Create a Private Number
+    caller5 = {"NAME": "O", "NMBR": "P", "DATE": "1012", "TIME": "0600"}
 
     # Perform tests
     print "Assert is blacklisted: " + caller1['NMBR']
@@ -117,32 +125,39 @@ def test(db, config):
     print "Assert is whitelisted: " + caller2['NMBR']
     assert screener.is_whitelisted(caller2)
 
-    print "Assert a bad name pattern: " + caller3['NMBR']
+    print "Assert a blocked name pattern: " + caller3['NAME']
     assert screener.is_blacklisted(caller3)
 
     print "Assert is blacklisted by nomorobo: " + caller4['NMBR']
     assert screener.is_blacklisted(caller4)
 
+    print "Assert a blocked number pattern: " + caller5['NMBR']
+    assert screener.is_blacklisted(caller5)
+
     return 0
 
 
 if __name__ == '__main__':
+    """ Run Unit Tests """
 
     # Add the parent directory to the path so callattendant can be found
-    import os, sys
+    import os
+    import sys
     currentdir = os.path.dirname(os.path.realpath(__file__))
     parentdir = os.path.dirname(currentdir)
     sys.path.append(parentdir)
 
     # Load and tweak the default config
-    from callattendant import make_config
+    from callattendant import make_config, print_config
     config = make_config()
     config['DEBUG'] = True
-    config['TESTING'] = True
     config['BLOCK_NAME_PATTERNS'] = {
         "V[0-9]{15}": "Telemarketer Caller ID",
-        "O": "Unknown number"
     }
+    config['BLOCK_NUMBER_PATTERNS'] = {
+        "P": "Private number",
+    }
+    print_config(config)
 
     # Create the test db in RAM
     import sqlite3

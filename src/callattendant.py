@@ -26,6 +26,7 @@ import os
 import sqlite3
 from config import Config
 from Queue import Queue
+from pprint import pprint
 from screening.calllogger import CallLogger
 from screening.callscreener import CallScreener
 from hardware.modem import Modem
@@ -38,6 +39,9 @@ class CallAttendant(object):
 
     def handle_caller(self, caller):
         """Places the caller record in synchronized queue for processing"""
+        if self.config["DEBUG"]:
+            print("Adding to caller queue:")
+            pprint(caller)
         self._caller_queue.put(caller)
 
     def phone_ringing(self, enabled):
@@ -53,9 +57,12 @@ class CallAttendant(object):
             :param config: the application config dict
         """
         self.config = config
-
-        database = os.path.join(self.config['ROOT_PATH'], self.config['DATABASE'])
-        self.db = sqlite3.connect(database)
+        db_path = None
+        if self.config["TESTING"]:
+            self.db = sqlite3.connect(":memory:")
+        else:
+            db_path = os.path.join(self.config['ROOT_PATH'], self.config['DATABASE'])
+            self.db = sqlite3.connect(db_path)
 
         # The current/last caller id
         self._caller_queue = Queue()
@@ -65,18 +72,20 @@ class CallAttendant(object):
         self.blocked_indicator = BlockedIndicator()
         self.ring_indicator = RingIndicator()
 
-        # Telephony subsystems
-        self.logger = CallLogger(self.db)
+        # Screening subsystems
+        self.logger = CallLogger(self.db, self.config)
         self.screener = CallScreener(self.db, self.config)
+
+        # Hardware subsystem
         self.modem = Modem(self.config, self.phone_ringing, self.handle_caller)
 
-        # Start the User Interface subsystem
-        webapp.start(database)
-
+        # Start User Interface subsystem if we're not running functional tests
+        # When testing, we're using a memory database, which can't be shared
+        if not self.config["TESTING"]:
+            webapp.start(db_path)
 
     def run(self):
         """Processes incoming callers with logging and screening."""
-
         # Get relevant config settings
         screening_mode = self.config['SCREENING_MODE']
         block = self.config.get_namespace("BLOCK_")
@@ -89,33 +98,38 @@ class CallAttendant(object):
         # Process incoming calls
         while 1:
 
-            # Wait (blocking) for a caller
-            caller = self._caller_queue.get()
+            try:
+                # Wait (blocking) for a caller
+                caller = self._caller_queue.get()
 
-            # Perform the call screening
-            whitelisted = False
-            blacklisted = False
-            if "whitelist" in screening_mode:
-                print "Checking whitelist(s)"
-                if self.screener.is_whitelisted(caller):
-                    whitelisted = True
-                    caller["NOTE"] = "Whitelisted"
-                    self.approved_indicator.turn_on()
+                # Perform the call screening
+                whitelisted = False
+                blacklisted = False
+                if "whitelist" in screening_mode:
+                    print "Checking whitelist(s)"
+                    if self.screener.is_whitelisted(caller):
+                        whitelisted = True
+                        caller["NOTE"] = "Whitelisted"
+                        self.approved_indicator.turn_on()
 
-            if not whitelisted and "blacklist" in screening_mode:
-                print "Checking blacklist(s)"
-                if self.screener.is_blacklisted(caller):
-                    blacklisted = True
-                    caller["NOTE"] = "Blacklisted"
-                    self.blocked_indicator.turn_on()
-                    if block['enabled']:
-                        self.modem.block_call()
+                if not whitelisted and "blacklist" in screening_mode:
+                    print "Checking blacklist(s)"
+                    if self.screener.is_blacklisted(caller):
+                        blacklisted = True
+                        caller["NOTE"] = "Blacklisted"
+                        self.blocked_indicator.turn_on()
+                        if block['enabled']:
+                            self.modem.block_call()
 
-            # Log every call to the database
-            self.logger.log_caller(caller)
+                # Log every call to the database
+                self.logger.log_caller(caller)
+            except Exception as e:
+                print e
+                logging.exception(e)
+                return 1
 
 
-def make_config(filename = None):
+def make_config(filename=None):
     '''Creates the config dictionary for this application/module.
         :param filename: the filename of a python configuration file.
             This can either be an absolute filename or a filename
@@ -132,23 +146,29 @@ def make_config(filename = None):
         "DATABASE": "callattendant.db",
         "SCREENING_MODE": ("whitelist", "blacklist"),
         "BLOCK_ENABLED": True,
-        "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID",},
-        "BLOCK_NUMBER_PATTERNS": { },
-        "BLOCKED_ACTIONS" : ("play_message"),
+        "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID", },
+        "BLOCK_NUMBER_PATTERNS": {},
+        "BLOCKED_ACTIONS": ("play_message", ),
         "BLOCKED_MESSAGE_FILE": "hardware/blocked.wav",
     }
     # Create the default configuration
     cfg = Config(root_path, default_config)
     # Load the config file, which may overwrite defaults
-    if not filename is None:
+    if filename is not None:
         cfg.from_pyfile(filename)
 
     if cfg["DEBUG"]:
-        print "[Configuration]"
-        for key, val in cfg.iteritems():
-            print "{} = {}".format(key, val)
+        print_config(cfg)
 
     return cfg
+
+
+def print_config(config):
+    """ Pretty print the given configuration dict """
+    print "[Configuration]"
+    keys = sorted(config.keys())
+    for key in keys:
+        print "  {} = {}".format(key, config[key])
 
 
 def get_args(argv):
@@ -156,11 +176,12 @@ def get_args(argv):
         :param argv: sys.argv
         :return: configfile
     """
-    import sys, getopt
+    import sys
+    import getopt
     syntax = 'Usage: python callattendant.py -c [FILE]'
     configfile = None
     try:
-        opts, args = getopt.getopt(argv[1:], "hc:",["help","config="])
+        opts, args = getopt.getopt(argv[1:], "hc:", ["help", "config="])
     except getopt.GetoptError:
         print syntax
         sys.exit(2)

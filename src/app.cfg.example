@@ -6,23 +6,23 @@
 # This file contains the configuration settings for the callattendant
 # ==============================================================================
 
-# ENV: production or development environment. development implies
-# incomplete features and/or debugging
+# ENV: "production" or "development" environment. "development" implies
+# the inclusion of incomplete features and/or experimental code.
 ENV = 'production'
 
-# DEBUG: If true additional assertions and output may be generated
+# DEBUG: If True, additional assertions and output may be generated
 DEBUG = False
 
-# TESTING: If true test scaffolding/behavior may be implmented
+# TESTING: If True, functional tests are executed in lieu of normal operation
 TESTING = False
 
-# DATABASE: Sqlite database for incoming call log, whitelist and blacklist
+# DATABASE: Name of Sqlite database for call log, whitelist and blacklist
 DATABASE = "callattendant.db"
 
 # SCREENING_MODE: A tuple containing: "whitelist" and/or "blacklist", or empty
 SCREENING_MODE = ("whitelist", "blacklist")
 
-# BLOCK_ENABLED: if true calls that fail screening will be blocked
+# BLOCK_ENABLED: if True calls that fail screening will be blocked
 BLOCK_ENABLED = True
 
 # BLOCK_NAME_PATTERNS: A regex expression dict applied to the CID names
@@ -34,7 +34,7 @@ BLOCK_NAME_PATTERNS = {"V[0-9]{15}": "Telemarketer Caller ID",}
 BLOCK_NUMBER_PATTERNS = { }
 
 # BLOCKED_ACTIONS: A tuple containing: "play_message" and/or "record_message", or empty
-BLOCKED_ACTIONS = ("whitelist", "blacklist")
+BLOCKED_ACTIONS = ("play_message")
 
 # BLOCKED_MESSAGE_FILE: The wav file to be played to blocked callers
 BLOCKED_MESSAGE_FILE = "hardware/blocked.wav"

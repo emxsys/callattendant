@@ -30,15 +30,19 @@
 # ==============================================================================
 
 import utils
+from pprint import pprint
 from datetime import datetime
 
 
 class Whitelist(object):
 
-    def __init__(self, db):
+    def __init__(self, db, config):
         """Ensures database access to the Whitelist table"""
-
         self.db = db
+        self.config = config
+
+        if self.config["DEBUG"]:
+            print "Initializing Whitelist"
 
         sql = '''CREATE TABLE IF NOT EXISTS Whitelist (
             PhoneNo TEXT PRIMARY KEY,
@@ -49,7 +53,20 @@ class Whitelist(object):
         curs.executescript(sql)
         curs.close()
 
-        print "Whitelist initialized"
+        if self.config["TESTING"]:
+            # Add a record to the test db;
+            # The number should match a value in the Modem's TEST_DATA
+            caller = {
+                "NAME": "Bruce",
+                "NMBR": "8055554567",
+                "DATE": "0801",
+                "TIME": "1801",
+                "REASON": "Whitelist test",
+            }
+            self.add_caller(caller)
+
+        if self.config["DEBUG"]:
+            print "Whitelist initialized"
 
     def add_caller(self, call_record, reason=""):
         query = '''INSERT INTO Whitelist(
@@ -66,7 +83,9 @@ class Whitelist(object):
         self.db.execute(query, arguments)
         self.db.commit()
 
-        print "New whitelist entry added"
+        if self.config["DEBUG"]:
+            print "New whitelist entry added"
+            pprint(arguments)
 
     def remove_number(self, phone_no):
         '''Removes records for the given number (without dashes or formatting)'''
@@ -75,7 +94,9 @@ class Whitelist(object):
         self.db.execute(query, arguments)
         self.db.commit()
 
-        print "whitelist entry removed"
+        if self.config["DEBUG"]:
+            print "whitelist entry removed"
+            pprint(arguments)
 
     def check_number(self, number):
         query = "SELECT COUNT(*) FROM Whitelist WHERE PhoneNo=:number"
@@ -90,15 +111,11 @@ class Whitelist(object):
         return results
 
 
-def test(args):
-    import sqlite3
-
-    # Create the test db in RAM
-    db = sqlite3.connect(":memory:")
-    # db.text_factory = str
+def test(db, config):
+    """ Unit Tests """
 
     # Create the whitelist to be tested
-    whitelist = Whitelist(db)
+    whitelist = Whitelist(db, config)
 
     # Add a record
     call_record = {"NAME": "Bruce", "NMBR": "1234567890", "REASON": "some reason", "DATE": "1012", "TIME": "0600"}
@@ -107,21 +124,45 @@ def test(args):
     # List the records
     query = 'SELECT * from Whitelist'
     results = utils.query_db(db, query)
-    print "Query results:"
-    print results
+    print query + " results:"
+    pprint(results)
 
     number = "1234567890"
-    print "Check number: " + number
-    print whitelist.check_number(number)
-    print "Check wrong number:"
-    print whitelist.check_number("1111111111")
-    print "Get number:"
-    print whitelist.get_number(number)
+    print "Assert is whitelisted: " + number
+    assert whitelist.check_number(number)
+
+    number = "1111111111"
+    print "Assert not whitelisted: " + number
+    assert not whitelist.check_number(number)
+
+    number = "1234567890"
+    print "Get number: " + number
+    pprint(whitelist.get_number(number))
 
     return 0
 
 
 if __name__ == '__main__':
+    """  Run the unit tests """
+
+    # Create the test db in RAM
+    import sqlite3
+    db = sqlite3.connect(":memory:")
+
+    # Add the parent directory to the path so callattendant can be found
+    import os
     import sys
-    sys.exit(test(sys.argv))
-    print("Done")
+    currentdir = os.path.dirname(os.path.realpath(__file__))
+    parentdir = os.path.dirname(currentdir)
+    sys.path.append(parentdir)
+
+    # Create and tweak a default config suitable for unit testing
+    from callattendant import make_config, print_config
+    config = make_config()
+    config['DEBUG'] = True
+    print_config(config)
+
+    # Run the tests
+    sys.exit(test(db, config))
+
+    print("Tests complete")

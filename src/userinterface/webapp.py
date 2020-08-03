@@ -351,13 +351,13 @@ def get_pagination(**kwargs):
     )
 
 
-def run_flask(database):
+def run_flask(db_path):
     '''
     Runs the Flask webapp.
         :param database: full path to the callattendant database file
     '''
     with app.app_context():
-        app.config["DATABASE"] = database
+        app.config["DATABASE"] = db_path
 
     print "Running Flask webapp"
     # debug mode prevents app from running in separate thread
