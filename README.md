@@ -1,5 +1,5 @@
 # Call Attendant
-Automated call attendant, call blocker, and voice messaging on a Raspberry Pi.
+Automated call attendant with call blocking and voice messaging on a Raspberry Pi.
 
 #### Table of Contents
 - [Overview](#overview)
@@ -12,12 +12,12 @@ Automated call attendant, call blocker, and voice messaging on a Raspberry Pi.
 
 ## Overview
 The Call Attendant (__callattendant__) uses a Raspberry Pi coupled with a US Robotics 5637 modem to screen incoming
-calls on a landline. Features being developed include:
-- [x] Robocallers and blocked numbers are intercepted at the first ring
+calls on a landline. The __callattendant__ is a Python3 project. Features being developed include:
+- [x] A call blocker that intercepts robocallers and blocked numbers at or before the first ring
 - [x] Permitted numbers pass straight through to the local phone system for normal call ringing and answering
 - [x] Visual indicators to show whether the incoming call is from a permitted, blocked, or unknown number
 - [x] Call details, permitted numbers, and blocked numbers are available in a web-based user interface
-- [ ] Unknown callers are handled by a voice messaging system that requires human interaction, e.g, "Press 1 to leave a message"
+- [ ] Blocked callers are handled by a voice messaging system that requires human interaction, e.g, "Press 1 to leave a message"
 
 The Call Attendant project was inspired by the [pamapa/callblocker](https://github.com/pamapa/callblocker) project,
 an excellent Raspberry Pi based call blocker.  However, the __callattendant__ differs from the __callblocker__ in that adds
@@ -129,8 +129,7 @@ cd callattendant-master
 
 ### Setup
 
-The installation calls for Python2.X. Yes, it's deprecated, but go ahead and
-live dangerously. 
+The installation calls for Python3.X.
 
 #### Setup Virtual Environment
 ###### *Optional*
@@ -139,15 +138,15 @@ For development purposes, you might be best served by setting up a virtual envir
 If you intend to simply install and run the **callattendant** on a dedicated Raspberry Pi, 
 you can skip this step and proceed with [Install Packages](#install-packages).
 
-The following instructions create a virtual environment named _ca_testing_ within the current
+The following instructions create a virtual environment named _python3_ within the current
 folder:
 
 ```bash
 sudo apt install virtualenv
 
-virtualenv ca_testing --python=python2.7
+virtualenv python3 --python=python3
 
-source ca_testing/bin/activate
+source python3/bin/activate
 ```
 
 Now you're operating with a virtual Python. To check, issue the following
@@ -161,11 +160,11 @@ $ which python
 You should see output of the form:
 
 ```
-(ca_testing) pi@raspberryi:~/testing $ which python
-/home/pi/testing/ca_testing/bin/python
+(python3) pi@raspberryi:~/testing $ which python
+/home/pi/testing/python3/bin/python
 ```
 
-To make sure you're on 2.7 as requested, issue:
+To make sure you're on 3.x as requested, issue:
 
 ```bash
 
@@ -175,8 +174,8 @@ $ python --version
 You should see output of the form:
 
 ```
-(ca_testing) pi@raspberrypi:~/testing $ python --version
-Python 2.7.16
+(python3) pi@raspberrypi:~/testing $ python --version
+Python 3.7.3
 ```
 
 #### Install Packages
@@ -204,7 +203,7 @@ python callattendant.py
 You should see output of the form:
 
 ```
-(ca_testing) pi@raspberrypi:~/testing/callattendant/src $ python callattendant.py
+(python3) pi@raspberrypi:~/testing/callattendant/src $ python callattendant.py
 CallLogger initialized
 Blacklist initialized
 Whitelist initialized
