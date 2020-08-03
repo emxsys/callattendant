@@ -92,7 +92,6 @@ class Modem(object):
 
     def _call_handler(self):
         """Thread function that processes the incoming modem data."""
-
         # Handle incoming calls
         call_record = {}
         while 1:
@@ -149,10 +148,10 @@ class Modem(object):
         try:
             if self._send(GO_OFF_HOOK):
                 time.sleep(2)
-                if blocked['message_enabled']:
+                if "play_message" in blocked["actions"]:
                     blocked_message_file = os.path.join(
-                        self.config['ROOT_PATH'],
-                        blocked['message_file'])
+                        self.config["ROOT_PATH"],
+                        blocked["message_file"])
                     self.play_audio(blocked_message_file)
                 time.sleep(2)
                 self._send(GO_ON_HOOK)

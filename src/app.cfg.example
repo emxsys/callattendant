@@ -19,23 +19,23 @@ TESTING = False
 # DATABASE: Sqlite database for incoming call log, whitelist and blacklist
 DATABASE = "callattendant.db"
 
-# SCREENING_MODE: no_screening, whitelist_only, whitelist_and_blacklist, blacklist_only
-SCREENING_MODE = "whitelist_and_blacklist"
+# SCREENING_MODE: A tuple containing: "whitelist" and/or "blacklist", or empty
+SCREENING_MODE = ("whitelist", "blacklist")
 
 # BLOCK_ENABLED: if true calls that fail screening will be blocked
 BLOCK_ENABLED = True
 
 # BLOCK_NAME_PATTERNS: A regex expression dict applied to the CID names
-# Example: {"V[0-9]{15}": "Telemarketer Caller ID", "O": "Unknownd caller"}
+# Example: {"V[0-9]{15}": "Telemarketer Caller ID", "O": "Unknown caller"}
 BLOCK_NAME_PATTERNS = {"V[0-9]{15}": "Telemarketer Caller ID",}
 
 # BLOCK_NUMBER_PATTERNS: A regx expression dict applied to the CID numbers
 # Example: {"P": "Private number",}
 BLOCK_NUMBER_PATTERNS = { }
 
-# BLOCKED_MESSAGE_ENABLED: If true the blocked message file will be played to the caller
-BLOCKED_MESSAGE_ENABLED = False
+# BLOCKED_ACTIONS: A tuple containing: "play_message" and/or "record_message", or empty
+BLOCKED_ACTIONS = ("whitelist", "blacklist")
 
 # BLOCKED_MESSAGE_FILE: The wav file to be played to blocked callers
-BLOCKED_MESSAGE_FILE = "hardware/sample.wav"
+BLOCKED_MESSAGE_FILE = "hardware/blocked.wav"
 

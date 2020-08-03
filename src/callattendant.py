@@ -134,8 +134,8 @@ def make_config(filename = None):
         "BLOCK_ENABLED": True,
         "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID",},
         "BLOCK_NUMBER_PATTERNS": { },
-        "BLOCKED_MESSAGE_ENABLED": False,
-        "BLOCKED_MESSAGE_FILE": "hardware/sample.wav",
+        "BLOCKED_ACTIONS" : ("play_message"),
+        "BLOCKED_MESSAGE_FILE": "hardware/blocked.wav",
     }
     # Create the default configuration
     cfg = Config(root_path, default_config)
