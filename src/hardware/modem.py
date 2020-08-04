@@ -165,7 +165,6 @@ class Modem(object):
                 print("Closing modem log file")
                 logfile.close()
 
-
     def hang_up(self):
         """Terminate an active call, e.g., hang up."""
         print("Terminating call...")
@@ -200,7 +199,9 @@ class Modem(object):
 
     def play_audio(self, audio_file_name):
         """Play an audio file with 8-bit linear compression at 8.0 kHz sampling"""
-        print("Play Audio Msg - Start")
+        debugging = self.config["DEBUG"]
+        if debugging:
+            print("Play Audio Msg - Start")
 
         self._serial.cancel_read()
         self._lock.acquire()
@@ -221,17 +222,18 @@ class Modem(object):
             time.sleep(1)
 
             # Play Audio File
-            print("Play Audio Msg - playing wav file")
+            if debugging:
+                print("Play Audio Msg - Playing wav file")
 
             wf = wave.open(audio_file_name, 'rb')
             chunk = 1024
 
             data = wf.readframes(chunk)
-            while data != '':
+            while data != b'':
                 self._serial.write(data)
                 data = wf.readframes(chunk)
                 # You may need to change this sleep interval to smooth-out the audio
-                time.sleep(.12)
+                time.sleep(.12)  # 120ms
             wf.close()
 
             # self._serial.flushInput()
@@ -242,7 +244,8 @@ class Modem(object):
         finally:
             self._lock.release()
 
-        print("Play Audio Msg - END")
+        if debugging:
+            print("Play Audio Msg - End")
 
     def record_audio(self, audio_file_name):
         print("Record Audio Msg - Start")
@@ -287,23 +290,24 @@ class Modem(object):
             start_time = datetime.now()
             CHUNK = 1024
             audio_frames = []
-
+            DLE_b = (chr(16) + chr(98)).encode()    # <DLE>b
+            DLE_s = (chr(16) + chr(115)).encode()   # <DLE>s
+            DLE_ETX = "<DLE><ETX>".encode()         # <DLE><ETX>
             while 1:
                 # Read audio data from the Modem
                 audio_data = self._serial.read(CHUNK)
-
                 # Check if <DLE>b is in the stream
-                if ((chr(16) + chr(98)) in audio_data):
+                if (DLE_b in audio_data):
                     print("Busy Tone... Call will be disconnected.")
                     break
 
                 # Check if <DLE>s is in the stream
-                if ((chr(16) + chr(115)) in audio_data):
+                if (DLE_s in audio_data):
                     print("Silence Detected... Call will be disconnected.")
                     break
 
                 # Check if <DLE><ETX> is in the stream
-                if (("<DLE><ETX>").encode() in audio_data):
+                if (DLE_ETX in audio_data):
                     print("<DLE><ETX> Char Recieved... Call will be disconnected.")
                     break
 
@@ -507,33 +511,42 @@ def test(config, phone_ringing, handle_caller):
         print("Error: Unable to open the Serial Port.")
         return 1
 
-    print("Assert factory reset")
-    assert modem._send(FACTORY_RESET, "OK")
+    try:
+        print("Assert factory reset")
+        assert modem._send(FACTORY_RESET, "OK"), "FACTORY_RESET"
 
-    print("Assert display modem settings")
-    assert modem._send(DISPLAY_MODEM_SETTINGS, "OK")
+        print("Assert display modem settings")
+        assert modem._send(DISPLAY_MODEM_SETTINGS, "OK"), "DISPLAY_MODEM_SETTINGS"
 
-    print("Assert put modem into voice mode.")
-    assert modem._send(ENTER_VOICE_MODE, "OK")
+        print("Assert put modem into voice mode.")
+        assert modem._send(ENTER_VOICE_MODE, "OK"), "ENTER_VOICE_MODE"
 
-    print("Assert set compression method and sampling rate specifications.")
-    assert modem._send(SET_VOICE_COMPRESSION_METHOD, "OK")
+        print("Assert set compression method and sampling rate specifications.")
+        assert modem._send(SET_VOICE_COMPRESSION_METHOD, "OK"), "SET_VOICE_COMPRESSION_METHOD"
 
-    print("Assert put modem into TAD mode.")
-    assert modem._send(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE, "OK")
+        print("Assert put modem into TAD mode.")
+        assert modem._send(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE, "OK"), "ENTER_TELEPHONE_ANSWERING_DEVICE_MODE"
 
-    print("Assert put modem into data transmit state.")
-    assert modem._send(ENTER_VOICE_TRANSMIT_DATA_STATE, "CONNECT")
+        print("Assert put modem into data transmit state.")
+        assert modem._send(ENTER_VOICE_TRANSMIT_DATA_STATE, "CONNECT"), "ENTER_VOICE_TRANSMIT_DATA_STATE"
 
-    print("Assert cancel data transmit state.")
-    assert modem._send(END_VOICE_TRANSMIT_DATA_STATE, "OK")
+        print("Assert cancel data transmit state.")
+        assert modem._send(END_VOICE_TRANSMIT_DATA_STATE, "OK"), "END_VOICE_TRANSMIT_DATA_STATE"
 
-    modem._send(FACTORY_RESET)
+        # Test audio play/recording when functional testing is enabled
+        if config["TESTING"]:
+            modem._send(FACTORY_RESET)
+            currentdir = os.path.dirname(os.path.realpath(__file__))
+            modem.play_audio(os.path.join(currentdir, "sample.wav"))
+            modem.record_audio("message.wav")
 
-    currentdir = os.path.dirname(os.path.realpath(__file__))
-    modem.play_audio(os.path.join(currentdir, "sample.wav"))
+        print("*** Unit tests passed ***")
 
-    modem.record_audio("message.wav")
+    except Exception as e:
+
+        print("*** Unit test failure ***")
+        pprint(e)
+        return 1
 
     return 0
 
@@ -552,7 +565,8 @@ if __name__ == '__main__':
     # Load and tweak the default config
     from callattendant import make_config, print_config
     config = make_config()
-    config['DEBUGs'] = True
+    config['DEBUG'] = True
+    config['TESTING'] = True
     print_config(config)
 
     # Dummy callback functions
@@ -561,4 +575,3 @@ if __name__ == '__main__':
 
     # Run the tests
     sys.exit(test(config, phone_ringing, handle_caller))
-    print("Done")
