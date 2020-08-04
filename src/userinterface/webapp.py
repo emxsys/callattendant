@@ -233,12 +233,12 @@ def manage_caller(call_log_id):
             caller['NMBR'] = number
             caller['NAME'] = request.form['name']
             print("Adding " + caller['NAME'] + " to whitelist")
-            whitelist = Whitelist(get_db())
+            whitelist = Whitelist(get_db(), current_app.config)
             whitelist.add_caller(caller, request.form['reason'])
 
         elif request.form['action'] == 'RemovePermit':
             print("Removing " + number + " from whitelist")
-            whitelist = Whitelist(get_db())
+            whitelist = Whitelist(get_db(), current_app.config)
             whitelist.remove_number(number)
 
         elif request.form['action'] == 'Block':
@@ -246,12 +246,12 @@ def manage_caller(call_log_id):
             caller['NMBR'] = number
             caller['NAME'] = request.form['name']
             print("Adding " + caller['NAME'] + " to blacklist")
-            blacklist = Blacklist(get_db())
+            blacklist = Blacklist(get_db(), current_app.config)
             blacklist.add_caller(caller, request.form['reason'])
 
         elif request.form['action'] == 'RemoveBlock':
             print("Removing " + number + " from blacklist")
-            blacklist = Blacklist(get_db())
+            blacklist = Blacklist(get_db(), current_app.config)
             blacklist.remove_number(number)
 
     # Retrieve the caller information for the given call log entry
