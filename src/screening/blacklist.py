@@ -123,12 +123,14 @@ class Blacklist(object):
 def test(db, config):
     """ Unit Tests """
 
+    print("*** Running Blacklist Unit Tests ***")
+
     # Create the blacklist to be tested
     blacklist = Blacklist(db, config)
 
     # Add a record
-    callerid = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
-    blacklist.add_caller(callerid)
+    callerid = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600",}
+    blacklist.add_caller(callerid, "Test")
 
     # List the records
     query = 'select * from Blacklist'
@@ -136,18 +138,27 @@ def test(db, config):
     print(query + " results:")
     pprint(results)
 
-    number = "1234567890"
-    print("Assert is blacklisted: " + number)
-    assert blacklist.check_number(number)
+    try:
+        number = "1234567890"
+        print("Assert is blacklisted: " + number)
+        assert blacklist.check_number(number), number + " should be blacklisted"
 
-    number = "1111111111"
-    print("Assert not blacklisted: " + number)
-    assert not blacklist.check_number(number)
+        number = "1111111111"
+        print("Assert not blacklisted: " + number)
+        assert not blacklist.check_number(number), number + " should not be blacklisted"
 
-    number = "1234567890"
-    print("Get number: " + number)
-    pprint(blacklist.get_number(number))
+        number = "1234567890"
+        print("Get number: " + number)
+        caller = blacklist.get_number(number)
+        pprint(caller)
+        assert caller[0][0] == number, number + " should match get_number "+ caller[0][0]
 
+    except AssertionError as e:
+        print("*** Unit Test FAILED ***")
+        pprint(e)
+        return 1
+
+    print("*** Unit Tests PASSED ***")
     return 0
 
 

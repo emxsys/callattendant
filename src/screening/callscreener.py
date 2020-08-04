@@ -97,44 +97,55 @@ class CallScreener(object):
 def test(db, config):
     """ Unit Tests """
 
+    print("*** Running CallScreener Unit Tests ***")
+
     # Create the screener to be tested
     screener = CallScreener(db, config)
 
     # Add a record to the blacklist
-    caller1 = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
+    caller1 = {"NAME": "caller1", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
     screener._blacklist.add_caller(caller1)
     # Add a record to the whitelist
-    caller2 = {"NAME": "Frank", "NMBR": "1111111111", "DATE": "1012", "TIME": "0600", "REASON": "Test"}
+    caller2 = {"NAME": "caller2", "NMBR": "1111111111", "DATE": "1012", "TIME": "0600", "REASON": "Test"}
     screener._whitelist.add_caller(caller2)
     # Create a V123456789012345 Telemarketer caller
     caller3 = {"NAME": "V123456789012345", "NMBR": "80512345678", "DATE": "1012", "TIME": "0600"}
     # Create a robocaller
-    caller4 = {"NAME": "Robocaller", "NMBR": "3105241189", "DATE": "1012", "TIME": "0600"}
+    caller4 = {"NAME": "caller4", "NMBR": "3105241189", "DATE": "1012", "TIME": "0600"}
     # Create a Private Number
-    caller5 = {"NAME": "O", "NMBR": "P", "DATE": "1012", "TIME": "0600"}
+    caller5 = {"NAME": "caller5", "NMBR": "P", "DATE": "1012", "TIME": "0600"}
 
     # Perform tests
-    print("Assert is blacklisted: " + caller1['NMBR'])
-    assert screener.is_blacklisted(caller1)
+    try:
+        print("Assert is blacklisted: " + caller1['NMBR'])
+        assert screener.is_blacklisted(caller1), "caller1 should be blocked"
 
-    print("Assert not is whitelisted: " + caller1['NMBR'])
-    assert not screener.is_whitelisted(caller1)
+        print("Assert not is whitelisted: " + caller1['NMBR'])
+        assert not screener.is_whitelisted(caller1), "caller1 should not be permitted"
 
-    print("Assert not is blacklisted: " + caller2['NMBR'])
-    assert not screener.is_blacklisted(caller2)
+        print("Assert not is blacklisted: " + caller2['NMBR'])
+        assert not screener.is_blacklisted(caller2), "caller2 should not be blocked"
 
-    print("Assert is whitelisted: " + caller2['NMBR'])
-    assert screener.is_whitelisted(caller2)
+        print("Assert is whitelisted: " + caller2['NMBR'])
+        assert screener.is_whitelisted(caller2), "caller2 should be permitted"
 
-    print("Assert a blocked name pattern: " + caller3['NAME'])
-    assert screener.is_blacklisted(caller3)
+        print("Assert a blocked name pattern: " + caller3['NAME'])
+        assert screener.is_blacklisted(caller3), "caller3 should be blocked by name pattern"
 
-    print("Assert is blacklisted by nomorobo: " + caller4['NMBR'])
-    assert screener.is_blacklisted(caller4)
+        print("Assert is blacklisted by nomorobo: " + caller4['NMBR'])
+        assert screener.is_blacklisted(caller4), "caller4 should be blocked by nomorobo"
 
-    print("Assert a blocked number pattern: " + caller5['NMBR'])
-    assert screener.is_blacklisted(caller5)
+        print("Assert a blocked number pattern: " + caller5['NMBR'])
+        assert screener.is_blacklisted(caller5), "caller1 should be blocked by number pattern"
 
+
+    except AssertionError as e:
+
+        print("*** Unit test FAILED ***")
+        pprint(e)
+        return 1
+
+    print("*** Unit tests PASSED ***")
     return 0
 
 

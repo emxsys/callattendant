@@ -61,9 +61,8 @@ class Whitelist(object):
                 "NMBR": "8055554567",
                 "DATE": "0801",
                 "TIME": "1801",
-                "REASON": "Whitelist test",
             }
-            self.add_caller(caller)
+            self.add_caller(caller, "Whitelist test")
 
         if self.config["DEBUG"]:
             print("Whitelist initialized")
@@ -114,12 +113,14 @@ class Whitelist(object):
 def test(db, config):
     """ Unit Tests """
 
+    print("*** Running Whitelist Unit Tests ***")
+
     # Create the whitelist to be tested
     whitelist = Whitelist(db, config)
 
     # Add a record
-    call_record = {"NAME": "Bruce", "NMBR": "1234567890", "REASON": "some reason", "DATE": "1012", "TIME": "0600"}
-    whitelist.add_caller(call_record)
+    call_record = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
+    whitelist.add_caller(call_record, "Test")
 
     # List the records
     query = 'SELECT * from Whitelist'
@@ -127,18 +128,27 @@ def test(db, config):
     print(query + " results:")
     pprint(results)
 
-    number = "1234567890"
-    print("Assert is whitelisted: " + number)
-    assert whitelist.check_number(number)
+    try:
+        number = "1234567890"
+        print("Assert is whitelisted: " + number)
+        assert whitelist.check_number(number), number + " should be whitelisted"
 
-    number = "1111111111"
-    print("Assert not whitelisted: " + number)
-    assert not whitelist.check_number(number)
+        number = "1111111111"
+        print("Assert not whitelisted: " + number)
+        assert not whitelist.check_number(number), number + " should not be whitelisted"
 
-    number = "1234567890"
-    print("Get number: " + number)
-    pprint(whitelist.get_number(number))
+        number = "1234567890"
+        print("Get number: " + number)
+        caller = whitelist.get_number(number)
+        pprint(caller)
+        assert caller[0][0] == number, number + " should match get_number "+ caller[0][0]
 
+    except AssertionError as e:
+        print("*** Unit Test FAILED ***")
+        pprint(e)
+        return 1
+
+    print("*** Unit Tests PASSED ***")
     return 0
 
 
