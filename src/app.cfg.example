@@ -3,7 +3,11 @@
 # file: app.cfg
 #
 # ==============================================================================
-# This file contains the configuration settings for the callattendant
+# This file contains configuration settings for the callattendant.
+#
+# The values are in python syntax. You can/should use an editor like
+# "nano" which will provide you with syntax highlighting to ensure your
+# values are syntactically valid.
 # ==============================================================================
 
 # ENV: "production" or "development" environment. "development" implies

@@ -169,7 +169,7 @@ class Modem(object):
 
     def hang_up(self):
         """Terminate an active call, e.g., hang up."""
-        print("Terminating call...")
+        print("> Terminating call...")
         self._serial.cancel_read()
         self._lock.acquire()
         try:
@@ -180,18 +180,28 @@ class Modem(object):
 
     def block_call(self):
         """Block the current caller by answering and hanging up"""
-        print("Blocking call...")
+        print("> Blocking call...")
         blocked = self.config.get_namespace("BLOCKED_")
         self._serial.cancel_read()
         self._lock.acquire()
         try:
             if self._send(GO_OFF_HOOK):
                 time.sleep(2)
-                if "play_message" in blocked["actions"]:
+                if "play_greeting" in blocked["actions"]:
                     blocked_message_file = os.path.join(
                         self.config["ROOT_PATH"],
-                        blocked["message_file"])
+                        blocked["greeting_file"])
                     self.play_audio(blocked_message_file)
+                if "record_message" in blocked["actions"]:
+                    time.sleep(1)
+                    leave_message_file = os.path.join(
+                        self.config["ROOT_PATH"],
+                        blocked["leave_message_file"])
+                    self.play_audio(leave_message_file)
+                    if blocked["leave_message_action"]=="leave_message":
+                        self.record_audio("test.wav")
+                    elif blocked["leave_message_action"]=="press_1_leave_message":
+                        pass
                 time.sleep(2)
                 self._send(GO_ON_HOOK)
             else:

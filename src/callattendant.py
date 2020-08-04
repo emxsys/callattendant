@@ -123,6 +123,7 @@ class CallAttendant(object):
                         caller["NOTE"] = "Blacklisted"
                         self.blocked_indicator.turn_on()
                         if block['enabled']:
+                            print("Blocking {}".format(caller["NMBR"]))
                             self.modem.block_call()
 
                 # Log every call to the database
