@@ -54,7 +54,9 @@ ENABLE_VERBOSE_CODES = "ATV1"
 ENTER_VOICE_MODE = "AT+FCLASS=8"
 ENTER_TELEPHONE_ANSWERING_DEVICE_MODE = "AT+VLS=1"  # DCE off-hook
 ENTER_VOICE_TRANSMIT_DATA_STATE = "AT+VTX"
+ENTER_VOICE_RECIEVE_DATA_STATE = "AT+VRX"
 END_VOICE_TRANSMIT_DATA_STATE = DLE_CODE + ETX_CODE
+END_VOICE_RECIEVE_DATA_STATE = DLE_CODE + '!'
 FACTORY_RESET = "ATZ3"
 GO_OFF_HOOK = "ATH1"
 GO_ON_HOOK = "ATH0"
@@ -239,7 +241,7 @@ class Modem(object):
             # self._serial.flushInput()
             # self._serial.flushOutput()
 
-            self._send(END_VOICE_TRANSMIT_DATA_STATE)
+            self._send(END_VOICE_TRANSMIT_DATA_STATE, "OK")
 
         finally:
             self._lock.release()
@@ -252,9 +254,12 @@ class Modem(object):
 
         self._serial.cancel_read()
         self._lock.acquire()
+
+        debugging = self.config["DEBUG"]
+        result = True
         try:
             try:
-                if not self._send("AT+FCLASS=8", "OK"):
+                if not self._send(ENTER_VOICE_MODE, "OK"):
                     raise RuntimeError("Failed to put modem into voice mode.")
 
                 if not self._send("AT+VGT=128", "OK"):
@@ -267,22 +272,23 @@ class Modem(object):
                 if not self._send("AT+VSD=128,0", "OK"):
                     raise RuntimeError("Failed to disable silence detection.")
 
-                if not self._send("AT+VLS=1", "OK"):
+                if not self._send(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE, "OK"):
                     raise RuntimeError("Unable put modem into TAD mode.")
+
+                # Play 1.2 beep
+                if not self._send("AT+VTS=[933,900,120]", "OK"):
+                    raise RuntimeError("Failed to play 1.2 second beep.")
 
                 # Select normal silence detection sensitivity and detection interval of 5 s.
                 if not self._send("AT+VSD=128,50", "OK"):
                     raise RuntimeError("Failed to enable silence detection.")
 
-                if not self._send("AT+VTS=[933,900,100]", "OK"):
-                    raise RuntimeError("Failed to play 1.2 second beep.")
-
-                if not self._send("AT+VRX", "CONNECT"):
+                if not self._send(ENTER_VOICE_RECIEVE_DATA_STATE, "CONNECT"):
                     raise RuntimeError("Error: Unable put modem into voice receive mode.")
 
             except RuntimeError as error:
                 print("Modem initialization error: ", error)
-                return
+                return False
 
             # Record Audio File
 
@@ -290,12 +296,13 @@ class Modem(object):
             start_time = datetime.now()
             CHUNK = 1024
             audio_frames = []
-            DLE_b = (chr(16) + chr(98)).encode()    # <DLE>b
-            DLE_s = (chr(16) + chr(115)).encode()   # <DLE>s
-            DLE_ETX = "<DLE><ETX>".encode()         # <DLE><ETX>
+            DLE_b = (chr(16) + chr(98)).encode()    # <DLE>b Busy
+            DLE_s = (chr(16) + chr(115)).encode()   # <DLE>s Silence
+            DLE_ETX = (chr(16) + chr(3)).encode()   # <DLE><ETX> End of text
             while 1:
                 # Read audio data from the Modem
                 audio_data = self._serial.read(CHUNK)
+
                 # Check if <DLE>b is in the stream
                 if (DLE_b in audio_data):
                     print("Busy Tone... Call will be disconnected.")
@@ -330,19 +337,22 @@ class Modem(object):
             # Reset Audio File Name
             audio_file_name = ''
 
-            # Send End of Voice Recieve state by passing "<DLE>!"
-            if not self._send((chr(16) + chr(33)), "OK"):
-                print("Error: Unable to signal end of voice receive state")
+            # Clear buffer before sending commands
+            self._serial.reset_input_buffer()
+
+            # Send End of Recieve Data state by passing "<DLE>!"
+            if not self._send(END_VOICE_RECIEVE_DATA_STATE, DLE_CODE + ETX_CODE):
+                print("Error: Unable to signal end of voice/data receive state")
 
             # Hangup the Call
-            if not self._send("ATH", "OK"):
+            if not self._send(TERMINATE_CALL, "OK"):
                 print("Error: Unable to hang-up the call")
 
         finally:
             self._lock.release()
 
         print("Record Audio Msg - END")
-        return
+        return result
 
     def _send(self, command, expected_response=None, response_timeout=5):
         """Sends a command string (e.g., AT command) to the modem."""
@@ -379,7 +389,7 @@ class Modem(object):
         try:
             while 1:
                 modem_data = self._serial.readline()
-                response = modem_data.strip(b' \t\n\r' + DLE_CODE.encode("utf-8")).decode()
+                response = modem_data.decode("utf-8").strip(' \t\n\r') # strip DLE_CODE too?
                 if expected_response == response:
                     return True
                 elif "ERROR" in response:
@@ -501,7 +511,8 @@ def test(config, phone_ringing, handle_caller):
     """ Unit Tests """
     import os
 
-    print("Running Unit Tests....")
+    print("*** Running Modem Unit Tests ***")
+
     modem = Modem(config, phone_ringing, handle_caller)
 
     try:
@@ -536,18 +547,20 @@ def test(config, phone_ringing, handle_caller):
         # Test audio play/recording when functional testing is enabled
         if config["TESTING"]:
             modem._send(FACTORY_RESET)
+
             currentdir = os.path.dirname(os.path.realpath(__file__))
             modem.play_audio(os.path.join(currentdir, "sample.wav"))
+            modem._send(TERMINATE_CALL, "OK")
+
+            modem._send(FACTORY_RESET)
             modem.record_audio("message.wav")
 
-        print("*** Unit tests passed ***")
-
     except Exception as e:
-
-        print("*** Unit test failure ***")
+        print("*** Unit test FAILED ***")
         pprint(e)
         return 1
 
+    print("*** Unit tests PASSED ***")
     return 0
 
 
