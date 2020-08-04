@@ -36,10 +36,15 @@ BLOCK_NAME_PATTERNS = {"V[0-9]{15}": "Telemarketer Caller ID",}
 # BLOCK_NUMBER_PATTERNS: A regx expression dict applied to the CID numbers
 # Example: {"P": "Private number",}
 BLOCK_NUMBER_PATTERNS = { }
+# BLOCKED_ACTIONS: A tuple containing: "play_greeting" and/or "record_message", or empty
+BLOCKED_ACTIONS = ("play_greeting", "record_message")
 
-# BLOCKED_ACTIONS: A tuple containing: "play_message" and/or "record_message", or empty
-BLOCKED_ACTIONS = ("play_message")
+# BLOCKED_GREETING_FILE: The wav file to be played to blocked callers
+BLOCKED_GREETING_FILE = "hardware/blocked.wav"
 
-# BLOCKED_MESSAGE_FILE: The wav file to be played to blocked callers
-BLOCKED_MESSAGE_FILE = "hardware/blocked.wav"
+# BLOCKED_LEAVE_MESSAGE_FILE: The wav file to be before recording a message, e.g., "press 1 to record a message"
+BLOCKED_LEAVE_MESSAGE_FILE = "hardware/leave_message.wav"
+
+# BLOCKED_LEAVE_MESSAGE_ACTION: "leave_message" or "press_1_leave_message"
+BLOCKED_LEAVE_MESSAGE_ACTION = "leave_message"
 
