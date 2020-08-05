@@ -185,20 +185,18 @@ class CallAttendant(object):
 
                         # Record message
                         if "record_message" in blocked["actions"]:
-                            time.sleep(1)
                             self.modem.play_audio(leave_message_file)
                             self.modem.record_audio(message_file)
 
                         # Enter voice mail
                         elif "voice_mail" in blocked["actions"]:
-                            time.sleep(1)
                             self.modem.play_audio(voice_mail_menu_file)
                             digits = self.modem.wait_for_keypress(5)
                             if len(digits) > 0:
                                 self.modem.record_audio(message_file)
 
                         # Terminate the call
-                        time.sleep(2)
+                        time.sleep(1)
                         self.modem.hang_up()
 
                 else:  # PRODUCTION code block

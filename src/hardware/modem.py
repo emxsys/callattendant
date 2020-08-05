@@ -76,7 +76,7 @@ DCE_RING = (chr(16) + chr(82)).encode()                 # <DLE>-R
 DCE_SILENCE_DETECTED = (chr(16) + chr(115)).encode()    # <DLE>-s
 DCE_END_VOICE_DATA_TX = (chr(16) + chr(3)).encode()     # <DLE><ETX>
 
-# Modem DLE shielded codes - DTE to DCE
+# System DLE shielded codes - DTE to DCE
 DTE_RAISE_VOLUME = (chr(16) + chr(117))                 # <DLE>-u
 DTE_LOWER_VOLUME = (chr(16) + chr(100))                 # <DLE>-d
 DTE_END_VOICE_DATA_TX = (chr(16) + chr(3))              # <DLE><ETX>
@@ -120,7 +120,9 @@ class Modem(object):
         self.event_thread.start()
 
     def _call_handler(self):
-        """Thread function that processes the incoming modem data."""
+        """
+        Thread function that processes the incoming modem data.
+        """
 
         # Handle incoming calls
         call_record = {}
@@ -275,8 +277,6 @@ class Modem(object):
                 print("* Error: Unable put modem into TAD data transmit state.")
                 return False
 
-            time.sleep(1)
-
             # Play Audio File
             wf = wave.open(audio_file_name, 'rb')
             chunk = 1024
@@ -384,9 +384,6 @@ class Modem(object):
             wf.writeframes(b''.join(audio_frames))
             wf.close()
 
-            # Reset Audio File Name
-            audio_file_name = ''
-
             # Clear buffer before sending commands
             self._serial.reset_input_buffer()
 
@@ -395,8 +392,8 @@ class Modem(object):
                 print("* Error: Unable to signal end of voice/data receive state")
 
             # Hangup the Call
-            if not self._send(TERMINATE_CALL, "OK"):
-                print("* Error: Unable to hang-up the call")
+            # if not self._send(TERMINATE_CALL, "OK"):
+            #     print("* Error: Unable to hang-up the call")
 
         finally:
             self._lock.release()
@@ -416,21 +413,27 @@ class Modem(object):
 
         debugging = self.config["DEBUG"]
         try:
+            modem_data = b''
             try:
                 if not self._send(ENTER_VOICE_MODE, "OK"):
                     raise RuntimeError("Failed to put modem into voice mode.")
+
                 if not self._send(ENABLE_SILENCE_DETECTION_5_SECS, "OK"):
                     raise RuntimeError("Failed to enable silence detection.")
+
                 if not self._send(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE, "OK"):
                     raise RuntimeError("Unable put modem into TAD mode.")
+
             except RuntimeError as error:
                 print("Modem initialization error: ", error)
                 return ''
 
             # Wait for keypress
             while 1:
-                # Read bytes from the Modem
-                modem_data = self._serial.read()
+                # Read 1 bytes from the Modem
+                modem_data = modem_data + self._serial.read(1)
+                print("modem_data:")
+                pprint(modem_data)
 
                 # Check if <DLE>b is in the stream
                 if (DCE_BUSY_TONE in modem_data):
@@ -448,8 +451,9 @@ class Modem(object):
                     break
 
                 # Parse DTMF Digits, if found in the modem data
-                digit_list = re.findall('/(.+?)~', modem_data)
+                digit_list = re.findall('/(.+?)~', decode(modem_data))
                 if len(digit_list) > 0:
+                    print("Digits:")
                     pprint(digit_list)
                     for d in digit_list:
                         print("\nNew Event: DTMF Digit Detected: " + d[1])
@@ -457,7 +461,7 @@ class Modem(object):
         finally:
             self._lock.release()
 
-        return True
+        return ''
 
     def _send(self, command, expected_response=None, response_timeout=5):
         """
@@ -592,15 +596,15 @@ class Modem(object):
     def _init_serial_port(self, com_port):
         """Initializes the given COM port for communications with the modem."""
         self._serial.port = com_port
-        self._serial.baudrate = 57600  # 9600
-        self._serial.bytesize = serial.EIGHTBITS  # number of bits per bytes
-        self._serial.parity = serial.PARITY_NONE  # set parity check: no parity
-        self._serial.stopbits = serial.STOPBITS_ONE  # number of stop bits
-        self._serial.timeout = 3  # non-block read
-        self._serial.xonxoff = False  # disable software flow control
-        self._serial.rtscts = False  # disable hardware (RTS/CTS) flow control
-        self._serial.dsrdtr = False  # disable hardware (DSR/DTR) flow control
-        self._serial.writeTimeout = 3  # timeout for write
+        self._serial.baudrate = 57600               # 9600
+        self._serial.bytesize = serial.EIGHTBITS    # number of bits per bytes
+        self._serial.parity = serial.PARITY_NONE    # set parity check: no parity
+        self._serial.stopbits = serial.STOPBITS_ONE # number of stop bits
+        self._serial.timeout = 3                    # non-block read
+        self._serial.xonxoff = False                # disable software flow control
+        self._serial.rtscts = False                 # disable hardware (RTS/CTS) flow control
+        self._serial.dsrdtr = False                 # disable hardware (DSR/DTR) flow control
+        self._serial.writeTimeout = 3               # timeout for write
 
     def close_serial_port(self):
         """Closes the serial port attached to the modem."""
