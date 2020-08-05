@@ -138,7 +138,9 @@ class CallAttendant(object):
                 # Wait (blocking) for a caller
                 caller = self._caller_queue.get()
 
+                # ======================================================
                 # DEVELOPMENT code block
+                # ======================================================
                 if self.config["ENV"] == "development":
 
                     # Perform the call screening
@@ -179,26 +181,35 @@ class CallAttendant(object):
                                 datetime.now().strftime("%Y%m%d-%H%M%S")
                             )
                         )
-                        # Play greeting
-                        if "greeting" in blocked["actions"]:
-                            self.modem.play_audio(blocked_greeting_file)
+                        # Go "off-hook"
+                        # - Acquires a lock on the modem
+                        # - MUST be followed by hang_up()
+                        self.modem.pick_up()
+                        try:
+                            # Play greeting
+                            if "greeting" in blocked["actions"]:
+                                self.modem.play_audio(blocked_greeting_file)
 
-                        # Record message
-                        if "record_message" in blocked["actions"]:
-                            self.modem.play_audio(leave_message_file)
-                            self.modem.record_audio(message_file)
-
-                        # Enter voice mail
-                        elif "voice_mail" in blocked["actions"]:
-                            self.modem.play_audio(voice_mail_menu_file)
-                            digits = self.modem.wait_for_keypress(5)
-                            if len(digits) > 0:
+                            # Record message
+                            if "record_message" in blocked["actions"]:
+                                self.modem.play_audio(leave_message_file)
                                 self.modem.record_audio(message_file)
 
-                        # Terminate the call
-                        time.sleep(1)
-                        self.modem.hang_up()
+                            # Enter voice mail
+                            elif "voice_mail" in blocked["actions"]:
+                                self.modem.play_audio(voice_mail_menu_file)
+                                digits = self.modem.wait_for_keypress(5)
+                                if len(digits) > 0:
+                                    self.modem.record_audio(message_file)
 
+                        finally:
+                            # Go "on-hook"
+                            time.sleep(1)
+                            self.modem.hang_up()
+
+                # ======================================================
+                # End DEVELOPMENT code block
+                # ======================================================
                 else:  # PRODUCTION code block
 
                     # Perform the call screening
@@ -257,8 +268,8 @@ def make_config(filename=None):
     if filename is not None:
         cfg.from_pyfile(filename)
 
-    if cfg["DEBUG"]:
-        print_config(cfg)
+    # Always print the configuration
+    print_config(cfg)
 
     return cfg
 

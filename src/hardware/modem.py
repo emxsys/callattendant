@@ -103,7 +103,7 @@ class Modem(object):
         """
         Constructs a modem object for serial communications.
             :param config: application configuration dict
-            :param phone_ringing: function that takes a boolean
+            :param phone_ringing: callback function that takes a boolean
             :param handle_caller: callback function that takes a caller
         """
         self.config = config
@@ -117,6 +117,7 @@ class Modem(object):
     def handle_calls(self):
         self._init_modem()
         self.event_thread = threading.Thread(target=self._call_handler)
+        self.event_thread.name = "modem_call_handler"
         self.event_thread.start()
 
     def _call_handler(self):
@@ -191,19 +192,30 @@ class Modem(object):
                 logfile.close()
 
     def pick_up(self):
-        """ Go Off-Hook """
-        print("> Terminating call...")
+        """
+        Go "off hook". Called by the application object (callattendant.py)
+        to set the lock and perform a batch of operations before hanging up.
+        The hang_up() function must be called to release the lock.
+        note:: hang_up must be called by the same thread to release the lock
+        """
+        print("> Going off hook...")
         self._serial.cancel_read()
         self._lock.acquire()
         try:
             if not self._send(GO_OFF_HOOK):
                 print("Error: Failed to pickup.")
-        finally:
+        except Exception as e:
+            pprint(e)
             self._lock.release()
 
     def hang_up(self):
-        """ Terminate an active call, e.g., hang up."""
-        print("> Terminating call...")
+        """
+        Terminate an active call, i.e., hang up. Called by the application
+        object after finishing a batch of modem operations to go "on hook"
+        and release the lock aquired by pick_up().
+        note:: assumes pick-up() has been called to acquire the lock
+        """
+        print("> Going on hook...")
         self._serial.cancel_read()
         self._lock.acquire()
         try:
