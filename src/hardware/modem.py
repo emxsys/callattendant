@@ -33,6 +33,7 @@ from datetime import datetime
 from pprint import pprint
 import atexit
 import os
+import re
 import serial
 import subprocess
 import sys
@@ -42,26 +43,44 @@ import wave
 
 
 # ACSII codes
-DLE_CODE = chr(16)  # Data Link Escape code
-ETX_CODE = chr(3)  # End Transmission code
+DLE_CODE = chr(16)      # Data Link Escape (DLE) code
+ETX_CODE = chr(3)       # End Transmission (ETX) code
 
 #  Modem AT commands:
 #  See http://support.usr.com/support/5637/5637-ug/ref_data.html
+FACTORY_RESET = "ATZ3"
 DISPLAY_MODEM_SETTINGS = "ATI4"
 ENABLE_ECHO_COMMANDS = "ATE1"
 ENABLE_FORMATTED_CID = "AT+VCID=1"
 ENABLE_VERBOSE_CODES = "ATV1"
+ENABLE_SILENCE_DETECTION_5_SECS = "AT+VSD=128,50"
 ENTER_VOICE_MODE = "AT+FCLASS=8"
 ENTER_TELEPHONE_ANSWERING_DEVICE_MODE = "AT+VLS=1"  # DCE off-hook
 ENTER_VOICE_TRANSMIT_DATA_STATE = "AT+VTX"
 ENTER_VOICE_RECIEVE_DATA_STATE = "AT+VRX"
 END_VOICE_TRANSMIT_DATA_STATE = DLE_CODE + ETX_CODE
-END_VOICE_RECIEVE_DATA_STATE = DLE_CODE + '!'
-FACTORY_RESET = "ATZ3"
+SET_VOICE_COMPRESSION_METHOD = "AT+VSM=128,8000"  # 128 = 8-bit linear, 8.0 kHz
 GO_OFF_HOOK = "ATH1"
 GO_ON_HOOK = "ATH0"
-SET_VOICE_COMPRESSION_METHOD = "AT+VSM=128,8000"  # 128 = 8-bit linear, 8.0 kHz
 TERMINATE_CALL = "ATH"
+
+# Modem DLE shielded codes - DCE to DTE
+DCE_ANSWER_TONE = (chr(16) + chr(97)).encode()          # <DLE>-a
+DCE_BUSY_TONE = (chr(16) + chr(98)).encode()            # <DLE>-b
+DCE_FAX_CALLING_TONE = (chr(16) + chr(99)).encode()     # <DLE>-c
+DCE_DIAL_TONE = (chr(16) + chr(100)).encode()           # <DLE>-d
+DCE_DATA_CALLING_TONE = (chr(16) + chr(101)).encode()   # <DLE>-e
+DCE_PHONE_ON_HOOK = (chr(16) + chr(104)).encode()       # <DLE>-h
+DCE_PHONE_OFF_HOOK = (chr(16) + chr(72)).encode()       # <DLE>-H
+DCE_RING = (chr(16) + chr(82)).encode()                 # <DLE>-R
+DCE_SILENCE_DETECTED = (chr(16) + chr(115)).encode()    # <DLE>-s
+DCE_END_VOICE_DATA_TX = (chr(16) + chr(3)).encode()     # <DLE><ETX>
+
+# Modem DLE shielded codes - DTE to DCE
+DTE_RAISE_VOLUME = (chr(16) + chr(117))                 # <DLE>-u
+DTE_LOWER_VOLUME = (chr(16) + chr(100))                 # <DLE>-d
+DTE_END_VOICE_DATA_TX = (chr(16) + chr(3))              # <DLE><ETX>
+DTE_END_RECIEVE_DATA_STATE = (chr(16) + chr(33))        # <DLE>-!
 
 # Record Voice Mail variables
 REC_VM_MAX_DURATION = 120  # Time in Seconds
@@ -169,8 +188,19 @@ class Modem(object):
                 print("Closing modem log file")
                 logfile.close()
 
+    def pick_up(self):
+        """ Go Off-Hook """
+        print("> Terminating call...")
+        self._serial.cancel_read()
+        self._lock.acquire()
+        try:
+            if not self._send(GO_OFF_HOOK):
+                print("Error: Failed to pickup.")
+        finally:
+            self._lock.release()
+
     def hang_up(self):
-        """Terminate an active call, e.g., hang up."""
+        """ Terminate an active call, e.g., hang up."""
         print("> Terminating call...")
         self._serial.cancel_read()
         self._lock.acquire()
@@ -181,7 +211,7 @@ class Modem(object):
             self._lock.release()
 
     def block_call(self, caller=None):
-        """Block the current caller by answering and hanging up"""
+        """ Block the current caller by answering and hanging up """
         print("> Blocking call...")
         blocked = self.config.get_namespace("BLOCKED_")
         self._serial.cancel_read()
@@ -221,7 +251,11 @@ class Modem(object):
             self._lock.release()
 
     def play_audio(self, audio_file_name):
-        """Play an audio file with 8-bit linear compression at 8.0 kHz sampling"""
+        """
+        Play the given audio file.
+            :param audio_file_name: a wav file with 8-bit linear
+                compression recored at 8.0 kHz sampling rate
+        """
         print("> Playing {}...".format(audio_file_name))
 
         self._serial.cancel_read()
@@ -266,6 +300,12 @@ class Modem(object):
         return True
 
     def record_audio(self, audio_file_name):
+        """
+        Records audio from the model to the given audio file.
+            :param audio_file_name: the wav file to be created with the
+                recorded audio; recored with 8-bit linear compression
+                at 8.0 kHz sampling rate
+        """
         print("> Recording {}...".format(audio_file_name))
 
         self._serial.cancel_read()
@@ -305,30 +345,26 @@ class Modem(object):
                 print("Modem initialization error: ", error)
                 return False
 
-            # Set the auto timeout interval
+            # Record Audio File
             start_time = datetime.now()
             CHUNK = 1024
             audio_frames = []
-            DLE_b = (chr(16) + chr(98)).encode()    # <DLE>b Busy
-            DLE_s = (chr(16) + chr(115)).encode()   # <DLE>s Silence
-            DLE_ETX = (chr(16) + chr(3)).encode()   # <DLE><ETX> End of text
-            # Record Audio File
             while 1:
                 # Read audio data from the Modem
                 audio_data = self._serial.read(CHUNK)
 
                 # Check if <DLE>b is in the stream
-                if (DLE_b in audio_data):
+                if (DCE_BUSY_TONE in audio_data):
                     print(">> Busy Tone... Call will be disconnected.")
                     break
 
                 # Check if <DLE>s is in the stream
-                if (DLE_s in audio_data):
+                if (DCE_SILENCE_DETECTED in audio_data):
                     print(">> Silence Detected... Call will be disconnected.")
                     break
 
                 # Check if <DLE><ETX> is in the stream
-                if (DLE_ETX in audio_data):
+                if (DCE_END_VOICE_DATA_TX in audio_data):
                     print(">> <DLE><ETX> Char Recieved... Call will be disconnected.")
                     break
 
@@ -355,7 +391,7 @@ class Modem(object):
             self._serial.reset_input_buffer()
 
             # Send End of Recieve Data state by passing "<DLE>!"
-            if not self._send(END_VOICE_RECIEVE_DATA_STATE, DLE_CODE + ETX_CODE):
+            if not self._send(DTE_END_RECIEVE_DATA_STATE, DLE_CODE + ETX_CODE):
                 print("* Error: Unable to signal end of voice/data receive state")
 
             # Hangup the Call
@@ -367,9 +403,70 @@ class Modem(object):
 
         return True
 
-    def _send(self, command, expected_response=None, response_timeout=5):
-        """Sends a command string (e.g., AT command) to the modem."""
+    def wait_for_keypress(self, seconds=5):
+        """
+        Waits n seconds for a keypress.
+            :params seconds: the number of seconds to wait for a keypress
+            :return: the keypress
+        """
+        print("> Waiting for keypress...")
 
+        self._serial.cancel_read()
+        self._lock.acquire()
+
+        debugging = self.config["DEBUG"]
+        try:
+            try:
+                if not self._send(ENTER_VOICE_MODE, "OK"):
+                    raise RuntimeError("Failed to put modem into voice mode.")
+                if not self._send(ENABLE_SILENCE_DETECTION_5_SECS, "OK"):
+                    raise RuntimeError("Failed to enable silence detection.")
+                if not self._send(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE, "OK"):
+                    raise RuntimeError("Unable put modem into TAD mode.")
+            except RuntimeError as error:
+                print("Modem initialization error: ", error)
+                return ''
+
+            # Wait for keypress
+            while 1:
+                # Read bytes from the Modem
+                modem_data = self._serial.read()
+
+                # Check if <DLE>b is in the stream
+                if (DCE_BUSY_TONE in modem_data):
+                    print(">> Busy Tone... Call will be disconnected.")
+                    break
+
+                # Check if <DLE>s is in the stream
+                if (DCE_SILENCE_DETECTED in modem_data):
+                    print(">> Silence Detected... Call will be disconnected.")
+                    break
+
+                # Check if <DLE><ETX> is in the stream
+                if (DCE_END_VOICE_DATA_TX in modem_data):
+                    print(">> <DLE><ETX> Char Recieved... Call will be disconnected.")
+                    break
+
+                # Parse DTMF Digits, if found in the modem data
+                digit_list = re.findall('/(.+?)~', modem_data)
+                if len(digit_list) > 0:
+                    pprint(digit_list)
+                    for d in digit_list:
+                        print("\nNew Event: DTMF Digit Detected: " + d[1])
+                        return d[1]
+        finally:
+            self._lock.release()
+
+        return True
+
+    def _send(self, command, expected_response=None, response_timeout=5):
+        """
+        Sends a command string (e.g., AT command) to the modem.
+            :param command: the command string to send
+            :param expected response: the expected response to the command, e.g. "OK"
+            :param response_timeout: number of seconds to wait for the command to respond
+            :return: True if the command response matches the expected_response
+        """
         # Disable processing while sending commands lest the response
         # get processed by the event processing thread.
         self._lock.acquire()
@@ -393,9 +490,12 @@ class Modem(object):
     def _read_response(self, expected_response, response_timeout_secs):
         """
         Handles the command response code from the modem.
-        Returns True if the expected response was returned.
-        Returns False if ERROR is returned or if it times out
         before the expected response is returned
+            :param expected response: the expected response, e.g. "OK"
+            :param response_timeout_secs: number of seconds to wait for
+                the command to respond
+            :return: True if the response matches the expected_response;
+                False if ERROR is returned or if it times out
         """
 
         start_time = datetime.now()
