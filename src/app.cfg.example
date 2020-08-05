@@ -75,6 +75,10 @@ BLOCKED_GREETING_FILE = "resources/blocked_greeting.wav"
 #   Example: "I'm sorry we missed your call..."
 VOICE_MAIL_GREETING_FILE = "resources/general_greeting.wav"
 
+#VOICE_MAIL_GOODBYE_FILE = "resources/goodbye.wav"
+
+#VOICE_MAIL_INVALID_RESPONSE_FILE = "resources/invalid_response.wav"
+
 # VOICE_MAIL_MENU_FILE: The wav file with message instructions, played after the greeting
 #   Example: "Press 1 to leave a message..."
 VOICE_MAIL_MENU_FILE = "resources/voice_mail_menu.wav"

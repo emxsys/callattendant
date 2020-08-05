@@ -54,6 +54,7 @@ ENABLE_ECHO_COMMANDS = "ATE1"
 ENABLE_FORMATTED_CID = "AT+VCID=1"
 ENABLE_VERBOSE_CODES = "ATV1"
 ENABLE_SILENCE_DETECTION_5_SECS = "AT+VSD=128,50"
+ENABLE_SILENCE_DETECTION_10_SECS = "AT+VSD=128,100"
 ENTER_VOICE_MODE = "AT+FCLASS=8"
 ENTER_TELEPHONE_ANSWERING_DEVICE_MODE = "AT+VLS=1"  # DCE off-hook
 ENTER_VOICE_TRANSMIT_DATA_STATE = "AT+VTX"
@@ -437,7 +438,7 @@ class Modem(object):
                 if not self._send(ENTER_VOICE_MODE, "OK"):
                     raise RuntimeError("Failed to put modem into voice mode.")
 
-                if not self._send(ENABLE_SILENCE_DETECTION_5_SECS, "OK"):
+                if not self._send(ENABLE_SILENCE_DETECTION_10_SECS, "OK"):
                     raise RuntimeError("Failed to enable silence detection.")
 
                 if not self._send(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE, "OK"):
@@ -447,26 +448,33 @@ class Modem(object):
                 print("Modem initialization error: ", error)
                 return ''
 
+
             # Wait for keypress
+            start_time = datetime.now()
             while 1:
                 # Read 1 bytes from the Modem
                 modem_data = modem_data + self._serial.read(1)
                 print("modem_data:")
                 pprint(modem_data)
 
+                # Check if <DLE>h is in the stream
+                if (DCE_PHONE_ON_HOOK in modem_data):
+                    print(">> Phone On Hook... Aborting")
+                    break
+
                 # Check if <DLE>b is in the stream
                 if (DCE_BUSY_TONE in modem_data):
-                    print(">> Busy Tone... Call will be disconnected.")
+                    print(">> Busy Tone... Aborting wait for key.")
                     break
 
                 # Check if <DLE>s is in the stream
                 if (DCE_SILENCE_DETECTED in modem_data):
-                    print(">> Silence Detected... Call will be disconnected.")
+                    print(">> Silence Detected... Aborting wait for key.")
                     break
 
                 # Check if <DLE><ETX> is in the stream
                 if (DCE_END_VOICE_DATA_TX in modem_data):
-                    print(">> <DLE><ETX> Char Recieved... Call will be disconnected.")
+                    print(">> <DLE><ETX> Char Recieved... Aboring.")
                     break
 
                 # Parse DTMF Digits, if found in the modem data
