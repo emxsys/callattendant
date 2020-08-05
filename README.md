@@ -11,21 +11,36 @@ Automated call attendant with call blocking and voice messaging on a Raspberry P
 
 
 ## Overview
-The Call Attendant (__callattendant__) uses a Raspberry Pi coupled with a US Robotics 5637 modem to screen incoming
-calls on a landline. The __callattendant__ is a Python3 project. Features being developed include:
+The Call Attendant (__callattendant__) is a python-based, automated call attendant that runs on a lightweight Raspberry Pi
+or other Linux-based system. Coupled with a modem, it provides a call blocker and voice messaging system that can screen
+callers and block robocall and scams from your landline.
+
+Features being developed include:
 - [x] A call blocker that intercepts robocallers and blocked numbers at or before the first ring
 - [x] Permitted numbers pass straight through to the local phone system for normal call ringing and answering
 - [x] Visual indicators to show whether the incoming call is from a permitted, blocked, or unknown number
 - [x] Call details, permitted numbers, and blocked numbers are available in a web-based user interface
 - [ ] Blocked callers are handled by a voice messaging system that requires human interaction, e.g, "Press 1 to leave a message"
 
+### Hardware
+- Raspberry Pi 3B+ or better
+- US Robotics 5637 Modem
+
+##### _The required hardware components: a Raspberry Pi 3B+ and USR5637 modem_
+![Raspberry Pi and USR5637 Modem](https://github.com/emxsys/callattendant/raw/master/docs/raspberry_pi-modem.jpg)
+
+### Web Interface
+Call history, permitted numbers, blocked numbers and caller management is all performed through a web interface.
+
+##### _Call Log Example_
+![Call Log](https://github.com/emxsys/callattendant/raw/master/docs/callattendant-calllog.png)
+
+### More information
 The Call Attendant project was inspired by the [pamapa/callblocker](https://github.com/pamapa/callblocker) project,
 an excellent Raspberry Pi based call blocker.  However, the __callattendant__ differs from the __callblocker__ in that adds
 voice messaging; and the __callattendant__ is written entirely in Python, uses SQLite for the call logging, and
 implments the web interface with Flask.
 
-
-### More information
 The following blogs from [IoT Bytes by Pradeep Singh](https://iotbytes.wordpress.com/) were very useful for learning to how
 to program the Raspberry Pi and the US Robotics 5637 modem. His blog site has many Raspberry Pi resources. Thanks Pradeep!
 
