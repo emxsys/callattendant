@@ -196,7 +196,8 @@ class Modem(object):
         Go "off hook". Called by the application object (callattendant.py)
         to set the lock and perform a batch of operations before hanging up.
         The hang_up() function must be called to release the lock.
-        note:: hang_up must be called by the same thread to release the lock
+
+        note:: hang_up MUST be called by the same thread to release the lock
         """
         print("> Going off hook...")
         self._serial.cancel_read()
@@ -204,25 +205,31 @@ class Modem(object):
         try:
             if not self._send(GO_OFF_HOOK):
                 print("Error: Failed to pickup.")
+                return False
         except Exception as e:
             pprint(e)
             self._lock.release()
+        return True
+
 
     def hang_up(self):
         """
-        Terminate an active call, i.e., hang up. Called by the application
-        object after finishing a batch of modem operations to go "on hook"
-        and release the lock aquired by pick_up().
-        note:: assumes pick-up() has been called to acquire the lock
+        Hang up on an active call, i.e., go "on hook". Called by the
+        application object after finishing a batch of modem operations
+        to terminate the call and release the lock aquired by pick_up().
+
+        note:: Assumes pick-up() has been called previously to acquire
+            the lock
         """
         print("> Going on hook...")
-        self._serial.cancel_read()
-        self._lock.acquire()
         try:
-            if not self._send(TERMINATE_CALL):
+            self._serial.cancel_read()
+            if not self._send(GO_ON_HOOK):
                 print("Error: Failed to terminate the call.")
+                return False
         finally:
             self._lock.release()
+        return True
 
     def block_call(self, caller=None):
         """ Block the current caller by answering and hanging up """
