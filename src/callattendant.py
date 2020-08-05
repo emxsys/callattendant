@@ -124,7 +124,7 @@ class CallAttendant(object):
                         self.blocked_indicator.turn_on()
                         if block['enabled']:
                             print("Blocking {}".format(caller["NMBR"]))
-                            self.modem.block_call()
+                            self.modem.block_call(caller)
 
                 # Log every call to the database
                 self.logger.log_caller(caller)

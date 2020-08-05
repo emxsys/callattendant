@@ -118,6 +118,8 @@ class Modem(object):
             logging = True
 
         try:
+            # This loop reads incoming data from the serial port and
+            # posts the caller id data to the handle_caller function
             while 1:
                 modem_data = b''
 
@@ -156,11 +158,11 @@ class Modem(object):
 
                     # https://stackoverflow.com/questions/1285911/how-do-i-check-that-multiple-keys-are-in-a-dict-in-a-single-pass
                     if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
-                        print("Screening call...")
+                        print("> Screening call...")
                         self.handle_caller(call_record)
                         call_record = {}
-                        # Sleep for a short duration to allow call attendant
-                        # to screen call before resuming
+                        # Sleep for a short duration ( secs) to allow the
+                        # call attendant to screen the call before resuming
                         time.sleep(2)
         finally:
             if logging:
@@ -178,7 +180,7 @@ class Modem(object):
         finally:
             self._lock.release()
 
-    def block_call(self):
+    def block_call(self, caller=None):
         """Block the current caller by answering and hanging up"""
         print("> Blocking call...")
         blocked = self.config.get_namespace("BLOCKED_")
@@ -198,9 +200,18 @@ class Modem(object):
                         self.config["ROOT_PATH"],
                         blocked["leave_message_file"])
                     self.play_audio(leave_message_file)
-                    if blocked["leave_message_action"]=="leave_message":
-                        self.record_audio("test.wav")
-                    elif blocked["leave_message_action"]=="press_1_leave_message":
+                    if blocked["leave_message_action"] == "leave_message":
+                        filename = "{}-{}.wav".format(
+                            caller["NMBR"],
+                            datetime.now().strftime("%Y%m%d-%H%M%S"))
+                        path = os.path.join(
+                            self.config["ROOT_PATH"],
+                            self.config["MESSAGE_FOLDER"])
+                        if not os.path.exists(path):
+                            os.makedirs('my_folder')
+                        message_file = os.path.join(path, filename)
+                        self.record_audio(message_file)
+                    elif blocked["leave_message_action"] == "press_1_leave_message":
                         pass
                 time.sleep(2)
                 self._send(GO_ON_HOOK)
@@ -211,32 +222,28 @@ class Modem(object):
 
     def play_audio(self, audio_file_name):
         """Play an audio file with 8-bit linear compression at 8.0 kHz sampling"""
-        debugging = self.config["DEBUG"]
-        if debugging:
-            print("Play Audio Msg - Start")
+        print("> Playing {}...".format(audio_file_name))
 
         self._serial.cancel_read()
         self._lock.acquire()
         try:
+            # Setup modem for transmitting audio data
             if not self._send(ENTER_VOICE_MODE):
-                print("Error: Failed to put modem into voice mode.")
-                return
+                print("* Error: Failed to put modem into voice mode.")
+                return False
             if not self._send(SET_VOICE_COMPRESSION_METHOD):
-                print("Error: Failed to set compression method and sampling rate specifications.")
-                return
+                print("* Error: Failed to set compression method and sampling rate specifications.")
+                return False
             if not self._send(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE):
-                print("Error: Unable put modem into TAD mode.")
-                return
+                print("* Error: Unable put modem into TAD mode.")
+                return False
             if not self._send(ENTER_VOICE_TRANSMIT_DATA_STATE, "CONNECT"):
-                print("Error: Unable put modem into TAD data transmit state.")
-                return
+                print("* Error: Unable put modem into TAD data transmit state.")
+                return False
 
             time.sleep(1)
 
             # Play Audio File
-            if debugging:
-                print("Play Audio Msg - Playing wav file")
-
             wf = wave.open(audio_file_name, 'rb')
             chunk = 1024
 
@@ -256,17 +263,15 @@ class Modem(object):
         finally:
             self._lock.release()
 
-        if debugging:
-            print("Play Audio Msg - End")
+        return True
 
     def record_audio(self, audio_file_name):
-        print("Record Audio Msg - Start")
+        print("> Recording {}...".format(audio_file_name))
 
         self._serial.cancel_read()
         self._lock.acquire()
 
         debugging = self.config["DEBUG"]
-        result = True
         try:
             try:
                 if not self._send(ENTER_VOICE_MODE, "OK"):
@@ -300,8 +305,6 @@ class Modem(object):
                 print("Modem initialization error: ", error)
                 return False
 
-            # Record Audio File
-
             # Set the auto timeout interval
             start_time = datetime.now()
             CHUNK = 1024
@@ -309,28 +312,29 @@ class Modem(object):
             DLE_b = (chr(16) + chr(98)).encode()    # <DLE>b Busy
             DLE_s = (chr(16) + chr(115)).encode()   # <DLE>s Silence
             DLE_ETX = (chr(16) + chr(3)).encode()   # <DLE><ETX> End of text
+            # Record Audio File
             while 1:
                 # Read audio data from the Modem
                 audio_data = self._serial.read(CHUNK)
 
                 # Check if <DLE>b is in the stream
                 if (DLE_b in audio_data):
-                    print("Busy Tone... Call will be disconnected.")
+                    print(">> Busy Tone... Call will be disconnected.")
                     break
 
                 # Check if <DLE>s is in the stream
                 if (DLE_s in audio_data):
-                    print("Silence Detected... Call will be disconnected.")
+                    print(">> Silence Detected... Call will be disconnected.")
                     break
 
                 # Check if <DLE><ETX> is in the stream
                 if (DLE_ETX in audio_data):
-                    print("<DLE><ETX> Char Recieved... Call will be disconnected.")
+                    print(">> <DLE><ETX> Char Recieved... Call will be disconnected.")
                     break
 
                 # Timeout
                 elif ((datetime.now() - start_time).seconds) > REC_VM_MAX_DURATION:
-                    print("Timeout - Max recording limit reached.")
+                    print(">> Timeout - Max recording limit reached.")
                     break
 
                 # Add Audio Data to Audio Buffer
@@ -352,17 +356,16 @@ class Modem(object):
 
             # Send End of Recieve Data state by passing "<DLE>!"
             if not self._send(END_VOICE_RECIEVE_DATA_STATE, DLE_CODE + ETX_CODE):
-                print("Error: Unable to signal end of voice/data receive state")
+                print("* Error: Unable to signal end of voice/data receive state")
 
             # Hangup the Call
             if not self._send(TERMINATE_CALL, "OK"):
-                print("Error: Unable to hang-up the call")
+                print("* Error: Unable to hang-up the call")
 
         finally:
             self._lock.release()
 
-        print("Record Audio Msg - END")
-        return result
+        return True
 
     def _send(self, command, expected_response=None, response_timeout=5):
         """Sends a command string (e.g., AT command) to the modem."""
@@ -399,7 +402,7 @@ class Modem(object):
         try:
             while 1:
                 modem_data = self._serial.readline()
-                response = modem_data.decode("utf-8").strip(' \t\n\r') # strip DLE_CODE too?
+                response = modem_data.decode("utf-8").strip(' \t\n\r')  # strip DLE_CODE too?
                 if expected_response == response:
                     return True
                 elif "ERROR" in response:
@@ -578,8 +581,6 @@ if __name__ == '__main__':
     """ Run the Unit Tests """
 
     # Add the parent directory to the path so callattendant can be found
-    import os
-    import sys
     currentdir = os.path.dirname(os.path.realpath(__file__))
     parentdir = os.path.dirname(currentdir)
     sys.path.append(parentdir)
@@ -593,8 +594,11 @@ if __name__ == '__main__':
     print_config(config)
 
     # Dummy callback functions
-    phone_ringing = lambda is_ringing: pprint(is_ringing)
-    handle_caller = lambda caller: pprint(caller)
+    def dummy_phone_ringing(is_ringing):
+        print(is_ringing)
+
+    def dummy_handle_caller(caller):
+        pprint(caller)
 
     # Run the tests
-    sys.exit(test(config, phone_ringing, handle_caller))
+    sys.exit(test(config, dummy_phone_ringing, dummy_handle_caller))
