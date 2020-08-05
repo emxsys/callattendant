@@ -14,13 +14,13 @@
 # the inclusion of incomplete features and/or experimental code.
 ENV = 'production'
 
-# DEBUG: If True, additional assertions and output may be generated
+# DEBUG: If True additional assertions and output may be generated
 DEBUG = False
 
-# TESTING: If True, functional tests are executed in lieu of normal operation
+# TESTING: If True function tests are executed in lieu of normal operation
 TESTING = False
 
-# DATABASE: Name of Sqlite database for call log, whitelist and blacklist
+# DATABASE: Sqlite database for incoming call log, whitelist and blacklist
 DATABASE = "callattendant.db"
 
 # SCREENING_MODE: A tuple containing: "whitelist" and/or "blacklist", or empty
@@ -31,23 +31,58 @@ BLOCK_ENABLED = True
 
 # BLOCK_NAME_PATTERNS: A regex expression dict applied to the CID names
 # Example: {"V[0-9]{15}": "Telemarketer Caller ID", "O": "Unknown caller"}
-BLOCK_NAME_PATTERNS = {"V[0-9]{15}": "Telemarketer Caller ID",}
+BLOCK_NAME_PATTERNS = {"V[0-9]{15}": "Telemarketer Caller ID", }
 
 # BLOCK_NUMBER_PATTERNS: A regx expression dict applied to the CID numbers
 # Example: {"P": "Private number",}
-BLOCK_NUMBER_PATTERNS = { }
+BLOCK_NUMBER_PATTERNS = {}
 
-# BLOCKED_ACTIONS: A tuple containing: "play_greeting" and/or "record_message", or empty
-BLOCKED_ACTIONS = ("play_greeting", "record_message")
+# BLOCKED_ACTIONS: A tuple containing a combination of the following actions:
+#   "greeting", "record_message", "voice_mail".
+#
+# These actions are performed before hanging up.
+#
+# Note: the  "record_message", "voice_mail" actions are mutually exclusive.
+# Also Note: A trailing comma is required for a tuple with just one item
 
-# BLOCKED_GREETING_FILE: The wav file to be played to blocked callers
-BLOCKED_GREETING_FILE = "hardware/blocked.wav"
+# Example: No actions, just hang_up
+#   BLOCKED_ACTIONS = ()
+#
+# Example: Play an announcement before hanging up
+#   BLOCKED_ACTIONS = ("greeting", )
+#
+# Example: Record a message before hanging up, no keypress required
+#   BLOCKED_ACTIONS = ("record_message", )
+#
+# Example: Option to record a message; keypress required to leave message
+#   BLOCKED_ACTIONS = ("voice_mail", )
+#
+# Example: Play announcment and record a message; no keypress required
+#   BLOCKED_ACTIONS = ("greeting", "record_message" )
+#
+# Example: Play announcment and voice mail menu; keypress required to leave message
+#   BLOCKED_ACTIONS = ("greeting", "voice_mail" )
+#
+BLOCKED_ACTIONS = ("greeting", "voice_mail")
 
-# BLOCKED_LEAVE_MESSAGE_FILE: The wav file to be before recording a message, e.g., "press 1 to record a message"
-BLOCKED_LEAVE_MESSAGE_FILE = "hardware/leave_message.wav"
+# BLOCKED_GREETING_FILE: The wav file to be played to blocked callers.
+#   Example: "We're sorry, this call has been blocked by the Raspberry Pi
+#           call attendant. To be unblocked, leave a message with your
+#           justification to be unblocked."
+BLOCKED_GREETING_FILE = "resources/blocked_greeting.wav"
 
-# BLOCKED_LEAVE_MESSAGE_ACTION: "leave_message" or "press_1_leave_message"
-BLOCKED_LEAVE_MESSAGE_ACTION = "leave_message"
+# VOICE_MAIL_GREETING_FILE: The wav file played after answering: a general greeting
+#   Example: "I'm sorry we missed your call..."
+VOICE_MAIL_GREETING_FILE = "resources/general_greeting.wav"
 
-# MESSAGE_FOLDER: The folder location of where voice messages are stored
-MESSAGE_FOLDER = "../data"
+# VOICE_MAIL_MENU_FILE: The wav file with message instructions, played after the greeting
+#   Example: "Press 1 to leave a message..."
+VOICE_MAIL_MENU_FILE = "resources/voice_mail_menu.wav"
+
+# VOICE_MAIL_LEAVE_MESSAGE_FILE: The wav file played be before recording a message
+#   Example: "Please leave a message"
+VOICE_MAIL_LEAVE_MESSAGE_FILE = "resources/please_leave_message.wav"
+
+# VOICE_MAIL_MESSAGE_FOLDER: The folder where voice mail message are stored
+#   Example: "../data" to place the messages alongside the ./src folder
+VOICE_MAIL_MESSAGE_FOLDER = "../messages"

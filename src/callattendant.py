@@ -26,12 +26,14 @@ import os
 import sys
 
 currentdir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(currentdir,"screening"))
-sys.path.append(os.path.join(currentdir,"hardware"))
+sys.path.append(os.path.join(currentdir, "screening"))
+sys.path.append(os.path.join(currentdir, "hardware"))
 
 import queue
 import sqlite3
+import time
 from pprint import pprint
+from datetime import datetime
 from config import Config
 from screening.calllogger import CallLogger
 from screening.callscreener import CallScreener
@@ -39,29 +41,19 @@ from hardware.modem import Modem
 from hardware.indicators import RingIndicator, ApprovedIndicator, BlockedIndicator
 import userinterface.webapp as webapp
 
+
 class CallAttendant(object):
     """The CallAttendant provides call logging and call screening services."""
 
-    def handle_caller(self, caller):
-        """Places the caller record in synchronized queue for processing"""
-        if self.config["DEBUG"]:
-            print("Adding to caller queue:")
-            pprint(caller)
-        self._caller_queue.put(caller)
-
-    def phone_ringing(self, enabled):
-        """Controls the phone ringing status indicator."""
-        if enabled:
-            self.ring_indicator.turn_on()
-        else:
-            self.ring_indicator.turn_off()
-
     def __init__(self, config):
         """
-        The constructor initializes and starts the Call Attendant
+        The constructor initializes and starts the Call Attendant.
             :param config: the application config dict
         """
+        # The application-wide configuration
         self.config = config
+
+        # Open the database
         db_path = None
         if self.config["TESTING"]:
             self.db = sqlite3.connect(":memory:")
@@ -69,35 +61,75 @@ class CallAttendant(object):
             db_path = os.path.join(self.config['ROOT_PATH'], self.config['DATABASE'])
             self.db = sqlite3.connect(db_path)
 
-        # The current/last caller id
+        # Create a synchronized queue for incoming callers from the modem
         self._caller_queue = queue.Queue()
 
-        # Visual indicators (LEDs)
-        self.approved_indicator = ApprovedIndicator()
-        self.blocked_indicator = BlockedIndicator()
-        self.ring_indicator = RingIndicator()
-
-        # Screening subsystems
+        # Screening subsystem
         self.logger = CallLogger(self.db, self.config)
         self.screener = CallScreener(self.db, self.config)
 
         # Hardware subsystem
+        # Create the modem with the callback functions that it invokes
+        # when incoming calls are received.
         self.modem = Modem(self.config, self.phone_ringing, self.handle_caller)
+        # Initialize the visual indicators (LEDs)
+        self.approved_indicator = ApprovedIndicator()
+        self.blocked_indicator = BlockedIndicator()
+        self.ring_indicator = RingIndicator()
 
-        # Start User Interface subsystem if we're not running functional tests
-        # When testing, we're using a memory database, which can't be shared
+        # Start the User Interface subsystem (Flask)
+        # Skip if we're running functional tests, because when testing
+        # we use a memory database which can't be shared between threads.
         if not self.config["TESTING"]:
+            print("Staring the Flask webapp")
             webapp.start(db_path)
 
+    def handle_caller(self, caller):
+        """
+        A callback function used by the modem that places the given
+        caller object into the synchronized queue for processing by the
+        run method.
+            :param caller: a dict object with caller ID information
+        """
+        if self.config["DEBUG"]:
+            print("Adding to caller queue:")
+            pprint(caller)
+        self._caller_queue.put(caller)
+
+    def phone_ringing(self, enabled):
+        """
+        A callback fucntion used by the modem to signal if the phone
+        is ringing. It controls the phone ringing status indicator.
+            :param enabled: If True, signals the phone is ringing
+        """
+        if enabled:
+            self.ring_indicator.turn_on()
+        else:
+            self.ring_indicator.turn_off()
+
     def run(self):
-        """Processes incoming callers with logging and screening."""
+        """
+        Processes incoming callers by logging, screening, blocking
+        and/or recording messages.
+        """
         # Get relevant config settings
+        root_path = self.config['ROOT_PATH']
         screening_mode = self.config['SCREENING_MODE']
+        # Get configuration subsets
         block = self.config.get_namespace("BLOCK_")
         blocked = self.config.get_namespace("BLOCKED_")
-        blocked_message_file = os.path.join(self.config['ROOT_PATH'], blocked['message_file'])
+        voice_mail = self.config.get_namespace("VOICE_MAIL_")
+        # Build some common paths
+        blocked_greeting_file = os.path.join(root_path, blocked['greeting_file'])
+        general_greeting_file = os.path.join(root_path, voice_mail['greeting_file'])
+        leave_message_file = os.path.join(root_path, voice_mail['leave_message_file'])
+        voice_mail_menu_file = os.path.join(root_path, voice_mail['menu_file'])
+        message_path = os.path.join(root_path, voice_mail["message_folder"])
+        # Ensure the message path exists
+        if not os.path.exists(message_path):
+            os.makedirs(message_path)
 
-        # Instruct the modem to feed calls into the caller queue
+        # Instruct the modem to start feeding calls into the caller queue
         self.modem.handle_calls()
 
         # Process incoming calls
@@ -106,28 +138,94 @@ class CallAttendant(object):
                 # Wait (blocking) for a caller
                 caller = self._caller_queue.get()
 
-                # Perform the call screening
-                whitelisted = False
-                blacklisted = False
-                if "whitelist" in screening_mode:
-                    print("Checking whitelist(s)")
-                    if self.screener.is_whitelisted(caller):
-                        whitelisted = True
-                        caller["NOTE"] = "Whitelisted"
-                        self.approved_indicator.turn_on()
+                # DEVELOPMENT code block
+                if self.config["ENV"] == "development":
 
-                if not whitelisted and "blacklist" in screening_mode:
-                    print("Checking blacklist(s)")
-                    if self.screener.is_blacklisted(caller):
-                        blacklisted = True
-                        caller["NOTE"] = "Blacklisted"
-                        self.blocked_indicator.turn_on()
-                        if block['enabled']:
-                            print("Blocking {}".format(caller["NMBR"]))
-                            self.modem.block_call(caller)
+                    # Perform the call screening
+                    caller_permitted = False
+                    caller_blocked = False
 
-                # Log every call to the database
-                self.logger.log_caller(caller)
+                    # Check the whitelist
+                    if "whitelist" in screening_mode:
+                        print("Checking whitelist(s)")
+                        if self.screener.is_whitelisted(caller):
+                            permitted_caller = True
+                            caller["ACTION"] = "Permitted"
+                            self.approved_indicator.turn_on()
+
+                    # Now check the blacklist if not preempted by whitelist
+                    if not caller_permitted and "blacklist" in screening_mode:
+                        print("Checking blacklist(s)")
+                        if self.screener.is_blacklisted(caller):
+                            caller_blocked = True
+                            caller["ACTION"] = "Blocked"
+                            self.blocked_indicator.turn_on()
+
+                    if not caller_permitted and not caller_blocked:
+                        caller["ACTION"] = "Screened"
+
+                    # Log every call to the database
+                    call_no = self.logger.log_caller(caller)
+
+                    # Apply the configured actions to blocked callers
+                    if caller_blocked:
+
+                        # Build a filename for a potential message
+                        phone_no = caller["NMBR"]
+                        message_file = os.path.join(message_path,
+                            "{}_{}-{}-{}_{}.wav".format(
+                                call_no,
+                                phone_no[0:3], phone_no[3:6], phone_no[6:],
+                                datetime.now().strftime("%Y%m%d-%H%M%S")
+                            )
+                        )
+                        # Play greeting
+                        if "greeting" in blocked["actions"]:
+                            self.modem.play_audio(blocked_greeting_file)
+
+                        # Record message
+                        if "record_message" in blocked["actions"]:
+                            time.sleep(1)
+                            self.modem.play_audio(leave_message_file)
+                            self.modem.record_audio(message_file)
+
+                        # Enter voice mail
+                        elif "voice_mail" in blocked["actions"]:
+                            time.sleep(1)
+                            self.modem.play_audio(voice_mail_menu_file)
+                            digits = self.modem.wait_for_keypress(5)
+                            if len(digits) > 0:
+                                self.modem.record_audio(message_file)
+
+                        # Terminate the call
+                        time.sleep(2)
+                        self.modem.hang_up()
+
+                else:  # PRODUCTION code block
+
+                    # Perform the call screening
+                    whitelisted = False
+                    blacklisted = False
+                    if "whitelist" in screening_mode:
+                        print("Checking whitelist(s)")
+                        if self.screener.is_whitelisted(caller):
+                            whitelisted = True
+                            caller["NOTE"] = "Whitelisted"
+                            self.approved_indicator.turn_on()
+
+                    if not whitelisted and "blacklist" in screening_mode:
+                        print("Checking blacklist(s)")
+                        if self.screener.is_blacklisted(caller):
+                            blacklisted = True
+                            caller["NOTE"] = "Blacklisted"
+                            self.blocked_indicator.turn_on()
+                            if block['enabled']:
+                                print("Blocking {}".format(caller["NMBR"]))
+                                self.modem.block_call(caller)
+
+                    # Log every call to the database
+                    self.logger.log_caller(caller)
+
             except Exception as e:
                 print(e)
                 return 1
