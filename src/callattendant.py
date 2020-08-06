@@ -272,23 +272,27 @@ def make_config(filename=None):
         "DEBUG": False,
         "TESTING": False,
         "ROOT_PATH": root_path,
-        "DATABASE": "callattendant.db",
+        "DATABASE": "../data/callattendant.db",
         "SCREENING_MODE": ("whitelist", "blacklist"),
         "BLOCK_ENABLED": True,
         "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID", },
         "BLOCK_NUMBER_PATTERNS": {},
         "BLOCKED_ACTIONS": ("play_message", ),
-        "BLOCKED_MESSAGE_FILE": "hardware/blocked.wav",
+        "BLOCKED_GREETING_FILE": "resources/blocked_greeting.wav",
+        "VOICE_MAIL_GREETING_FILE": "resources/general_greeting.wav",
+        "VOICE_MAIL_GOODBYE_FILE": "resources/goodbye.wav",
+        "VOICE_MAIL_INVALID_RESPONSE_FILE": "resources/invalid_response.wav",
+        "VOICE_MAIL_LEAVE_MESSAGE_FILE": "resources/please_leave_message.wav",
+        "VOICE_MAIL_MENU_FILE": "resources/voice_mail_menu.wav",
+        "VOICE_MAIL_MESSAGE_FOLDER": "../data/messages",
     }
     # Create the default configuration
     cfg = Config(root_path, default_config)
     # Load the config file, which may overwrite defaults
     if filename is not None:
         cfg.from_pyfile(filename)
-
     # Always print the configuration
     print_config(cfg)
-
     return cfg
 
 

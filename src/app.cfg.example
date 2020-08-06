@@ -21,7 +21,8 @@ DEBUG = False
 TESTING = False
 
 # DATABASE: Sqlite database for incoming call log, whitelist and blacklist
-DATABASE = "callattendant.db"
+#   This should not be changed except during development/testing
+DATABASE = "../data/callattendant.db"
 
 # SCREENING_MODE: A tuple containing: "whitelist" and/or "blacklist", or empty
 SCREENING_MODE = ("whitelist", "blacklist")
@@ -43,8 +44,8 @@ BLOCK_NUMBER_PATTERNS = {}
 # These actions are performed before hanging up.
 #
 # Note: the  "record_message", "voice_mail" actions are mutually exclusive.
-# Also Note: A trailing comma is required for a tuple with just one item
-
+# Also Note: A trailing comma is REQUIRED for a tuple with just one item
+#
 # Example: No actions, just hang_up
 #   BLOCKED_ACTIONS = ()
 #
@@ -92,5 +93,5 @@ VOICE_MAIL_LEAVE_MESSAGE_FILE = "resources/please_leave_message.wav"
 VOICE_MAIL_MENU_FILE = "resources/voice_mail_menu.wav"
 
 # VOICE_MAIL_MESSAGE_FOLDER: The folder where voice mail message are stored
-#   Example: "../data" to place the messages alongside the ./src folder
-VOICE_MAIL_MESSAGE_FOLDER = "../messages"
+#   This should not be changed except during development/testing
+VOICE_MAIL_MESSAGE_FOLDER = "../data/messages"
