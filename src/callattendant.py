@@ -175,13 +175,13 @@ class CallAttendant(object):
                     # Apply the configured actions to blocked callers
                     if caller_blocked:
 
-                        # Build a filename for a potential message
-                        phone_no = caller["NMBR"]
+                        # Build the filename for a potential message
                         message_file = os.path.join(message_path,
-                            "{}_{}-{}-{}_{}.wav".format(
+                            "{}_{}_{}_{}.wav".format(
                                 call_no,
-                                phone_no[0:3], phone_no[3:6], phone_no[6:],
-                                datetime.now().strftime("%Y%m%d-%H%M%S")
+                                caller["NMBR"],
+                                caller["NAME"].replace('_','-'),
+                                datetime.now().strftime("%m%d%y_%H%M")
                             )
                         )
                         # Go "off-hook"

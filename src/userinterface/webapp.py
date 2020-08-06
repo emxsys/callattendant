@@ -245,17 +245,17 @@ def messages():
             # Flask pages use the static folder to get resources.
             # There We have created soft-link to the data/messsages
             # folder containing the actual messages (wav files)
-            audio_src = os.path.join("../static/messages", entry.name)
+            msgfile = os.path.join("../static/messages", entry.name)
 
             # Split the filename up into fields
-            # Example name: 2077_805-555-1080_20200805-173720.wav
-            name_split = entry.name.split('_')
+            # Example name: 2077_8055551080_BRUCE_200805_1737.wav
+            split = entry.name.split('_')
             msglist.append(dict(
-                call_no=name_split[0],
-                phone_no=name_split[1],
-                name="",
-                date_time=name_split[2],
-                wav_file=audio_src))
+                call_no=split[0],
+                phone_no="{}-{}-{}".format(split[1][0:3], split[1][3:6], split[1][6:]),
+                name=split[2],
+                date_time="{} {}".format(split[3], split[4].strip(".wav")),
+                wav_file=msgfile))
 
     from operator import itemgetter
     messages = sorted(msglist, key=itemgetter('call_no'), reverse=True)
