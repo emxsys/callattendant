@@ -34,8 +34,8 @@
           <td>{{ item.name }}</td>
           <td>{{ item.date_time }}</td>
           <td>
-              <audio controls preload="auto">
-                <source src="{{ item.wave_file }}" type="audio/wav">
+              <audio controls preload="metadata">
+                <source src="{{ item.wav_file }}" type="audio/wav">
                 Your browser does not support the audio element.
               </audio>
           </td>

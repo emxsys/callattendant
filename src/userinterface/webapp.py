@@ -237,25 +237,28 @@ def messages():
     Display the voice messages
     """
     # Get list of wav files from MESSAGES folder
-    currentdir = os.path.dirname(os.path.realpath(__file__))
-    messagesdir = os.path.join(app.config["ROOT_PATH"], app.config["VOICE_MAIL_MESSAGE_FOLDER"])
-    msgs_relpath = os.path.relpath(messagesdir, currentdir)
-
-    messages = []
-    file_list = os.scandir(messagesdir)
-    for entry in file_list:
+    msgdir = os.path.join(app.config["ROOT_PATH"], app.config["VOICE_MAIL_MESSAGE_FOLDER"])
+    msglist = []
+    filelist = os.scandir(msgdir)
+    for entry in filelist:
         if entry.is_file and entry.name.lower().endswith("wav"):
+            # Flask pages use the static folder to get resources.
+            # There We have created soft-link to the data/messsages
+            # folder containing the actual messages (wav files)
+            audio_src = os.path.join("../static/messages", entry.name)
 
+            # Split the filename up into fields
             # Example name: 2077_805-555-1080_20200805-173720.wav
             name_split = entry.name.split('_')
-            audio_src = os.path.join("../static/messages", entry.name)
-            messages.append(dict(
-                call_no = name_split[0],
-                phone_no = name_split[1],
-                name = "",
-                date_time = name_split[2],
-                wave_file = audio_src))
-            print(audio_src)
+            msglist.append(dict(
+                call_no=name_split[0],
+                phone_no=name_split[1],
+                name="",
+                date_time=name_split[2],
+                wav_file=audio_src))
+
+    from operator import itemgetter
+    messages = sorted(msglist, key=itemgetter('call_no'), reverse=True)
 
     # Get values used for pagination of the messages
     total = len(messages)
@@ -413,7 +416,7 @@ def get_pagination(**kwargs):
     )
 
 
-def run_flask(db_path, config):
+def run_flask(config):
     '''
     Runs the Flask webapp.
         :param database: full path to the callattendant database file
@@ -423,20 +426,20 @@ def run_flask(db_path, config):
         app.config["DEBUG"] = config["DEBUG"]
         app.config["TESTING"] = config["TESTING"]
         # Add settings from callattendant config
-        app.config["DATABASE"] = db_path
-        app.config["DB_PATH"] = os.path.join(config["ROOT_PATH"], config["DATABASE"])
-        app.config["MSG_PATH"] = os.path.join(config["ROOT_PATH"], config["VOICE_MAIL_MESSAGE_FOLDER"])
         app.config["ROOT_PATH"] = config["ROOT_PATH"]
+        app.config["DATABASE"] = config["DATABASE"]
         app.config["VOICE_MAIL_MESSAGE_FOLDER"] = config["VOICE_MAIL_MESSAGE_FOLDER"]
+        # Add a new derived setting
+        app.config["DB_PATH"] = os.path.join(config["ROOT_PATH"], config["DATABASE"])
 
     print("Running Flask webapp")
     # debug mode prevents app from running in separate thread
     app.run(host='0.0.0.0', debug=False)
 
 
-def start(database, config):
+def start(config):
     '''
     Starts the Flask webapp in a separate thread.
         :param database: full path to the callattendant database file
     '''
-    _thread.start_new_thread(run_flask, (database, config))
+    _thread.start_new_thread(run_flask, (config,))

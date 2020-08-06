@@ -58,8 +58,9 @@ class CallAttendant(object):
         if self.config["TESTING"]:
             self.db = sqlite3.connect(":memory:")
         else:
-            db_path = os.path.join(self.config['ROOT_PATH'], self.config['DATABASE'])
-            self.db = sqlite3.connect(db_path)
+            self.db = sqlite3.connect(os.path.join(
+                self.config['ROOT_PATH'],
+                self.config['DATABASE']))
 
         # Create a synchronized queue for incoming callers from the modem
         self._caller_queue = queue.Queue()
@@ -82,7 +83,7 @@ class CallAttendant(object):
         # we use a memory database which can't be shared between threads.
         if not self.config["TESTING"]:
             print("Staring the Flask webapp")
-            webapp.start(db_path, config)
+            webapp.start(config)
 
     def handle_caller(self, caller):
         """
