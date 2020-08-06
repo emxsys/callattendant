@@ -46,22 +46,28 @@ app.debug = False  # debug mode prevents app from running in separate thread
 
 @app.before_request
 def before_request():
-    '''Establish a database connection for the current request'''
-    g.conn = sqlite3.connect(current_app.config.get("DATABASE"))
+    """
+    Establish a database connection for the current request
+    """
+    g.conn = sqlite3.connect(current_app.config.get("DB_PATH"))
     g.conn.row_factory = sqlite3.Row
     g.cur = g.conn.cursor()
 
 
 @app.teardown_request
 def teardown(error):
-    '''Closes the database connection for the last request'''
+    """
+    Closes the database connection for the last request
+    """
     if hasattr(g, 'conn'):
         g.conn.close()
 
 
 @app.route('/')
-def call_details():
-    '''Display the call details from the call log table'''
+def callers():
+    """
+    Display the call details from the call log table
+    """
 
     # Get values used for pagination of the call log
     total = get_row_count('CallLog')
@@ -139,7 +145,9 @@ def call_details():
 
 @app.route('/blocked')
 def blacklist():
-    '''Display the blocked numbers from the blacklist table'''
+    """
+    Display the blocked numbers from the blacklist table
+    """
     # Get values used for pagination of the blacklist
     total = get_row_count('Blacklist')
     page, per_page, offset = get_page_args(
@@ -181,7 +189,9 @@ def blacklist():
 
 @app.route('/permitted')
 def whitelist():
-    '''Display the permitted numbers from the whitelist table'''
+    """
+    Display the permitted numbers from the whitelist table
+    """
     # Get values used for pagination of the blacklist
     total = get_row_count('Whitelist')
     page, per_page, offset = get_page_args(
@@ -215,6 +225,57 @@ def whitelist():
         'whitelist.htm',
         whitelist=records,
         total_calls=total,
+        page=page,
+        per_page=per_page,
+        pagination=pagination,
+    )
+
+
+@app.route('/messages')
+def messages():
+    """
+    Display the voice messages
+    """
+    # Get list of wav files from MESSAGES folder
+    currentdir = os.path.dirname(os.path.realpath(__file__))
+    messagesdir = os.path.join(app.config["ROOT_PATH"], app.config["VOICE_MAIL_MESSAGE_FOLDER"])
+    msgs_relpath = os.path.relpath(messagesdir, currentdir)
+
+    messages = []
+    file_list = os.scandir(messagesdir)
+    for entry in file_list:
+        if entry.is_file and entry.name.lower().endswith("wav"):
+
+            # Example name: 2077_805-555-1080_20200805-173720.wav
+            name_split = entry.name.split('_')
+            audio_src = os.path.join("../static/messages", entry.name)
+            messages.append(dict(
+                call_no = name_split[0],
+                phone_no = name_split[1],
+                name = "",
+                date_time = name_split[2],
+                wave_file = audio_src))
+            print(audio_src)
+
+    # Get values used for pagination of the messages
+    total = len(messages)
+    page, per_page, offset = get_page_args(
+        page_parameter="page",
+        per_page_parameter="per_page")
+
+    # Create a pagination object for the page
+    pagination = get_pagination(
+        page=page,
+        per_page=per_page,
+        total=total,
+        record_name="messages",
+        format_total=True,
+        format_number=True,
+    )
+    # Render the results with pagination
+    return render_template(
+        "messages.htm",
+        messages=messages,
         page=page,
         per_page=per_page,
         pagination=pagination,
@@ -352,22 +413,30 @@ def get_pagination(**kwargs):
     )
 
 
-def run_flask(db_path):
+def run_flask(db_path, config):
     '''
     Runs the Flask webapp.
         :param database: full path to the callattendant database file
     '''
     with app.app_context():
+        # Override settings from callattendant config
+        app.config["DEBUG"] = config["DEBUG"]
+        app.config["TESTING"] = config["TESTING"]
+        # Add settings from callattendant config
         app.config["DATABASE"] = db_path
+        app.config["DB_PATH"] = os.path.join(config["ROOT_PATH"], config["DATABASE"])
+        app.config["MSG_PATH"] = os.path.join(config["ROOT_PATH"], config["VOICE_MAIL_MESSAGE_FOLDER"])
+        app.config["ROOT_PATH"] = config["ROOT_PATH"]
+        app.config["VOICE_MAIL_MESSAGE_FOLDER"] = config["VOICE_MAIL_MESSAGE_FOLDER"]
 
     print("Running Flask webapp")
     # debug mode prevents app from running in separate thread
     app.run(host='0.0.0.0', debug=False)
 
 
-def start(database):
+def start(database, config):
     '''
     Starts the Flask webapp in a separate thread.
         :param database: full path to the callattendant database file
     '''
-    _thread.start_new_thread(run_flask, (database,))
+    _thread.start_new_thread(run_flask, (database, config))

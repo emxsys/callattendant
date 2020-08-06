@@ -82,7 +82,7 @@ class CallAttendant(object):
         # we use a memory database which can't be shared between threads.
         if not self.config["TESTING"]:
             print("Staring the Flask webapp")
-            webapp.start(db_path)
+            webapp.start(db_path, config)
 
     def handle_caller(self, caller):
         """
@@ -329,10 +329,10 @@ def main(argv):
     """Create and run the call attendent application"""
 
     # Process command line arguments
-    configfile = get_args(argv)
+    config_file = get_args(argv)
 
     # Create the application config dict
-    config = make_config(configfile)
+    config = make_config(config_file)
 
     # Create and start the application
     app = CallAttendant(config)
