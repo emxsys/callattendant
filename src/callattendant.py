@@ -141,118 +141,85 @@ class CallAttendant(object):
                 # Wait (blocking) for a caller
                 caller = self._caller_queue.get()
 
-                # ======================================================
-                # DEVELOPMENT code block
-                # ======================================================
-                if self.config["ENV"] == "development":
+                # Perform the call screening
+                caller_permitted = False
+                caller_blocked = False
 
-                    # Perform the call screening
-                    caller_permitted = False
-                    caller_blocked = False
+                # Check the whitelist
+                if "whitelist" in screening_mode:
+                    print("Checking whitelist(s)")
+                    if self.screener.is_whitelisted(caller):
+                        permitted_caller = True
+                        caller["ACTION"] = "Permitted"
+                        self.approved_indicator.turn_on()
 
-                    # Check the whitelist
-                    if "whitelist" in screening_mode:
-                        print("Checking whitelist(s)")
-                        if self.screener.is_whitelisted(caller):
-                            permitted_caller = True
-                            caller["ACTION"] = "Permitted"
-                            self.approved_indicator.turn_on()
+                # Now check the blacklist if not preempted by whitelist
+                if not caller_permitted and "blacklist" in screening_mode:
+                    print("Checking blacklist(s)")
+                    if self.screener.is_blacklisted(caller):
+                        caller_blocked = True
+                        caller["ACTION"] = "Blocked"
+                        self.blocked_indicator.turn_on()
 
-                    # Now check the blacklist if not preempted by whitelist
-                    if not caller_permitted and "blacklist" in screening_mode:
-                        print("Checking blacklist(s)")
-                        if self.screener.is_blacklisted(caller):
-                            caller_blocked = True
-                            caller["ACTION"] = "Blocked"
-                            self.blocked_indicator.turn_on()
+                if not caller_permitted and not caller_blocked:
+                    caller["ACTION"] = "Screened"
 
-                    if not caller_permitted and not caller_blocked:
-                        caller["ACTION"] = "Screened"
+                # Log every call to the database
+                call_no = self.logger.log_caller(caller)
 
-                    # Log every call to the database
-                    call_no = self.logger.log_caller(caller)
+                # Apply the configured actions to blocked callers
+                if caller_blocked:
 
-                    # Apply the configured actions to blocked callers
-                    if caller_blocked:
-
-                        # Build the filename for a potential message
-                        message_file = os.path.join(message_path,
-                            "{}_{}_{}_{}.wav".format(
-                                call_no,
-                                caller["NMBR"],
-                                caller["NAME"].replace('_','-'),
-                                datetime.now().strftime("%m%d%y_%H%M")
-                            )
+                    # Build the filename for a potential message
+                    message_file = os.path.join(message_path,
+                        "{}_{}_{}_{}.wav".format(
+                            call_no,
+                            caller["NMBR"],
+                            caller["NAME"].replace('_','-'),
+                            datetime.now().strftime("%m%d%y_%H%M")
                         )
-                        # Go "off-hook"
-                        # - Acquires a lock on the modem
-                        # - MUST be followed by hang_up()
-                        if self.modem.pick_up():
-                            try:
-                                # Play greeting
-                                if "greeting" in blocked["actions"]:
-                                    self.modem.play_audio(blocked_greeting_file)
+                    )
+                    # Go "off-hook"
+                    # - Acquires a lock on the modem
+                    # - MUST be followed by hang_up()
+                    if self.modem.pick_up():
+                        try:
+                            # Play greeting
+                            if "greeting" in blocked["actions"]:
+                                self.modem.play_audio(blocked_greeting_file)
 
-                                # Record message
-                                if "record_message" in blocked["actions"]:
-                                    self.modem.play_audio(leave_message_file)
-                                    self.modem.record_audio(message_file)
+                            # Record message
+                            if "record_message" in blocked["actions"]:
+                                self.modem.play_audio(leave_message_file)
+                                self.modem.record_audio(message_file)
 
-                                # Enter voice mail
-                                elif "voice_mail" in blocked["actions"]:
-                                    tries = 0
-                                    while tries < 3:
-                                        self.modem.play_audio(voice_mail_menu_file)
-                                        digit = self.modem.wait_for_keypress(5)
-                                        if digit == '1':
-                                            # Leave a message
-                                            self.modem.play_audio(leave_message_file)
-                                            self.modem.record_audio(message_file)
-                                            time.sleep(1)
-                                            self.modem.play_audio(goodbye_file)
-                                            break
-                                        elif digit == '0':
-                                            # End this call
-                                            self.modem.play_audio(goodbye_file)
-                                            break
-                                        elif digit == '':
-                                            # Timeout
-                                            break
-                                        else:
-                                            # Try again
-                                            self.modem.play_audio(invalid_response_file)
-                                            tries += 1
-                            finally:
-                                # Go "on-hook"
-                                self.modem.hang_up()
-
-                # ======================================================
-                # End DEVELOPMENT code block
-                # ======================================================
-                else:  # PRODUCTION code block
-
-                    # Perform the call screening    q
-                    whitelisted = False
-                    blacklisted = False
-                    if "whitelist" in screening_mode:
-                        print("Checking whitelist(s)")
-                        if self.screener.is_whitelisted(caller):
-                            whitelisted = True
-                            caller["NOTE"] = "Whitelisted"
-                            self.approved_indicator.turn_on()
-
-                    if not whitelisted and "blacklist" in screening_mode:
-                        print("Checking blacklist(s)")
-                        if self.screener.is_blacklisted(caller):
-                            blacklisted = True
-                            caller["NOTE"] = "Blacklisted"
-                            self.blocked_indicator.turn_on()
-                            if block['enabled']:
-                                print("Blocking {}".format(caller["NMBR"]))
-                                self.modem.block_call(caller)
-
-                    # Log every call to the database
-                    self.logger.log_caller(caller)
+                            # Enter voice mail
+                            elif "voice_mail" in blocked["actions"]:
+                                tries = 0
+                                while tries < 3:
+                                    self.modem.play_audio(voice_mail_menu_file)
+                                    digit = self.modem.wait_for_keypress(5)
+                                    if digit == '1':
+                                        # Leave a message
+                                        self.modem.play_audio(leave_message_file)
+                                        self.modem.record_audio(message_file)
+                                        time.sleep(1)
+                                        self.modem.play_audio(goodbye_file)
+                                        break
+                                    elif digit == '0':
+                                        # End this call
+                                        self.modem.play_audio(goodbye_file)
+                                        break
+                                    elif digit == '':
+                                        # Timeout
+                                        break
+                                    else:
+                                        # Try again
+                                        self.modem.play_audio(invalid_response_file)
+                                        tries += 1
+                        finally:
+                            # Go "on-hook"
+                            self.modem.hang_up()
 
             except Exception as e:
                 print(e)

@@ -212,7 +212,6 @@ class Modem(object):
             self._lock.release()
         return True
 
-
     def hang_up(self):
         """
         Hang up on an active call, i.e., go "on hook". Called by the
@@ -232,45 +231,6 @@ class Modem(object):
             self._lock.release()
         return True
 
-    def block_call(self, caller=None):
-        """ Block the current caller by answering and hanging up """
-        print("> Blocking call...")
-        blocked = self.config.get_namespace("BLOCKED_")
-        self._serial.cancel_read()
-        self._lock.acquire()
-        try:
-            if self._send(GO_OFF_HOOK):
-                time.sleep(2)
-                if "play_greeting" in blocked["actions"]:
-                    blocked_message_file = os.path.join(
-                        self.config["ROOT_PATH"],
-                        blocked["greeting_file"])
-                    self.play_audio(blocked_message_file)
-                if "record_message" in blocked["actions"]:
-                    time.sleep(1)
-                    leave_message_file = os.path.join(
-                        self.config["ROOT_PATH"],
-                        blocked["leave_message_file"])
-                    self.play_audio(leave_message_file)
-                    if blocked["leave_message_action"] == "leave_message":
-                        filename = "{}-{}.wav".format(
-                            caller["NMBR"],
-                            datetime.now().strftime("%Y%m%d-%H%M%S"))
-                        path = os.path.join(
-                            self.config["ROOT_PATH"],
-                            self.config["MESSAGE_FOLDER"])
-                        if not os.path.exists(path):
-                            os.makedirs('my_folder')
-                        message_file = os.path.join(path, filename)
-                        self.record_audio(message_file)
-                    elif blocked["leave_message_action"] == "press_1_leave_message":
-                        pass
-                time.sleep(2)
-                self._send(GO_ON_HOOK)
-            else:
-                print("Error: Failed to block the call.")
-        finally:
-            self._lock.release()
 
     def play_audio(self, audio_file_name):
         """
