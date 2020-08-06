@@ -481,10 +481,10 @@ class Modem(object):
                 digit_list = re.findall('/(.+?)~', decode(modem_data))
                 if len(digit_list) > 0:
                     print("Digits:")
-                    pprint(digit_list)
+                    print(digit_list)
                     for d in digit_list:
                         print("\nNew Event: DTMF Digit Detected: " + d[1])
-                        return d[1]
+                    return d[1]
         finally:
             self._lock.release()
 
@@ -647,7 +647,7 @@ class Modem(object):
 
 
 def decode(bytestr):
-    string = bytestr.decode("utf-8").strip(' \t\n\r')
+    string = bytestr.decode("utf-8").strip(' \t\n\r' + DLE_CODE)
     return string
 
 

@@ -122,6 +122,8 @@ class CallAttendant(object):
         # Build some common paths
         blocked_greeting_file = os.path.join(root_path, blocked['greeting_file'])
         general_greeting_file = os.path.join(root_path, voice_mail['greeting_file'])
+        goodbye_file = os.path.join(root_path, voice_mail['goodbye_file'])
+        invalid_response_file = os.path.join(root_path, voice_mail['invalid_response_file'])
         leave_message_file = os.path.join(root_path, voice_mail['leave_message_file'])
         voice_mail_menu_file = os.path.join(root_path, voice_mail['menu_file'])
         message_path = os.path.join(root_path, voice_mail["message_folder"])
@@ -202,15 +204,22 @@ class CallAttendant(object):
                                         self.modem.play_audio(voice_mail_menu_file)
                                         digit = self.modem.wait_for_keypress(5)
                                         if digit == '1':
+                                            # Leave a message
+                                            self.modem.play_audio(leave_message_file)
                                             self.modem.record_audio(message_file)
                                             time.sleep(1)
-                                            # play goodbye
+                                            self.modem.play_audio(goodbye_file)
                                             break
                                         elif digit == '0':
-                                            # play goodbye
+                                            # End this call
+                                            self.modem.play_audio(goodbye_file)
+                                            break
+                                        elif digit == '':
+                                            # Timeout
                                             break
                                         else:
-                                            # play invalid response
+                                            # Try again
+                                            self.modem.play_audio(invalid_response_file)
                                             tries += 1
                             finally:
                                 # Go "on-hook"
@@ -221,7 +230,7 @@ class CallAttendant(object):
                 # ======================================================
                 else:  # PRODUCTION code block
 
-                    # Perform the call screening
+                    # Perform the call screening    q
                     whitelisted = False
                     blacklisted = False
                     if "whitelist" in screening_mode:
