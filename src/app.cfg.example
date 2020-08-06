@@ -83,13 +83,13 @@ VOICE_MAIL_GOODBYE_FILE = "resources/goodbye.wav"
 #   Example: "That was an invalid response.."
 VOICE_MAIL_INVALID_RESPONSE_FILE = "resources/invalid_response.wav"
 
-# VOICE_MAIL_MENU_FILE: The wav file with message instructions, played after the greeting
-#   Example: "Press 1 to leave a message..."
-VOICE_MAIL_MENU_FILE = "resources/voice_mail_menu.wav"
-
 # VOICE_MAIL_LEAVE_MESSAGE_FILE: The wav file played be before recording a message
 #   Example: "Please leave a message"
 VOICE_MAIL_LEAVE_MESSAGE_FILE = "resources/please_leave_message.wav"
+
+# VOICE_MAIL_MENU_FILE: The wav file with message instructions, played after the greeting
+#   Example: "Press 1 to leave a message..."
+VOICE_MAIL_MENU_FILE = "resources/voice_mail_menu.wav"
 
 # VOICE_MAIL_MESSAGE_FOLDER: The folder where voice mail message are stored
 #   Example: "../data" to place the messages alongside the ./src folder

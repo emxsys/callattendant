@@ -369,6 +369,7 @@ class Modem(object):
             start_time = datetime.now()
             CHUNK = 1024
             audio_frames = []
+            should_hang_up = False
             while 1:
                 # Read audio data from the Modem
                 audio_data = self._serial.read(CHUNK)
@@ -376,20 +377,23 @@ class Modem(object):
                 # Check if <DLE>b is in the stream
                 if (DCE_BUSY_TONE in audio_data):
                     print(">> Busy Tone... Call will be disconnected.")
+                    should_hang_up = True
                     break
 
                 # Check if <DLE>s is in the stream
                 if (DCE_SILENCE_DETECTED in audio_data):
                     print(">> Silence Detected... Call will be disconnected.")
+                    should_hang_up = True
                     break
 
                 # Check if <DLE><ETX> is in the stream
                 if (DCE_END_VOICE_DATA_TX in audio_data):
                     print(">> <DLE><ETX> Char Recieved... Call will be disconnected.")
+                    should_hang_up = True
                     break
 
                 # Timeout
-                elif ((datetime.now() - start_time).seconds) > REC_VM_MAX_DURATION:
+                if ((datetime.now() - start_time).seconds) > REC_VM_MAX_DURATION:
                     print(">> Timeout - Max recording limit reached.")
                     break
 
@@ -412,8 +416,9 @@ class Modem(object):
                 print("* Error: Unable to signal end of voice/data receive state")
 
             # Hangup the Call
-            # if not self._send(TERMINATE_CALL, "OK"):
-            #     print("* Error: Unable to hang-up the call")
+            if should_hang_up:
+                if not self._send(GO_ON_HOOK, "OK"):
+                    print("* Error: Unable to hang-up the call")
 
         finally:
             self._lock.release()
@@ -451,30 +456,27 @@ class Modem(object):
 
             # Wait for keypress
             start_time = datetime.now()
+            should_hang_up = False
             while 1:
                 # Read 1 bytes from the Modem
                 modem_data = modem_data + self._serial.read(1)
-                print("modem_data:")
-                pprint(modem_data)
-
-                # Check if <DLE>h is in the stream
-                if (DCE_PHONE_ON_HOOK in modem_data):
-                    print(">> Phone On Hook... Aborting")
-                    break
 
                 # Check if <DLE>b is in the stream
                 if (DCE_BUSY_TONE in modem_data):
-                    print(">> Busy Tone... Aborting wait for key.")
+                    print(">> Busy Tone... Disconnecting.")
+                    should_hang_up = True
                     break
 
                 # Check if <DLE>s is in the stream
                 if (DCE_SILENCE_DETECTED in modem_data):
-                    print(">> Silence Detected... Aborting wait for key.")
+                    print(">> Silence Detected... Disconnecting.")
+                    should_hang_up = True
                     break
 
                 # Check if <DLE><ETX> is in the stream
                 if (DCE_END_VOICE_DATA_TX in modem_data):
-                    print(">> <DLE><ETX> Char Recieved... Aboring.")
+                    print(">> <DLE><ETX> Recieved... Disconnecting.")
+                    should_hang_up = True
                     break
 
                 # Parse DTMF Digits, if found in the modem data
@@ -485,6 +487,12 @@ class Modem(object):
                     for d in digit_list:
                         print("\nNew Event: DTMF Digit Detected: " + d[1])
                     return d[1]
+
+            # Hang up?
+            if should_hang_up:
+                if not self._send(GO_ON_HOOK, "OK"):
+                    print("* Error: Unable to hang-up the call")
+
         finally:
             self._lock.release()
 
