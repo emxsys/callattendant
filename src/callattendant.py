@@ -258,7 +258,74 @@ def make_config(filename=None):
         cfg.from_pyfile(filename)
     # Always print the configuration
     print_config(cfg)
+
     return cfg
+
+
+def validate_config(config):
+    success = True
+
+    if config["ENV"] not in ("production", "development"):
+        print("* ENV is incorrect: {}".format(config["ENV"]))
+        success = False
+
+    if not isinstance(config["DEBUG"], bool):
+        print("* DEBUG should be a bool: {}".format(type(config["DEBUG"])))
+        success = False
+    if not isinstance(config["TESTING"], bool):
+        print("* TESTING should be bool: {}".format(type(config["TESTING"])))
+        success = False
+    if not isinstance(config["BLOCK_ENABLED"], bool):
+        print("* BLOCK_ENABLED should be a bool: {}".format(type(config["BLOCK_ENABLED"])))
+        success = False
+
+    for mode in config["SCREENING_MODE"]:
+        if mode not in ("whitelist", "blacklist"):
+            print("* SCREENING_MODE option is invalid: {}".format(mode))
+            success = False
+    for mode in config["BLOCKED_ACTIONS"]:
+        if mode not in ("greeting", "record_message", "voice_mail"):
+            print("* BLOCKED_ACTIONS option is invalid: {}".format(mode))
+            success = False
+
+    if not config["DATABASE"] == "../data/callattendant.db":
+        print("* DATABASE is not '../data/callattendant.db', are you sure this is right?")
+        print("  Path is {}".format(config["DATABASE"]))
+        if config["ENV"] == "production":
+            success = False
+    if not config["VOICE_MAIL_MESSAGE_FOLDER"] == "../data/messages":
+        print("* VOICE_MAIL_MESSAGE_FOLDER is not '../data/messages', are you sure this is right?")
+        print("  Path is {}".format(config["VOICE_MAIL_MESSAGE_FOLDER"]))
+        if config["ENV"] == "production":
+            success = False
+
+    rootpath = config["ROOT_PATH"]
+    filepath = os.path.join(rootpath, config["BLOCKED_GREETING_FILE"])
+    if not os.path.exists(filepath):
+        print("* BLOCKED_GREETING_FILE not found: {}".format(filepath))
+        success = False
+    filepath = os.path.join(rootpath, config["VOICE_MAIL_GREETING_FILE"])
+    if not os.path.exists(filepath):
+        print("* VOICE_MAIL_GREETING_FILE not found: {}".format(filepath))
+        success = False
+    filepath = os.path.join(rootpath, config["VOICE_MAIL_GOODBYE_FILE"])
+    if not os.path.exists(filepath):
+        print("* VOICE_MAIL_GOODBYE_FILE not found: {}".format(filepath))
+        success = False
+    filepath = os.path.join(rootpath, config["VOICE_MAIL_LEAVE_MESSAGE_FILE"])
+    if not os.path.exists(filepath):
+        print("* VOICE_MAIL_LEAVE_MESSAGE_FILE not found: {}".format(filepath))
+        success = False
+    filepath = os.path.join(rootpath, config["VOICE_MAIL_MENU_FILE"])
+    if not os.path.exists(filepath):
+        print("* VOICE_MAIL_MENU_FILE not found: {}".format(filepath))
+        success = False
+    filepath = os.path.join(rootpath, config["VOICE_MAIL_MESSAGE_FOLDER"])
+    if not os.path.exists(filepath):
+        print("* VOICE_MAIL_MESSAGE_FOLDER not found: {}".format(filepath))
+        success = False
+
+    return success
 
 
 def print_config(config):
@@ -302,6 +369,9 @@ def main(argv):
 
     # Create the application config dict
     config = make_config(config_file)
+    if not validate_config(config):
+        print("Configuration is invalid. Please check {}".format(config_file))
+        return 1
 
     # Create and start the application
     app = CallAttendant(config)
