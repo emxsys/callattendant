@@ -15,12 +15,16 @@ The Call Attendant (__callattendant__) is a python-based, automated call attenda
 or other Linux-based system. Coupled with a modem, it provides a call blocker and voice messaging system that can screen
 callers and block robocall and scams from your landline.
 
-Features being developed include:
+Features include:
 - [x] A call blocker that intercepts robocallers and blocked numbers at or before the first ring
 - [x] Permitted numbers pass straight through to the local phone system for normal call ringing and answering
 - [x] Visual indicators to show whether the incoming call is from a permitted, blocked, or unknown number
 - [x] Call details, permitted numbers, and blocked numbers are available in a web-based user interface
-- [ ] Blocked callers are handled by a voice messaging system that requires human interaction, e.g, "Press 1 to leave a message"
+- [x] Blocked callers are handled by a voice messaging system that requires human interaction, e.g, "Press 1 to leave a message"
+
+### User Guide
+See the [User Guide](https://github.com/emxsys/callattendant/wiki/User-Guide) in the project's wiki for installation, 
+configuration, and operation instructions.
 
 ### Hardware
 - Raspberry Pi 3B+ or better
