@@ -24,6 +24,7 @@
           <th>Name</th>
           <th>Date Time</th>
           <th>Message</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -38,6 +39,11 @@
                 <source src="{{ item.wav_file }}" type="audio/wav">
                 Your browser does not support the audio element.
               </audio>
+          </td>
+          <td>
+            <button type="button" class="btn btn-outline-light text-dark" onClick="location.href='/delete_message/{{ item.call_no }}'">
+              <img src="../static/trash.svg" alt="" width="32" height="32" title="Trash">
+            </button>
           </td>
         </tr>
         {% endfor %}

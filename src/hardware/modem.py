@@ -231,7 +231,6 @@ class Modem(object):
             self._lock.release()
         return True
 
-
     def play_audio(self, audio_file_name):
         """
         Play the given audio file.
@@ -413,7 +412,6 @@ class Modem(object):
                 print("Modem initialization error: ", error)
                 return ''
 
-
             # Wait for keypress
             start_time = datetime.now()
             should_hang_up = False
@@ -591,15 +589,15 @@ class Modem(object):
     def _init_serial_port(self, com_port):
         """Initializes the given COM port for communications with the modem."""
         self._serial.port = com_port
-        self._serial.baudrate = 57600               # 9600
-        self._serial.bytesize = serial.EIGHTBITS    # number of bits per bytes
-        self._serial.parity = serial.PARITY_NONE    # set parity check: no parity
-        self._serial.stopbits = serial.STOPBITS_ONE # number of stop bits
-        self._serial.timeout = 3                    # non-block read
-        self._serial.xonxoff = False                # disable software flow control
-        self._serial.rtscts = False                 # disable hardware (RTS/CTS) flow control
-        self._serial.dsrdtr = False                 # disable hardware (DSR/DTR) flow control
-        self._serial.writeTimeout = 3               # timeout for write
+        self._serial.baudrate = 57600                   # 9600
+        self._serial.bytesize = serial.EIGHTBITS        # number of bits per bytes
+        self._serial.parity = serial.PARITY_NONE        # set parity check: no parity
+        self._serial.stopbits = serial.STOPBITS_ONE     # number of stop bits
+        self._serial.timeout = 3                        # non-block read
+        self._serial.xonxoff = False                    # disable software flow control
+        self._serial.rtscts = False                     # disable hardware (RTS/CTS) flow control
+        self._serial.dsrdtr = False                     # disable hardware (DSR/DTR) flow control
+        self._serial.writeTimeout = 3                   # timeout for write
 
     def close_serial_port(self):
         """Closes the serial port attached to the modem."""

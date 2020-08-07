@@ -171,14 +171,11 @@ class CallAttendant(object):
                 if caller_blocked:
 
                     # Build the filename for a potential message
-                    message_file = os.path.join(message_path,
-                        "{}_{}_{}_{}.wav".format(
-                            call_no,
-                            caller["NMBR"],
-                            caller["NAME"].replace('_','-'),
-                            datetime.now().strftime("%m%d%y_%H%M")
-                        )
-                    )
+                    message_file = os.path.join(message_path, "{}_{}_{}_{}.wav".format(
+                        call_no,
+                        caller["NMBR"],
+                        caller["NAME"].replace('_', '-'),
+                        datetime.now().strftime("%m%d%y_%H%M")))
                     # Go "off-hook"
                     # - Acquires a lock on the modem
                     # - MUST be followed by hang_up()
