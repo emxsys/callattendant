@@ -4,6 +4,7 @@
 # https://github.com/pradeesi/Incoming_Call_Detail_Logger
 # ==============================================================================
 
+import utils
 from datetime import datetime
 from pprint import pprint
 
@@ -27,9 +28,15 @@ class CallLogger(object):
         self.db.execute(query, arguments)
         self.db.commit()
 
+        query = "select last_insert_rowid()"
+        result = utils.query_db(self.db, query, (), True)
+        call_no = result[0]
+
         if self.config["DEBUG"]:
-            print("New log entry added")
+            print("> New call log entry #{}".format(call_no))
             pprint(arguments)
+
+        return call_no
 
     def __init__(self, db, config):
         self.db = db
@@ -57,23 +64,38 @@ class CallLogger(object):
 
 def test(db, config):
     ''' Unit Tests '''
+    print("*** Running Whitelist Unit Tests ***")
+
     import utils
 
     # Create the logger to be tested
     logger = CallLogger(db, config)
 
-    # Add a record
+    # Caller to be added
     callerid = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
-    print("Adding CID:")
+
+    print("Adding caller:")
     pprint(callerid)
-    logger.log_caller(callerid)
 
-    # List the records
-    query = "SELECT * FROM CallLog"
-    results = utils.query_db(db, query)
-    print(query + " results:")
-    pprint(results)
+    try:
+        print("Assert log_caller returns #1")
+        assert logger.log_caller(callerid) == 1, "call # should be 1"
 
+        print("Assert log_caller returns #2")
+        assert logger.log_caller(callerid) == 2, "call # should be 2"
+
+        # List the records
+        query = "SELECT * FROM CallLog"
+        results = utils.query_db(db, query)
+        print(query + " results:")
+        pprint(results)
+
+    except AssertionError as e:
+        print("*** Unit Test FAILED ***")
+        pprint(e)
+        return 1
+
+    print("*** Unit Tests PASSED ***")
     return 0
 
 

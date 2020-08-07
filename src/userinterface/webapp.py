@@ -29,14 +29,15 @@
 # https://iotbytes.wordpress.com/incoming-call-details-logger-with-raspberry-pi/
 # ==============================================================================
 from __future__ import division
-from flask import Flask, request, g, current_app, render_template
+from flask import Flask, request, g, current_app, render_template, redirect
 from flask_paginate import Pagination, get_page_args
 from screening.blacklist import Blacklist
 from screening.whitelist import Whitelist
+import glob
+import os
 import screening.utils
 import sqlite3
 import _thread
-import os
 
 # Create the Flask micro web-framework application
 app = Flask(__name__)
@@ -46,22 +47,28 @@ app.debug = False  # debug mode prevents app from running in separate thread
 
 @app.before_request
 def before_request():
-    '''Establish a database connection for the current request'''
-    g.conn = sqlite3.connect(current_app.config.get("DATABASE"))
+    """
+    Establish a database connection for the current request
+    """
+    g.conn = sqlite3.connect(current_app.config.get("DB_PATH"))
     g.conn.row_factory = sqlite3.Row
     g.cur = g.conn.cursor()
 
 
 @app.teardown_request
 def teardown(error):
-    '''Closes the database connection for the last request'''
+    """
+    Closes the database connection for the last request
+    """
     if hasattr(g, 'conn'):
         g.conn.close()
 
 
 @app.route('/')
-def call_details():
-    '''Display the call details from the call log table'''
+def callers():
+    """
+    Display the call details from the call log table
+    """
 
     # Get values used for pagination of the call log
     total = get_row_count('CallLog')
@@ -139,7 +146,9 @@ def call_details():
 
 @app.route('/blocked')
 def blacklist():
-    '''Display the blocked numbers from the blacklist table'''
+    """
+    Display the blocked numbers from the blacklist table
+    """
     # Get values used for pagination of the blacklist
     total = get_row_count('Blacklist')
     page, per_page, offset = get_page_args(
@@ -181,7 +190,9 @@ def blacklist():
 
 @app.route('/permitted')
 def whitelist():
-    '''Display the permitted numbers from the whitelist table'''
+    """
+    Display the permitted numbers from the whitelist table
+    """
     # Get values used for pagination of the blacklist
     total = get_row_count('Whitelist')
     page, per_page, offset = get_page_args(
@@ -221,10 +232,95 @@ def whitelist():
     )
 
 
+@app.route('/messages')
+def messages():
+    """
+    Display the voice messages for playback and/or deletion.
+    """
+    # Get list of wav files from MESSAGES folder
+    msgdir = os.path.join(app.config["ROOT_PATH"], app.config["VOICE_MAIL_MESSAGE_FOLDER"])
+    msglist = []
+    filelist = os.scandir(msgdir)
+    for entry in filelist:
+        if entry.is_file and entry.name.lower().endswith("wav"):
+            # Flask pages use the static folder to get resources.
+            # There We have created soft-link to the data/messsages
+            # folder containing the actual messages (wav files)
+            msgfile = os.path.join("../static/messages", entry.name)
+
+            # Split the filename up into fields
+            # Example name: 2077_8055551080_BRUCE_200805_1737.wav
+            split = entry.name.split('_')
+            msglist.append(dict(
+                call_no=split[0],
+                phone_no="{}-{}-{}".format(split[1][0:3], split[1][3:6], split[1][6:]),
+                name=split[2],
+                date_time="{} {}".format(split[3], split[4].strip(".wav")),
+                wav_file=msgfile))
+
+    from operator import itemgetter
+    messages = sorted(msglist, key=itemgetter('call_no'), reverse=True)
+
+    # Get values used for pagination of the messages
+    total = len(messages)
+    page, per_page, offset = get_page_args(
+        page_parameter="page",
+        per_page_parameter="per_page")
+
+    # Create a pagination object for the page
+    pagination = get_pagination(
+        page=page,
+        per_page=per_page,
+        total=total,
+        record_name="messages",
+        format_total=True,
+        format_number=True,
+    )
+    # Render the results with pagination
+    return render_template(
+        "messages.htm",
+        messages=messages,
+        page=page,
+        per_page=per_page,
+        pagination=pagination,
+    )
+
+
+@app.route('/delete_message/<int:call_no>', methods=['GET'])
+def delete_message(call_no):
+    """
+    Delete the voice message associated with call number.
+    """
+    import glob
+    # Get list of wav files from MESSAGES folder
+    msgdir = os.path.join(app.config["ROOT_PATH"], app.config["VOICE_MAIL_MESSAGE_FOLDER"])
+    files = glob.glob(os.path.join(msgdir, "{}_*".format(call_no)))
+
+    success = True
+    if len(files) > 0:
+        print("Deleting message: {}".format(files[0]))
+        try:
+            os.remove(files[0])
+        except OSError as error:
+            print(error)
+            print("{} cannot be removed".format(files[0]))
+            success = False
+    else:
+        print("The message file does not exist")
+        success = False
+
+    # Redisplay the messages page
+    if success:
+        return redirect("/messages", code=301)  # (re)moved permamently
+    else:
+        return redirect("/messages", code=333)  # Other
+
+
 @app.route('/manage_caller/<int:call_log_id>', methods=['GET', 'POST'])
 def manage_caller(call_log_id):
-    '''Display the Manage Caller form'''
-
+    """
+    Display the Manage Caller form
+    """
     # Post changes to the blacklist or whitelist table before rendering
     if request.method == 'POST':
         number = request.form['phone_no'].replace('-', '')
@@ -352,22 +448,30 @@ def get_pagination(**kwargs):
     )
 
 
-def run_flask(db_path):
+def run_flask(config):
     '''
     Runs the Flask webapp.
         :param database: full path to the callattendant database file
     '''
     with app.app_context():
-        app.config["DATABASE"] = db_path
+        # Override Flask settings with CallAttendant config settings
+        app.config["DEBUG"] = config["DEBUG"]
+        app.config["TESTING"] = config["TESTING"]
+        # Add addtional settings from callattendant config
+        app.config["ROOT_PATH"] = config["ROOT_PATH"]
+        app.config["DATABASE"] = config["DATABASE"]
+        app.config["VOICE_MAIL_MESSAGE_FOLDER"] = config["VOICE_MAIL_MESSAGE_FOLDER"]
+        # Add a new derived setting
+        app.config["DB_PATH"] = os.path.join(config["ROOT_PATH"], config["DATABASE"])
 
     print("Running Flask webapp")
     # debug mode prevents app from running in separate thread
     app.run(host='0.0.0.0', debug=False)
 
 
-def start(database):
+def start(config):
     '''
     Starts the Flask webapp in a separate thread.
         :param database: full path to the callattendant database file
     '''
-    _thread.start_new_thread(run_flask, (database,))
+    _thread.start_new_thread(run_flask, (config,))
