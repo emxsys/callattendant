@@ -85,14 +85,14 @@ also includes a [Developer Guide](https://github.com/emxsys/callattendant/wiki/D
 ## Software Development Plan
 The development plan's [phase objectives](https://github.com/emxsys/callattendant/projects?query=is%3Aopen+sort%3Acreated-asc) are captured in the GitHub projects.
 ### [Inception Phase](https://github.com/emxsys/callattendant/projects/1)
-- Iteration #I1: [v0.1](https://github.com/emxsys/callattendant/releases/tag/v0.1)
+- [x] Iteration #I1: [v0.1](https://github.com/emxsys/callattendant/releases/tag/v0.1)
 ### [Elaboration Phase](https://github.com/emxsys/callattendant/projects/2)
-- Iteration #E1: [v0.2](https://github.com/emxsys/callattendant/releases/tag/v0.2)
+- [x] Iteration #E1: [v0.2](https://github.com/emxsys/callattendant/releases/tag/v0.2)
 ### [Construction Phase](https://github.com/emxsys/callattendant/projects/3)
-- Iteration #C1: [v0.3](https://github.com/emxsys/callattendant/releases/tag/v0.3)
-- Iteration #C2: [v0.4](https://github.com/emxsys/callattendant/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Release+0.4%22)
+- [x] Iteration #C1: [v0.3](https://github.com/emxsys/callattendant/releases/tag/v0.3)
+- [ ] Iteration #C2: [v0.4](https://github.com/emxsys/callattendant/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Release+0.4%22)
 ### [Transition Phase](https://github.com/emxsys/callattendant/projects/4)
-- Iteration #T1: [v1.0](https://github.com/emxsys/callattendant/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Release+1.0%22)
+- [ ] Iteration #T1: [v1.0](https://github.com/emxsys/callattendant/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Release+1.0%22)
 
 ---
 
