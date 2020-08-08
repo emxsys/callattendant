@@ -76,10 +76,20 @@ def callers():
         page_parameter="page", per_page_parameter="per_page"
     )
     # Get the call log subset, limited to the pagination settings
-    sql = '''select a.CallLogID, a.Name, a.Number, a.Date, a.Time,
-      case when b.PhoneNo is null then 'N' else 'Y' end Whitelisted,
-      case when c.PhoneNo is null then 'N' else 'Y' end Blacklisted,
-      case when b.PhoneNo is not null then b.Reason else c.Reason end Reason
+    sql = '''select
+        a.CallLogID,
+        case
+            when b.PhoneNo is not null then b.Name
+            when c.PhoneNo is not null then c.Name
+            else a.Name
+        end Name,
+        a.Number,
+        a.Date,
+        a.Time,
+        a.Action,
+        a.Reason,
+        case when b.PhoneNo is null then 'N' else 'Y' end Whitelisted,
+        case when c.PhoneNo is null then 'N' else 'Y' end Blacklisted
     from CallLog as a
     left join Whitelist as b ON a.Number = b.PhoneNo
     left join Blacklist as c ON a.Number = c.PhoneNo
@@ -92,23 +102,16 @@ def callers():
     for record in result_set:
         number = record[2]
         phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
-        action = ""
-        if record[5] == 'Y':
-            action = "Permitted"
-        elif record[6] == 'Y':
-            action = "Blocked"
-        else:
-            action = "Screened"
         records.append(dict(
             Call_No=record[0],
             Phone_Number=phone_no,
             Name=record[1],
             Date=record[3],
             Time=record[4],
-            Whitelisted=record[5],
-            Blacklisted=record[6],
-            Action=action,
-            Reason=record[7]))
+            Action=record[5],
+            Reason=record[6],
+            Whitelisted=record[7],
+            Blacklisted=record[8]))
 
     # Create a pagination object for the page
     pagination = get_pagination(
@@ -120,11 +123,7 @@ def callers():
         format_number=True,
     )
     # Gather some metrics
-    sql = '''select count(*)
-        from CallLog as a
-        left join Whitelist as b ON a.Number = b.PhoneNo
-        left join Blacklist as c ON a.Number = c.PhoneNo
-        where b.PhoneNo is null and c.PhoneNo is not null'''
+    sql = "select count(*) from CallLog where `Action` = 'Blocked'"""
     g.cur.execute(sql)
     blocked = g.cur.fetchone()[0]
     if total == 0:

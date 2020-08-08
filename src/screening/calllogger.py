@@ -15,12 +15,14 @@ class CallLogger(object):
         query = """INSERT INTO CallLog(
             Name,
             Number,
+            Action,
             Date,
             Time,
             SystemDateTime)
-            VALUES(?,?,?,?,?)"""
+            VALUES(?,?,?,?,?,?)"""
         arguments = [callerid['NAME'],
                      callerid['NMBR'],
+                     callerid["ACTION"],
                      datetime.strptime(callerid['DATE'], '%m%d'). strftime('%d-%b'),
                      datetime.strptime(callerid['TIME'], '%H%M'). strftime('%I:%M %p'),
                      (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])]
@@ -39,6 +41,9 @@ class CallLogger(object):
         return call_no
 
     def __init__(self, db, config):
+        """ Initializes the CallLogger object and creates the
+            CallLog table if it doesn't exist
+        """
         self.db = db
         self.config = config
 
@@ -53,10 +58,59 @@ class CallLogger(object):
             Date TEXT,
             Time TEXT,
             SystemDateTime TEXT);"""
-
         curs = self.db.cursor()
         curs.executescript(sql)
+
+        # Early version of callattendant (<= v0.3) do not contain an Action
+        # column. This hack/code attempts to add the column if it doesn't exit.
+        try:
+            sql = """SELECT COUNT(*) AS CNTREC
+                FROM pragma_table_info('CallLog')
+                WHERE name='Action'"""
+            curs.execute(sql)
+            count = curs.fetchone()[0]
+            if count == 0:
+                print(">> Adding Action column to CallLog table")
+                sql = """ALTER TABLE CallLog ADD COLUMN Action TEXT default null"""
+                curs.executescript(sql)
+
+                print(">> Updating Action column in CallLog table")
+                sql = """UPDATE CallLog
+                    SET `Action`=(select
+                    CASE
+                        WHEN b.PhoneNo is not null then 'Permitted'
+                        WHEN c.PhoneNo is not null then 'Blocked'
+                        ELSE 'Screened'
+                    END actn
+                    FROM CallLog as a
+                    LEFT JOIN Whitelist as b ON a.Number = b.PhoneNo
+                    LEFT JOIN Blacklist as c ON a.Number = c.PhoneNo
+                    WHERE CallLog.CallLogID = a.CallLogID)"""
+                curs.executescript(sql)
+
+                print(">> Adding Reason column to CallLog table")
+                sql = """ALTER TABLE CallLog ADD COLUMN Reason TEXT default null"""
+                curs.executescript(sql)
+
+                print(">> Updating Reason column in CallLog table")
+                sql = """UPDATE CallLog
+                    SET `Reason`=(select
+                    CASE
+                        WHEN b.PhoneNo is not null then b.Reason
+                        WHEN c.PhoneNo is not null then c.Reason
+                        ELSE null
+                    END reason
+                    FROM CallLog as a
+                    LEFT JOIN Whitelist as b ON a.Number = b.PhoneNo
+                    LEFT JOIN Blacklist as c ON a.Number = c.PhoneNo
+                    WHERE CallLog.CallLogID = a.CallLogID)"""
+                curs.executescript(sql)
+
+        except Exception as e:
+            print(e)
+
         curs.close()
+        self.db = db.commit()
 
         if self.config["DEBUG"]:
             print("CallLogger initialized")
@@ -67,12 +121,21 @@ def test(db, config):
     print("*** Running Whitelist Unit Tests ***")
 
     import utils
-
+    from whitelist import Whitelist
+    from blacklist import Blacklist
+    # Dependencies
+    whitelist = Whitelist(db, config)
+    blacklist = Blacklist(db, config)
     # Create the logger to be tested
     logger = CallLogger(db, config)
 
     # Caller to be added
-    callerid = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
+    callerid = {
+        "NAME": "Bruce",
+        "NMBR": "1234567890",
+        "DATE": "1012",
+        "TIME": "0600",
+        "ACTION": "Screened"}
 
     print("Adding caller:")
     pprint(callerid)
