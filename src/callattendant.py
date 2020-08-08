@@ -108,6 +108,48 @@ class CallAttendant(object):
         else:
             self.ring_indicator.turn_off()
 
+    def leave_voice_message(self, call_no, caller, voice_mail_menu=False):
+
+        # Build some common paths
+        root_path = self.config['ROOT_PATH']
+        voice_mail = self.config.get_namespace("VOICE_MAIL_")
+        goodbye_file = os.path.join(root_path, voice_mail['goodbye_file'])
+        invalid_response_file = os.path.join(root_path, voice_mail['invalid_response_file'])
+        leave_message_file = os.path.join(root_path, voice_mail['leave_message_file'])
+        voice_mail_menu_file = os.path.join(root_path, voice_mail['menu_file'])
+        # Build the filename used for a potential message
+        message_path = os.path.join(root_path, voice_mail["message_folder"])
+        message_file = os.path.join(message_path, "{}_{}_{}_{}.wav".format(
+            call_no,
+            caller["NMBR"],
+            caller["NAME"].replace('_', '-'),
+            datetime.now().strftime("%m%d%y_%H%M")))
+
+        if voice_mail_menu:
+            tries = 0
+            while tries < 3:
+                self.modem.play_audio(voice_mail_menu_file)
+                success, digit = self.modem.wait_for_keypress(5)
+                if not success:
+                    break
+                if digit == '1':
+                    # Leave a message
+                    self.modem.play_audio(leave_message_file)
+                    self.modem.record_audio(message_file)
+                    break
+                elif digit == '0':
+                    # End this call
+                    break
+                else:
+                    # Try again--up to a limit
+                    self.modem.play_audio(invalid_response_file)
+                    tries += 1
+        else:
+            self.modem.play_audio(leave_message_file)
+            self.modem.record_audio(message_file)
+
+        self.modem.play_audio(goodbye_file)
+
     def run(self):
         """
         Processes incoming callers by logging, screening, blocking
@@ -116,21 +158,9 @@ class CallAttendant(object):
         # Get relevant config settings
         root_path = self.config['ROOT_PATH']
         screening_mode = self.config['SCREENING_MODE']
-        # Get configuration subsets
         block = self.config.get_namespace("BLOCK_")
         blocked = self.config.get_namespace("BLOCKED_")
-        voice_mail = self.config.get_namespace("VOICE_MAIL_")
-        # Build some common paths
         blocked_greeting_file = os.path.join(root_path, blocked['greeting_file'])
-        general_greeting_file = os.path.join(root_path, voice_mail['greeting_file'])
-        goodbye_file = os.path.join(root_path, voice_mail['goodbye_file'])
-        invalid_response_file = os.path.join(root_path, voice_mail['invalid_response_file'])
-        leave_message_file = os.path.join(root_path, voice_mail['leave_message_file'])
-        voice_mail_menu_file = os.path.join(root_path, voice_mail['menu_file'])
-        message_path = os.path.join(root_path, voice_mail["message_folder"])
-        # Ensure the message path exists
-        if not os.path.exists(message_path):
-            os.makedirs(message_path)
 
         # Instruct the modem to start feeding calls into the caller queue
         self.modem.handle_calls()
@@ -170,15 +200,7 @@ class CallAttendant(object):
                 # Apply the configured actions to blocked callers
                 if caller_blocked:
 
-                    # Build the filename for a potential message
-                    message_file = os.path.join(message_path, "{}_{}_{}_{}.wav".format(
-                        call_no,
-                        caller["NMBR"],
-                        caller["NAME"].replace('_', '-'),
-                        datetime.now().strftime("%m%d%y_%H%M")))
-                    # Go "off-hook"
-                    # - Acquires a lock on the modem
-                    # - MUST be followed by hang_up()
+                    # Go "off-hook" - Acquires a lock on the modem - MUST follow with hang_up()
                     if self.modem.pick_up():
                         try:
                             # Play greeting
@@ -187,39 +209,20 @@ class CallAttendant(object):
 
                             # Record message
                             if "record_message" in blocked["actions"]:
-                                self.modem.play_audio(leave_message_file)
-                                self.modem.record_audio(message_file)
-
-                            # Enter voice mail
+                                self.leave_voice_message(call_no, caller, False)
                             elif "voice_mail" in blocked["actions"]:
-                                tries = 0
-                                while tries < 3:
-                                    self.modem.play_audio(voice_mail_menu_file)
-                                    digit = self.modem.wait_for_keypress(5)
-                                    if digit == '1':
-                                        # Leave a message
-                                        self.modem.play_audio(leave_message_file)
-                                        self.modem.record_audio(message_file)
-                                        time.sleep(1)
-                                        self.modem.play_audio(goodbye_file)
-                                        break
-                                    elif digit == '0':
-                                        # End this call
-                                        self.modem.play_audio(goodbye_file)
-                                        break
-                                    elif digit == '':
-                                        # Timeout
-                                        break
-                                    else:
-                                        # Try again
-                                        self.modem.play_audio(invalid_response_file)
-                                        tries += 1
+                                self.leave_voice_message(call_no, caller, True)
+
+                        except RuntimeError as e:
+                            print("** Error handling a blocked caller: {}".format(e))
+
                         finally:
                             # Go "on-hook"
                             self.modem.hang_up()
 
             except Exception as e:
-                print(e)
+                pprint(e)
+                print("** Error running callattendant. Exiting.")
                 return 1
 
 
