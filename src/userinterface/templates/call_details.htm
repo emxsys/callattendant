@@ -68,9 +68,9 @@ The template is rendered with an array of dictionary objects named 'calls'.
         <tbody>
         {% for item in calls %}
             <tr class="clickable" data-call-number="{{ item.Call_No }}" onClick="location.href='/manage_caller/{{ item.Call_No }}'"
-            {% if item.Action == 'Permitted' %}
+            {% if item.Whitelisted == 'Y' %}
                 bgcolor="#90EE90"
-            {% elif item.Action == 'Blocked' %}
+            {% elif item.Blacklisted == 'Y' %}
                 bgcolor="#FFC0CB"
             {% endif %}
             >
@@ -79,7 +79,11 @@ The template is rendered with an array of dictionary objects named 'calls'.
                 <td class="name">{{ item.Name }}</td>
                 <td class="date">{{ item.Date }}</td>
                 <td class="time">{{ item.Time }}</td>
-                <td class="action">{{ item.Action }}</td>
+                <td class="action">
+                    <span class="badge {% if item.Action=='Permitted' %}badge-primary{% elif item.Action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
+                    {{ item.Action }}
+                    </span>
+                </td>
                 <td class="reason">{{ item.Reason }}</td>
             </tr>
         {% endfor %}
