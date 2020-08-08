@@ -136,14 +136,9 @@ class CallAttendant(object):
                     # Leave a message
                     self.modem.play_audio(leave_message_file)
                     self.modem.record_audio(message_file)
-                    time.sleep(1)
-                    self.modem.play_audio(goodbye_file)
                     break
                 elif digit == '0':
                     # End this call
-                    self.modem.play_audio(goodbye_file)
-                    break
-                elif digit == '':
                     break
                 else:
                     # Try again--up to a limit
@@ -152,6 +147,8 @@ class CallAttendant(object):
         else:
             self.modem.play_audio(leave_message_file)
             self.modem.record_audio(message_file)
+
+        self.modem.play_audio(goodbye_file)
 
     def run(self):
         """
