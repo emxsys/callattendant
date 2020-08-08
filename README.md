@@ -7,7 +7,7 @@ Automated call attendant with call blocking and voice messaging on a Raspberry P
 - [Software Development Plan](#software-development-plan)
 - [Installation](#installation)
 - [Operation](#operation)
-- [Related Projects](#related-projects)
+- [More Information](#more-information)
 
 
 ## Overview
@@ -15,40 +15,38 @@ The Call Attendant (__callattendant__) is a python-based, automated call attenda
 or other Linux-based system. Coupled with a modem, it provides a call blocker and voice messaging system that can screen
 callers and block robocall and scams from your landline.
 
-Features being developed include:
+Features include:
 - [x] A call blocker that intercepts robocallers and blocked numbers at or before the first ring
 - [x] Permitted numbers pass straight through to the local phone system for normal call ringing and answering
 - [x] Visual indicators to show whether the incoming call is from a permitted, blocked, or unknown number
 - [x] Call details, permitted numbers, and blocked numbers are available in a web-based user interface
-- [ ] Blocked callers are handled by a voice messaging system that requires human interaction, e.g, "Press 1 to leave a message"
+- [x] Blocked callers are handled by a voice messaging system that requires human interaction, e.g, "Press 1 to leave a message"
 
 ### Hardware
+The __callattendant__ uses the following hardware:
 - Raspberry Pi 3B+ or better
 - US Robotics 5637 Modem
+
+For a complete description of the hardware setup see the [Installation](https://github.com/emxsys/callattendant/wiki/User-Guide#installation) 
+section of the [User Guide](https://github.com/emxsys/callattendant/wiki/User-Guide).
 
 ##### _The required hardware components: a Raspberry Pi 3B+ and USR5637 modem_
 ![Raspberry Pi and USR5637 Modem](https://github.com/emxsys/callattendant/raw/master/docs/raspberry_pi-modem.jpg)
 
 ### Web Interface
-Call history, permitted numbers, blocked numbers and caller management is all performed through a web interface.
+Call history, permitted numbers, blocked numbers and caller management is performed through a web interface.
+Following is an example of the main screen, the Call Log, including metrics and a list of recent calls.  
+For a complete description see the [Web Interface](https://github.com/emxsys/callattendant/wiki/User-Guide#web-interface) 
+section of the [User Guide](https://github.com/emxsys/callattendant/wiki/User-Guide).
 
 ##### _Call Log Example_
-![Call Log](https://github.com/emxsys/callattendant/raw/master/docs/callattendant-calllog.png)
+![Call Log](https://github.com/emxsys/callattendant/blob/master/docs/call-log.png)
 
-### More information
-The Call Attendant project was inspired by the [pamapa/callblocker](https://github.com/pamapa/callblocker) project,
-an excellent Raspberry Pi based call blocker.  However, the __callattendant__ differs from the __callblocker__ in that adds
-voice messaging; and the __callattendant__ is written entirely in Python, uses SQLite for the call logging, and
-implments the web interface with Flask.
-
-The following blogs from [IoT Bytes by Pradeep Singh](https://iotbytes.wordpress.com/) were very useful for learning to how
-to program the Raspberry Pi and the US Robotics 5637 modem. His blog site has many Raspberry Pi resources. Thanks Pradeep!
-
-- [Incoming Call Details Logger with Raspberry Pi](https://iotbytes.wordpress.com/incoming-call-details-logger-with-raspberry-pi/)
-- [Play Audio File on Phone Line with Raspberry Pi](https://iotbytes.wordpress.com/play-audio-file-on-phone-line-with-raspberry-pi/)
-- [Record Audio from Phone Line with Raspberry Pi](https://iotbytes.wordpress.com/record-audio-from-phone-line-with-raspberry-pi/)
-
-
+### User Guide
+See the [User Guide](https://github.com/emxsys/callattendant/wiki/User-Guide) in the project's wiki for installation, 
+configuration, operation and web interface instructions.  The [Wiki](https://github.com/emxsys/callattendant/wiki) 
+also includes a [Developer Guide](https://github.com/emxsys/callattendant/wiki/Developer-Guide) and an 
+[Advanced](https://github.com/emxsys/callattendant/wiki/Advanced) page for more complex setups and situations.
 
 ## Software Architecture
 ### Archtectural Viewpoints
@@ -87,14 +85,14 @@ to program the Raspberry Pi and the US Robotics 5637 modem. His blog site has ma
 ## Software Development Plan
 The development plan's [phase objectives](https://github.com/emxsys/callattendant/projects?query=is%3Aopen+sort%3Acreated-asc) are captured in the GitHub projects.
 ### [Inception Phase](https://github.com/emxsys/callattendant/projects/1)
-- Iteration #I1: [v0.1](https://github.com/emxsys/callattendant/releases/tag/v0.1)
+- [x] Iteration #I1: [v0.1](https://github.com/emxsys/callattendant/releases/tag/v0.1)
 ### [Elaboration Phase](https://github.com/emxsys/callattendant/projects/2)
-- Iteration #E1: [v0.2](https://github.com/emxsys/callattendant/releases/tag/v0.2)
+- [x] Iteration #E1: [v0.2](https://github.com/emxsys/callattendant/releases/tag/v0.2)
 ### [Construction Phase](https://github.com/emxsys/callattendant/projects/3)
-- Iteration #C1: [v0.3](https://github.com/emxsys/callattendant/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Release+0.3%22)
-- Iteration #C2: [v0.4](https://github.com/emxsys/callattendant/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Release+0.4%22)
+- [x] Iteration #C1: [v0.3](https://github.com/emxsys/callattendant/releases/tag/v0.3)
+- [ ] Iteration #C2: [v0.4](https://github.com/emxsys/callattendant/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Release+0.4%22)
 ### [Transition Phase](https://github.com/emxsys/callattendant/projects/4)
-- Iteration #T1: [v1.0](https://github.com/emxsys/callattendant/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Release+1.0%22)
+- [ ] Iteration #T1: [v1.0](https://github.com/emxsys/callattendant/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Release+1.0%22)
 
 ---
 
@@ -367,10 +365,16 @@ sqlitebrowser callattendant/src/callattendant.db
 
 ---
 
-## Related Projects
+## More information
+The Call Attendant project was inspired by the [pamapa/callblocker](https://github.com/pamapa/callblocker) project,
+an excellent Raspberry Pi based call blocker.  However, the __callattendant__ differs from the __callblocker__ in that adds
+voice messaging; and the __callattendant__ is written entirely in Python, uses SQLite for the call logging, and
+implments the web interface with Flask.
 
-- [pamapa/callblocker](https://github.com/pamapa/callblocker)
-- [pradeesi/Incoming_Call_Detail_Logger ](https://github.com/pradeesi/Incoming_Call_Detail_Logger)
-- [pradeesi/record_audio_from_phone_line](https://github.com/pradeesi/record_audio_from_phone_line)
-- [pradeesi/play_audio_over_phone_line](https://github.com/pradeesi/play_audio_over_phone_line)
+The following blogs from [IoT Bytes by Pradeep Singh](https://iotbytes.wordpress.com/) were very useful for learning to how
+to program the Raspberry Pi and the US Robotics 5637 modem. His blog site has many Raspberry Pi resources. Thanks Pradeep!
+
+- [Incoming Call Details Logger with Raspberry Pi](https://iotbytes.wordpress.com/incoming-call-details-logger-with-raspberry-pi/)
+- [Play Audio File on Phone Line with Raspberry Pi](https://iotbytes.wordpress.com/play-audio-file-on-phone-line-with-raspberry-pi/)
+- [Record Audio from Phone Line with Raspberry Pi](https://iotbytes.wordpress.com/record-audio-from-phone-line-with-raspberry-pi/)
 
