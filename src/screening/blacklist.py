@@ -48,12 +48,17 @@ class Blacklist(object):
             reason,
             (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
         ]
-        self.db.execute(query, arguments)
-        self.db.commit()
-
-        if self.config["DEBUG"]:
-            print("New blacklist entry added")
-            pprint(arguments)
+        try:
+            self.db.execute(query, arguments)
+            self.db.commit()
+            if self.config["DEBUG"]:
+                print("New blacklist entry added")
+                pprint(arguments)
+        except Exception as e:
+            print("** Failed to add caller to blacklist:")
+            pprint(e)
+            return False
+        return True
 
     def remove_number(self, phone_no):
         '''Removes records for the given number (without dashes or formatting)'''
@@ -67,10 +72,18 @@ class Blacklist(object):
             pprint(arguments)
 
     def check_number(self, number):
-        query = "SELECT COUNT(*) FROM Blacklist WHERE PhoneNo=:number"
+        """
+        Checks if the number is in the blacklist
+            :parma number: the number to look for
+            :returns: True if found; and a string containing the reason
+        """
+        query = "SELECT Reason FROM Blacklist WHERE PhoneNo=:number"
         args = {"number": number}
-        result = utils.query_db(self.db, query, args, True)
-        return result[0] > 0
+        results = utils.query_db(self.db, query, args, False)
+        if len(results) > 0:
+            return True, results[0][0]
+        else:
+            return False, ""
 
     def get_number(self, number):
         query = "SELECT * FROM Blacklist WHERE PhoneNo = ?"
@@ -141,11 +154,15 @@ def test(db, config):
     try:
         number = "1234567890"
         print("Assert is blacklisted: " + number)
-        assert blacklist.check_number(number), number + " should be blacklisted"
+        is_blacklisted, reason = blacklist.check_number(number)
+        assert is_blacklisted, number + " should be blacklisted " + reason
+        print(reason)
 
         number = "1111111111"
         print("Assert not blacklisted: " + number)
-        assert not blacklist.check_number(number), number + " should not be blacklisted"
+        is_blacklisted, reason = blacklist.check_number(number)
+        assert not is_blacklisted, number + " should not be blacklisted " + reason
+        print(reason)
 
         number = "1234567890"
         print("Get number: " + number)

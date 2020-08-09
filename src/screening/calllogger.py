@@ -11,18 +11,20 @@ from pprint import pprint
 
 class CallLogger(object):
 
-    def log_caller(self, callerid):
+    def log_caller(self, callerid, action="Screened", reason=""):
         query = """INSERT INTO CallLog(
             Name,
             Number,
             Action,
+            Reason,
             Date,
             Time,
             SystemDateTime)
-            VALUES(?,?,?,?,?,?)"""
+            VALUES(?,?,?,?,?,?,?)"""
         arguments = [callerid['NAME'],
                      callerid['NMBR'],
-                     callerid["ACTION"],
+                     action,
+                     reason,
                      datetime.strptime(callerid['DATE'], '%m%d'). strftime('%d-%b'),
                      datetime.strptime(callerid['TIME'], '%H%M'). strftime('%I:%M %p'),
                      (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])]
@@ -70,6 +72,13 @@ class CallLogger(object):
             curs.execute(sql)
             count = curs.fetchone()[0]
             if count == 0:
+
+                # Dependencies: ensures associated tables exist
+                from whitelist import Whitelist
+                from blacklist import Blacklist
+                whitelist = Whitelist(db, config)
+                blacklist = Blacklist(db, config)
+
                 print(">> Adding Action column to CallLog table")
                 sql = """ALTER TABLE CallLog ADD COLUMN Action TEXT default null"""
                 curs.executescript(sql)
@@ -121,11 +130,6 @@ def test(db, config):
     print("*** Running Whitelist Unit Tests ***")
 
     import utils
-    from whitelist import Whitelist
-    from blacklist import Blacklist
-    # Dependencies
-    whitelist = Whitelist(db, config)
-    blacklist = Blacklist(db, config)
     # Create the logger to be tested
     logger = CallLogger(db, config)
 
@@ -135,14 +139,14 @@ def test(db, config):
         "NMBR": "1234567890",
         "DATE": "1012",
         "TIME": "0600",
-        "ACTION": "Screened"}
+        }
 
     print("Adding caller:")
     pprint(callerid)
 
     try:
         print("Assert log_caller returns #1")
-        assert logger.log_caller(callerid) == 1, "call # should be 1"
+        assert logger.log_caller(callerid, "Permitted", "Test1") == 1, "call # should be 1"
 
         print("Assert log_caller returns #2")
         assert logger.log_caller(callerid) == 2, "call # should be 2"

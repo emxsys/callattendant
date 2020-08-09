@@ -79,12 +79,17 @@ class Whitelist(object):
             reason,
             (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
         ]
-        self.db.execute(query, arguments)
-        self.db.commit()
-
-        if self.config["DEBUG"]:
-            print("New whitelist entry added")
-            pprint(arguments)
+        try:
+            self.db.execute(query, arguments)
+            self.db.commit()
+            if self.config["DEBUG"]:
+                print("New whitelist entry added")
+                pprint(arguments)
+        except Exception as e:
+            print("** Failed to add caller to whitelist:")
+            pprint(e)
+            return False
+        return True
 
     def remove_number(self, phone_no):
         '''Removes records for the given number (without dashes or formatting)'''
@@ -98,10 +103,13 @@ class Whitelist(object):
             pprint(arguments)
 
     def check_number(self, number):
-        query = "SELECT COUNT(*) FROM Whitelist WHERE PhoneNo=:number"
+        query = "SELECT Reason FROM Whitelist WHERE PhoneNo=:number"
         args = {"number": number}
-        result = utils.query_db(self.db, query, args, True)
-        return result[0] > 0
+        results = utils.query_db(self.db, query, args, False)
+        if len(results) > 0:
+            return True, results[0][0]
+        else:
+            return False, ""
 
     def get_number(self, number):
         query = "SELECT * FROM Whitelist WHERE PhoneNo = ?"
@@ -131,11 +139,15 @@ def test(db, config):
     try:
         number = "1234567890"
         print("Assert is whitelisted: " + number)
-        assert whitelist.check_number(number), number + " should be whitelisted"
+        is_whitelisted, reason = whitelist.check_number(number)
+        assert is_whitelisted, number + " should be whitelisted"
+        print(reason)
 
         number = "1111111111"
         print("Assert not whitelisted: " + number)
-        assert not whitelist.check_number(number), number + " should not be whitelisted"
+        is_whitelisted, reason = whitelist.check_number(number)
+        assert not is_whitelisted, number + " should not be whitelisted"
+        print(reason)
 
         number = "1234567890"
         print("Get number: " + number)
