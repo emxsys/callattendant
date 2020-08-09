@@ -44,11 +44,11 @@ class Whitelist(object):
         if self.config["DEBUG"]:
             print("Initializing Whitelist")
 
-        sql = '''CREATE TABLE IF NOT EXISTS Whitelist (
+        sql = """CREATE TABLE IF NOT EXISTS Whitelist (
             PhoneNo TEXT PRIMARY KEY,
             Name TEXT,
             Reason TEXT,
-            SystemDateTime TEXT)'''
+            SystemDateTime TEXT)"""
         curs = self.db.cursor()
         curs.executescript(sql)
         curs.close()
@@ -68,11 +68,11 @@ class Whitelist(object):
             print("Whitelist initialized")
 
     def add_caller(self, call_record, reason=""):
-        query = '''INSERT INTO Whitelist(
+        query = """INSERT INTO Whitelist(
             PhoneNo,
             Name,
             Reason,
-            SystemDateTime) VALUES(?,?,?,?)'''
+            SystemDateTime) VALUES(?,?,?,?)"""
         arguments = [
             call_record['NMBR'],
             call_record['NAME'],
@@ -87,7 +87,10 @@ class Whitelist(object):
             pprint(arguments)
 
     def remove_number(self, phone_no):
-        '''Removes records for the given number (without dashes or formatting)'''
+        """
+        Removes records for the given number
+        :param phone_no: phone number without dashes or formatting
+        """
         query = 'DELETE FROM Whitelist WHERE PhoneNo=:phone_no'
         arguments = {'phone_no': phone_no}
         self.db.execute(query, arguments)
@@ -95,6 +98,24 @@ class Whitelist(object):
 
         if self.config["DEBUG"]:
             print("whitelist entry removed")
+            pprint(arguments)
+
+    def update_number(self, phone_no, name, reason):
+        """
+        Updates the record for the given number
+        :param phone_no: phone number (key) without dashes or formatting
+        :param name: new name
+        :param reason: new reason
+        """
+        sql = """UPDATE Whitelist
+            SET Name=:name, Reason=:reason
+            WHERE PhoneNo=:phone_no"""
+        arguments = {'phone_no': phone_no, "name": name, "reason": reason}
+        self.db.execute(sql, arguments)
+        self.db.commit()
+
+        if self.config["DEBUG"]:
+            print("whitelist entry updated")
             pprint(arguments)
 
     def check_number(self, number):
@@ -137,11 +158,28 @@ def test(db, config):
         print("Assert not whitelisted: " + number)
         assert not whitelist.check_number(number), number + " should not be whitelisted"
 
-        number = "1234567890"
-        print("Get number: " + number)
+        new_caller = {"NAME": "New Caller", "NMBR": "12312351234", "DATE": "1012", "TIME": "0600"}
+        number = new_caller["NMBR"]
+        name = new_caller["NAME"]
+        reason = "Test"
+        print("Assert add caller:")
+        pprint(new_caller)
+        whitelist.add_caller(new_caller, reason)
         caller = whitelist.get_number(number)
         pprint(caller)
-        assert caller[0][0] == number, number + " should match get_number "+ caller[0][0]
+        assert caller[0][0] == number, number + " != "+ caller[0][0]
+        assert caller[0][1] == name, name + " !=  "+ caller[0][1]
+        assert caller[0][2] == reason, reason + " != "+ caller[0][2]
+
+        name = "Joe"
+        reason = "Confirm"
+        print("Assert update number: " + number)
+        whitelist.update_number(number, name, reason)
+        caller = whitelist.get_number(number)
+        pprint(caller)
+        assert caller[0][0] == number, number + " != "+ caller[0][0]
+        assert caller[0][1] == name, name + " !=  "+ caller[0][1]
+        assert caller[0][2] == reason, reason + " != "+ caller[0][2]
 
     except AssertionError as e:
         print("*** Unit Test FAILED ***")

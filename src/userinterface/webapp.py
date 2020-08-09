@@ -210,7 +210,7 @@ def whitelist():
             Phone_Number=phone_no,
             Name=record[1],
             Reason=record[2],
-            System_Date_Time=record[3]))
+            System_Date_Time=record[3][:-4]))  # Strip the decimal secs
     # Create a pagination object for the page
     pagination = get_pagination(
         page=page,
@@ -229,6 +229,47 @@ def whitelist():
         per_page=per_page,
         pagination=pagination,
     )
+@app.route('/permitted/delete/<string:phone_no>', methods=['GET'])
+def delete_permitted(phone_no):
+    """
+    Delete the whitelist entry associated with the phone number.
+    """
+    number = phone_no.replace('-', '')
+
+    print("Removing " + number + " from whitelist")
+    whitelist = Whitelist(get_db(), current_app.config)
+    whitelist.remove_number(number)
+
+    return redirect("/permitted", code=301)  # (re)moved permamently
+
+
+@app.route('/permitted/add', methods=['POST'])
+def add_permitted():
+    """
+    Add a new whitelist entry
+    """
+    caller = {}
+    # TODO: Strip all none digits from phone via regex
+    caller['NMBR'] = request.form['phone'].replace('-', '')
+    caller['NAME'] = request.form['name']
+    print("Adding " + caller['NAME'] + " to whitelist")
+    whitelist = Whitelist(get_db(), current_app.config)
+    whitelist.add_caller(caller, request.form['reason'])
+
+    return redirect("/permitted", code=303)
+
+
+@app.route('/permitted/update/<string:phone_no>', methods=['POST'])
+def update_permitted(phone_no):
+    """
+    Update the whitelist entry associated with the phone number.
+    """
+    number = phone_no.replace('-', '')
+    print("Updating " + phone_no + " in whitelist")
+    whitelist = Whitelist(get_db(), current_app.config)
+    whitelist.update_number(number, request.form['name'], request.form['reason'])
+
+    return redirect("/permitted", code=303)
 
 
 @app.route('/messages')
