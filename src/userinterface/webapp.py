@@ -200,12 +200,11 @@ def add_blocked():
     print("Adding " + number + " to blacklist")
     blacklist = Blacklist(get_db(), current_app.config)
     success = blacklist.add_caller(caller, request.form["reason"])
-    # TODO Handle Error
-    # ~ if success:
-        # ~ return redirect("/blocked", code=303)
-    # ~ else:
-        # ~ return redirect('/blocked', code=307)
-    return redirect("/blocked", code=303)
+    if success:
+        return redirect("/blocked", code=303)
+    else:
+        # Probably already exists... attempt to update with original form data
+        return redirect('/blocked/update/{}'.format(number), code=307)
 
 @app.route('/blocked/update/<string:phone_no>', methods=['POST'])
 def update_blocked(phone_no):
@@ -291,12 +290,11 @@ def add_permitted():
     print("Adding " + number + " to whitelist")
     whitelist = Whitelist(get_db(), current_app.config)
     success = whitelist.add_caller(caller, request.form['reason'])
-    # TODO: figure out how to handle error
-    # ~ if success:
-        # ~ return redirect("/permitted", code=303)
-    # ~ else:
-        # ~ return redirect('/permitted', code=307)
-    return redirect("/permitted", code=303)
+    if success:
+        return redirect("/permitted", code=303)
+    else:
+        # Probably already exists... attempt to update with POST form data
+        return redirect('/permitted/update/{}'.format(number), code=307)
 
 
 @app.route('/permitted/update/<string:phone_no>', methods=['POST'])

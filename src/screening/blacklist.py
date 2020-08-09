@@ -75,9 +75,14 @@ class Blacklist(object):
         :param reason: new reason
         """
         sql = """UPDATE Blacklist
-            SET Name=:name, Reason=:reason
+            SET Name=:name, Reason=:reason, SystemDateTime=:time
             WHERE PhoneNo=:phone_no"""
-        arguments = {'phone_no': phone_no, "name": name, "reason": reason}
+        arguments = {
+            'phone_no': phone_no,
+            "name": name,
+            "reason": reason,
+            "time": (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:19])
+            }
         self.db.execute(sql, arguments)
         self.db.commit()
 
