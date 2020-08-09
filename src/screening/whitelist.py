@@ -68,6 +68,13 @@ class Whitelist(object):
             print("Whitelist initialized")
 
     def add_caller(self, call_record, reason=""):
+        """
+        Add a caller to the permitted list.
+            :param caller: a dict with caller ID information
+            :param reason: an optional string indicating the
+                reason this caller was added
+            :return: True if successful
+        """
         query = """INSERT INTO Whitelist(
             PhoneNo,
             Name,
@@ -77,14 +84,19 @@ class Whitelist(object):
             call_record['NMBR'],
             call_record['NAME'],
             reason,
-            (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
+            (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:19])
         ]
-        self.db.execute(query, arguments)
-        self.db.commit()
-
-        if self.config["DEBUG"]:
-            print("New whitelist entry added")
-            pprint(arguments)
+        try:
+            self.db.execute(query, arguments)
+            self.db.commit()
+            if self.config["DEBUG"]:
+                print("New whitelist entry added")
+                pprint(arguments)
+        except Exception as e:
+            print("** Failed to add caller to whitelist:")
+            pprint(e)
+            return False
+        return True
 
     def remove_number(self, phone_no):
         """
@@ -97,7 +109,7 @@ class Whitelist(object):
         self.db.commit()
 
         if self.config["DEBUG"]:
-            print("whitelist entry removed")
+            print("** whitelist entry removed")
             pprint(arguments)
 
     def update_number(self, phone_no, name, reason):

@@ -37,6 +37,13 @@ from pprint import pprint
 class Blacklist(object):
 
     def add_caller(self, callerid, reason=""):
+        """
+        Add a caller to the blocked list.
+            :param caller: a dict with caller ID information
+            :param reason: an optional string indicating the
+                reason this caller was added
+            :return: True if successful
+        """
         query = '''INSERT INTO Blacklist(
             PhoneNo,
             Name,
@@ -46,13 +53,36 @@ class Blacklist(object):
             callerid['NMBR'],
             callerid['NAME'],
             reason,
-            (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
+            (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:19])
         ]
-        self.db.execute(query, arguments)
+        try:
+            self.db.execute(query, arguments)
+            self.db.commit()
+            if self.config["DEBUG"]:
+                print("New blacklist entry added")
+                pprint(arguments)
+        except Exception as e:
+            print("** Failed to add caller to blacklist:")
+            pprint(e)
+            return False
+        return True
+
+    def update_number(self, phone_no, name, reason):
+        """
+        Updates the record for the given number
+        :param phone_no: phone number (key) without dashes or formatting
+        :param name: new name
+        :param reason: new reason
+        """
+        sql = """UPDATE Blacklist
+            SET Name=:name, Reason=:reason
+            WHERE PhoneNo=:phone_no"""
+        arguments = {'phone_no': phone_no, "name": name, "reason": reason}
+        self.db.execute(sql, arguments)
         self.db.commit()
 
         if self.config["DEBUG"]:
-            print("New blacklist entry added")
+            print("Blacklist entry updated")
             pprint(arguments)
 
     def remove_number(self, phone_no):
@@ -152,6 +182,29 @@ def test(db, config):
         caller = blacklist.get_number(number)
         pprint(caller)
         assert caller[0][0] == number, number + " should match get_number "+ caller[0][0]
+
+        new_caller = {"NAME": "New Caller", "NMBR": "12312351234", "DATE": "1012", "TIME": "0600"}
+        number = new_caller["NMBR"]
+        name = new_caller["NAME"]
+        reason = "Test"
+        print("Assert add caller:")
+        pprint(new_caller)
+        blacklist.add_caller(new_caller, reason)
+        caller = blacklist.get_number(number)
+        pprint(caller)
+        assert caller[0][0] == number, number + " != "+ caller[0][0]
+        assert caller[0][1] == name, name + " !=  "+ caller[0][1]
+        assert caller[0][2] == reason, reason + " != "+ caller[0][2]
+
+        name = "Joe"
+        reason = "Confirm"
+        print("Assert update number: " + number)
+        blacklist.update_number(number, name, reason)
+        caller = blacklist.get_number(number)
+        pprint(caller)
+        assert caller[0][0] == number, number + " != "+ caller[0][0]
+        assert caller[0][1] == name, name + " !=  "+ caller[0][1]
+        assert caller[0][2] == reason, reason + " != "+ caller[0][2]
 
     except AssertionError as e:
         print("*** Unit Test FAILED ***")

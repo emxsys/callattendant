@@ -29,7 +29,7 @@
 # https://iotbytes.wordpress.com/incoming-call-details-logger-with-raspberry-pi/
 # ==============================================================================
 from __future__ import division
-from flask import Flask, request, g, current_app, render_template, redirect
+from flask import Flask, request, g, current_app, render_template, redirect, url_for
 from flask_paginate import Pagination, get_page_args
 from screening.blacklist import Blacklist
 from screening.whitelist import Whitelist
@@ -166,7 +166,7 @@ def blacklist():
             Phone_Number=phone_no,
             Name=record[1],
             Reason=record[2],
-            System_Date_Time=record[3]))
+            System_Date_Time=record[3][:19]))
 
     # Create a pagination object for the page
     pagination = get_pagination(
@@ -185,6 +185,53 @@ def blacklist():
         per_page=per_page,
         pagination=pagination,
     )
+
+
+@app.route('/blocked/add', methods=['POST'])
+def add_blocked():
+    """
+    Add a new blacklist entry
+    """
+    caller = {}
+    # TODO: Strip all none digits from phone via regex
+    number = request.form["phone"].replace('-', '')
+    caller['NMBR'] = number
+    caller['NAME'] = request.form["name"]
+    print("Adding " + number + " to blacklist")
+    blacklist = Blacklist(get_db(), current_app.config)
+    success = blacklist.add_caller(caller, request.form["reason"])
+    # TODO Handle Error
+    # ~ if success:
+        # ~ return redirect("/blocked", code=303)
+    # ~ else:
+        # ~ return redirect('/blocked', code=307)
+    return redirect("/blocked", code=303)
+
+@app.route('/blocked/update/<string:phone_no>', methods=['POST'])
+def update_blocked(phone_no):
+    """
+    Update the blacklist entry associated with the phone number.
+    """
+    number = phone_no.replace('-', '')
+    print("Updating " + number + " in blacklist")
+    blacklist = Blacklist(get_db(), current_app.config)
+    blacklist.update_number(number, request.form['name'], request.form['reason'])
+
+    return redirect("/blocked", code=303)
+
+
+@app.route('/blocked/delete/<string:phone_no>', methods=['GET'])
+def delete_blocked(phone_no):
+    """
+    Delete the blacklist entry associated with the phone number.
+    """
+    number = phone_no.replace('-', '')
+
+    print("Removing " + number + " from blacklist")
+    blacklist = Blacklist(get_db(), current_app.config)
+    blacklist.remove_number(number)
+
+    return redirect("/blocked", code=301)  # (re)moved permamently
 
 
 @app.route('/permitted')
@@ -210,7 +257,7 @@ def whitelist():
             Phone_Number=phone_no,
             Name=record[1],
             Reason=record[2],
-            System_Date_Time=record[3][:-4]))  # Strip the decimal secs
+            System_Date_Time=record[3][:19]))  # Strip the decimal secs
     # Create a pagination object for the page
     pagination = get_pagination(
         page=page,
@@ -229,6 +276,42 @@ def whitelist():
         per_page=per_page,
         pagination=pagination,
     )
+
+
+@app.route('/permitted/add', methods=['POST'])
+def add_permitted():
+    """
+    Add a new whitelist entry
+    """
+    caller = {}
+    # TODO: Strip all none digits from phone via regex
+    number = request.form['phone'].replace('-', '')
+    caller['NMBR'] = number
+    caller['NAME'] = request.form['name']
+    print("Adding " + number + " to whitelist")
+    whitelist = Whitelist(get_db(), current_app.config)
+    success = whitelist.add_caller(caller, request.form['reason'])
+    # TODO: figure out how to handle error
+    # ~ if success:
+        # ~ return redirect("/permitted", code=303)
+    # ~ else:
+        # ~ return redirect('/permitted', code=307)
+    return redirect("/permitted", code=303)
+
+
+@app.route('/permitted/update/<string:phone_no>', methods=['POST'])
+def update_permitted(phone_no):
+    """
+    Update the whitelist entry associated with the phone number.
+    """
+    number = phone_no.replace('-', '')
+    print("Updating " + number + " in whitelist")
+    whitelist = Whitelist(get_db(), current_app.config)
+    whitelist.update_number(number, request.form['name'], request.form['reason'])
+
+    return redirect("/permitted", code=303)
+
+
 @app.route('/permitted/delete/<string:phone_no>', methods=['GET'])
 def delete_permitted(phone_no):
     """
@@ -241,35 +324,6 @@ def delete_permitted(phone_no):
     whitelist.remove_number(number)
 
     return redirect("/permitted", code=301)  # (re)moved permamently
-
-
-@app.route('/permitted/add', methods=['POST'])
-def add_permitted():
-    """
-    Add a new whitelist entry
-    """
-    caller = {}
-    # TODO: Strip all none digits from phone via regex
-    caller['NMBR'] = request.form['phone'].replace('-', '')
-    caller['NAME'] = request.form['name']
-    print("Adding " + caller['NAME'] + " to whitelist")
-    whitelist = Whitelist(get_db(), current_app.config)
-    whitelist.add_caller(caller, request.form['reason'])
-
-    return redirect("/permitted", code=303)
-
-
-@app.route('/permitted/update/<string:phone_no>', methods=['POST'])
-def update_permitted(phone_no):
-    """
-    Update the whitelist entry associated with the phone number.
-    """
-    number = phone_no.replace('-', '')
-    print("Updating " + phone_no + " in whitelist")
-    whitelist = Whitelist(get_db(), current_app.config)
-    whitelist.update_number(number, request.form['name'], request.form['reason'])
-
-    return redirect("/permitted", code=303)
 
 
 @app.route('/messages')
