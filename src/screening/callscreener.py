@@ -46,31 +46,32 @@ class CallScreener(object):
         name = callerid["NAME"]
         block = self.config.get_namespace("BLOCK_")
         try:
-            if self._blacklist.check_number(number):
-                print("Caller is blacklisted")
-                return True
+            is_blacklisted, reason = self._blacklist.check_number(number)
+            if is_blacklisted:
+                return True, reason
             else:
                 print("Checking blocked CID patterns...")
                 for key in block["name_patterns"].keys():
                     match = re.search(key, name)
                     if match:
-                        print("CID blocked name pattern detected")
                         reason = block["name_patterns"][key]
-                        return True
+                        print(reason)
+                        return True, reason
                 for key in block["number_patterns"].keys():
                     match = re.search(key, number)
                     if match:
-                        print("CID blocked number pattern detected")
                         reason = block["number_patterns"][key]
-                        return True
+                        print(reason)
+                        return True, reason
                 print("Checking nomorobo...")
                 result = self._nomorobo.lookup_number(number)
                 if result["spam"]:
-                    print("Caller is robocaller")
-                    self.blacklist_caller(callerid, "{} with score {}".format(result["reason"], result["score"]))
-                    return True
+                    reason = "Nomorobo: {} with score {}".format(result["reason"], result["score"])
+                    print (reason)
+                    self.blacklist_caller(callerid, reason)
+                    return True, reason
                 print("Caller has been screened")
-                return False
+                return False, "Not found"
         finally:
             sys.stdout.flush()
 
@@ -106,7 +107,7 @@ def test(db, config):
     caller1 = {"NAME": "caller1", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
     screener._blacklist.add_caller(caller1)
     # Add a record to the whitelist
-    caller2 = {"NAME": "caller2", "NMBR": "1111111111", "DATE": "1012", "TIME": "0600", "REASON": "Test"}
+    caller2 = {"NAME": "caller2", "NMBR": "1111111111", "DATE": "1012", "TIME": "0600",}
     screener._whitelist.add_caller(caller2)
     # Create a V123456789012345 Telemarketer caller
     caller3 = {"NAME": "V123456789012345", "NMBR": "80512345678", "DATE": "1012", "TIME": "0600"}
@@ -118,25 +119,32 @@ def test(db, config):
     # Perform tests
     try:
         print("Assert is blacklisted: " + caller1['NMBR'])
-        assert screener.is_blacklisted(caller1), "caller1 should be blocked"
+        is_blacklisted, reason = screener.is_blacklisted(caller1)
+        assert is_blacklisted, "caller1 should be blocked"
 
         print("Assert not is whitelisted: " + caller1['NMBR'])
-        assert not screener.is_whitelisted(caller1), "caller1 should not be permitted"
+        is_whitelisted, reason = screener.is_whitelisted(caller1)
+        assert not is_whitelisted, "caller1 should not be permitted"
 
         print("Assert not is blacklisted: " + caller2['NMBR'])
-        assert not screener.is_blacklisted(caller2), "caller2 should not be blocked"
+        is_blacklisted, reason = screener.is_blacklisted(caller2)
+        assert not is_blacklisted, "caller2 should not be blocked"
 
         print("Assert is whitelisted: " + caller2['NMBR'])
-        assert screener.is_whitelisted(caller2), "caller2 should be permitted"
+        is_whitelisted, reason = screener.is_whitelisted(caller2)
+        assert is_whitelisted, "caller2 should be permitted"
 
         print("Assert a blocked name pattern: " + caller3['NAME'])
-        assert screener.is_blacklisted(caller3), "caller3 should be blocked by name pattern"
+        is_blacklisted, reason = screener.is_blacklisted(caller3)
+        assert is_blacklisted, "caller3 should be blocked by name pattern"
 
         print("Assert is blacklisted by nomorobo: " + caller4['NMBR'])
-        assert screener.is_blacklisted(caller4), "caller4 should be blocked by nomorobo"
+        is_blacklisted, reason = screener.is_blacklisted(caller4)
+        assert is_blacklisted, "caller4 should be blocked by nomorobo"
 
         print("Assert a blocked number pattern: " + caller5['NMBR'])
-        assert screener.is_blacklisted(caller5), "caller1 should be blocked by number pattern"
+        is_blacklisted, reason = screener.is_blacklisted(caller5)
+        assert is_blacklisted, "caller1 should be blocked by number pattern"
 
 
     except AssertionError as e:
