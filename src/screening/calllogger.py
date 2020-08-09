@@ -110,7 +110,7 @@ class CallLogger(object):
             print(e)
 
         curs.close()
-        self.db = db.commit()
+        self.db.commit()
 
         if self.config["DEBUG"]:
             print("CallLogger initialized")
