@@ -14,6 +14,11 @@
 
 <div class="container">
   <h2>Permitted Numbers</h2>
+  <div>
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addModal">Add New</button>
+  </div>
+  <br/>
+  <div>
   {% if whitelist %}
     {{ pagination.links }}
     <table class="table table-striped">
@@ -23,6 +28,8 @@
           <th>Name</th>
           <th>Reason</th>
           <th>System Date Time</th>
+          <th></th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -32,18 +39,115 @@
           <td>{{ item.Name }}</td>
           <td>{{ item.Reason }}</td>
           <td>{{ item.System_Date_Time }}</td>
+          <td>
+            <button type="button" class="btn btn-outline-light text-dark" data-toggle="modal" data-target="#updateModal"
+                data-permitted-phone="{{ item.Phone_Number }}" data-permitted-name="{{ item.Name }}" data-permitted-reason="{{ item.Reason }}">
+              <img src="../static/pencil.svg" alt="" width="32" height="32" title="Edit">
+            </button>
+          </td>
+          <td>
+            <button type="button" class="btn btn-outline-light text-dark" onClick="location.href='/permitted/delete/{{ item.Phone_Number }}'">
+              <img src="../static/trash.svg" alt="" width="32" height="32" title="Trash">
+            </button>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
     {{ pagination.links }}
     {% endif %}
+  </div>
+</div>
+<!-- Add Modal-->
+<div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addModalLabel">Add Permitted Number</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+        <form>
+          <div class="modal-body">
+              <div class="form-group">
+                <label for="add-phone" class="col-form-label">Phone: ...-...-....</label>
+                <input name="phone" type="tel" class="form-control" id="add-phone" required="required"
+                    pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" >
+              </div>
+              <div class="form-group">
+                <label for="add-name" class="col-form-label">Name:</label>
+                <input name="name" type="text" class="form-control" id="add-name">
+              </div>
+              <div class="form-group">
+                <label for="add-reason" class="col-form-label">Reason:</label>
+                <input name="reason" type="text" class="form-control" id="add-reason">
+              </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+    </div>
+  </div>
 </div>
 
+<!-- Update Modal -->
+<div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="updateModalLabel">Update Permitted Number: </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+        <form>
+          <div class="modal-body">
+              <div class="form-group">
+                <label for="update-name" class="col-form-label">Name:</label>
+                <input name="name" type="text" class="form-control" id="update-name">
+              </div>
+              <div class="form-group">
+                <label for="update-reason" class="col-form-label">Reason:</label>
+                <input name="reason" type="text" class="form-control" id="update-reason">
+              </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+    </div>
+  </div>
+</div>
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 <script type="text/javascript">
+// Add
+$('#addModal').on('show.bs.modal', function (event) {
+  var modal = $(this)
+  modal.find('.modal-dialog form').attr('action', '/permitted/add')
+  modal.find('.modal-dialog form').attr('method', 'post')
+})
+// Edit
+$('#updateModal').on('show.bs.modal', function (event) {
+  // Button that triggered the modal
+  var button = $(event.relatedTarget)
+  // Extract info from data-* attributes
+  var phone = button.data('permitted-phone')
+  var name = button.data('permitted-name')
+  var reason = button.data('permitted-reason')
+  var modal = $(this)
+  modal.find('.modal-title').text('Update Permitted Number: ' + phone)
+  modal.find('.modal-dialog form').attr('action', '/permitted/update/' + phone)
+  modal.find('.modal-dialog form').attr('method', 'post')
+  modal.find('#update-name').val(name)
+  modal.find('#update-reason').val(reason)
+})
+
 $(document).ready( function () {
   // Highlight the current page in the menu
   $('#whitelist').addClass('active');

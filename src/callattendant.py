@@ -182,7 +182,6 @@ class CallAttendant(object):
                     print("Checking whitelist(s)")
                     is_whitelisted, reason = self.screener.is_whitelisted(caller)
                     if is_whitelisted:
-                        print(">>>>> Whitelisted <<<<<<<")
                         caller_permitted = True
                         action = "Permitted"
                         self.approved_indicator.turn_on()

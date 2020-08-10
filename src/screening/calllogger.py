@@ -63,9 +63,10 @@ class CallLogger(object):
         curs = self.db.cursor()
         curs.executescript(sql)
 
-        # Early version of callattendant (<= v0.3) do not contain an Action
-        # column. This hack/code attempts to add the column if it doesn't exit.
         try:
+            # Early versions of callattendant (<= v0.3) do not contain an Action
+            # column or Reason column. This hack/code attempts to add the columns
+            # if they don't exit.
             sql = """SELECT COUNT(*) AS CNTREC
                 FROM pragma_table_info('CallLog')
                 WHERE name='Action'"""
@@ -73,7 +74,7 @@ class CallLogger(object):
             count = curs.fetchone()[0]
             if count == 0:
 
-                # Dependencies: ensures associated tables exist
+                # Dependencies: ensures tables used in queries exist
                 from whitelist import Whitelist
                 from blacklist import Blacklist
                 whitelist = Whitelist(db, config)
@@ -127,7 +128,7 @@ class CallLogger(object):
 
 def test(db, config):
     ''' Unit Tests '''
-    print("*** Running Whitelist Unit Tests ***")
+    print("*** Running CallLogger Unit Tests ***")
 
     import utils
     # Create the logger to be tested
