@@ -28,15 +28,18 @@ import sys
 currentdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(currentdir, "screening"))
 sys.path.append(os.path.join(currentdir, "hardware"))
+sys.path.append(os.path.join(currentdir, "messaging"))
 
 import queue
 import sqlite3
 import time
 from pprint import pprint
 from datetime import datetime
+
 from config import Config
 from screening.calllogger import CallLogger
 from screening.callscreener import CallScreener
+from messaging.voicemail import VoiceMail
 from hardware.modem import Modem
 from hardware.indicators import RingIndicator, ApprovedIndicator, BlockedIndicator
 import userinterface.webapp as webapp
@@ -70,13 +73,15 @@ class CallAttendant(object):
         self.screener = CallScreener(self.db, self.config)
 
         # Hardware subsystem
-        # Create the modem with the callback functions that it invokes
-        # when incoming calls are received.
+        # Create the modem using the callback functions
         self.modem = Modem(self.config, self.phone_ringing, self.handle_caller)
         # Initialize the visual indicators (LEDs)
         self.approved_indicator = ApprovedIndicator()
         self.blocked_indicator = BlockedIndicator()
         self.ring_indicator = RingIndicator()
+
+        # Messaging subsystem
+        self.voice_mail = VoiceMail(self.db, self.config, self.modem)
 
         # Start the User Interface subsystem (Flask)
         # Skip if we're running functional tests, because when testing
@@ -213,9 +218,10 @@ class CallAttendant(object):
 
                             # Record message
                             if "record_message" in blocked["actions"]:
-                                self.leave_voice_message(call_no, caller, False)
+                                self.voice_mail.record_message(call_no, caller)
+
                             elif "voice_mail" in blocked["actions"]:
-                                self.leave_voice_message(call_no, caller, True)
+                                self.voice_mail.voice_messaging_menu(call_no, caller)
 
                         except RuntimeError as e:
                             print("** Error handling a blocked caller: {}".format(e))

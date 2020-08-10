@@ -23,6 +23,8 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
+import os
+from datetime import datetime
 
 class VoiceMail:
 
@@ -31,21 +33,26 @@ class VoiceMail:
         self.config = config
         self.modem = modem
 
+        if self.config["DEBUG"]:
+            print("Initializing VoiceMail")
+
         # Create the message table if it does not exist
         if self.db:
-            sql = """CREATE TABLE IF NOT EXISTS Message (
-                MessageID INTEGER PRIMARY KEY AUTOINCREMENT,
-                FOREIGN KEY(CallLogID) REFERENCES CallLog(CallLogID) ,
-                PlayedStatus BOOLEAN default 0,
-                AudioFilename TEXT,
-                Audio BLOB default null,
-                SystemDateTime TEXT);"""
+            sql = """
+                CREATE TABLE IF NOT EXISTS Message (
+                    MessageID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    CallLogID INTEGER,
+                    PlayedStatus BOOLEAN default 0,
+                    AudioFilename TEXT,
+                    Audio BLOB default null,
+                    SystemDateTime TEXT,
+                    FOREIGN KEY(CallLogID) REFERENCES CallLog(CallLogID));"""
 
             curs = self.db.cursor()
             curs.executescript(sql)
             curs.close()
-
-        print "VoiceMail initialized"
+        if self.config["DEBUG"]:
+            print("VoiceMail initialized")
 
     def voice_messaging_menu(self, call_no, caller):
 
