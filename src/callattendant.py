@@ -73,9 +73,9 @@ class CallAttendant(object):
         self.screener = CallScreener(self.db, self.config)
 
         # Hardware subsystem
-        # Create the modem using the callback functions
+        #  Create the modem with callback functions
         self.modem = Modem(self.config, self.phone_ringing, self.handle_caller)
-        # Initialize the visual indicators (LEDs)
+        #  Initialize the visual indicators (LEDs)
         self.approved_indicator = ApprovedIndicator()
         self.blocked_indicator = BlockedIndicator()
         self.ring_indicator = RingIndicator()
@@ -113,47 +113,6 @@ class CallAttendant(object):
         else:
             self.ring_indicator.turn_off()
 
-    def leave_voice_message(self, call_no, caller, voice_mail_menu=False):
-
-        # Build some common paths
-        root_path = self.config['ROOT_PATH']
-        voice_mail = self.config.get_namespace("VOICE_MAIL_")
-        goodbye_file = os.path.join(root_path, voice_mail['goodbye_file'])
-        invalid_response_file = os.path.join(root_path, voice_mail['invalid_response_file'])
-        leave_message_file = os.path.join(root_path, voice_mail['leave_message_file'])
-        voice_mail_menu_file = os.path.join(root_path, voice_mail['menu_file'])
-        # Build the filename used for a potential message
-        message_path = os.path.join(root_path, voice_mail["message_folder"])
-        message_file = os.path.join(message_path, "{}_{}_{}_{}.wav".format(
-            call_no,
-            caller["NMBR"],
-            caller["NAME"].replace('_', '-'),
-            datetime.now().strftime("%m%d%y_%H%M")))
-
-        if voice_mail_menu:
-            tries = 0
-            while tries < 3:
-                self.modem.play_audio(voice_mail_menu_file)
-                success, digit = self.modem.wait_for_keypress(5)
-                if not success:
-                    break
-                if digit == '1':
-                    # Leave a message
-                    self.modem.play_audio(leave_message_file)
-                    self.modem.record_audio(message_file)
-                    break
-                elif digit == '0':
-                    # End this call
-                    break
-                else:
-                    # Try again--up to a limit
-                    self.modem.play_audio(invalid_response_file)
-                    tries += 1
-        else:
-            self.modem.play_audio(leave_message_file)
-            self.modem.record_audio(message_file)
-
-        self.modem.play_audio(goodbye_file)
 
     def run(self):
         """

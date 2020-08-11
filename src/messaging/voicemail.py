@@ -24,11 +24,16 @@
 #  SOFTWARE.
 
 import os
+from pprint import pprint
 from datetime import datetime
+
 
 class VoiceMail:
 
     def __init__(self, db, config, modem):
+        """
+        Initialize the database tables for voice messages.
+        """
         self.db = db
         self.config = config
         self.modem = modem
@@ -42,20 +47,22 @@ class VoiceMail:
                 CREATE TABLE IF NOT EXISTS Message (
                     MessageID INTEGER PRIMARY KEY AUTOINCREMENT,
                     CallLogID INTEGER,
-                    PlayedStatus BOOLEAN default 0,
-                    AudioFilename TEXT,
-                    Audio BLOB default null,
-                    SystemDateTime TEXT,
+                    Played BOOLEAN DEFAULT 0 NOT NULL CHECK (Played IN (0,1)),
+                    Filename TEXT,
+                    DateTime TEXT,
                     FOREIGN KEY(CallLogID) REFERENCES CallLog(CallLogID));"""
 
             curs = self.db.cursor()
             curs.executescript(sql)
             curs.close()
+
         if self.config["DEBUG"]:
             print("VoiceMail initialized")
 
     def voice_messaging_menu(self, call_no, caller):
-
+        """
+        Play a voice message menu and respond to the choices.
+        """
         # Build some common paths
         root_path = self.config['ROOT_PATH']
         voice_mail = self.config.get_namespace("VOICE_MAIL_")
@@ -83,6 +90,9 @@ class VoiceMail:
         self.modem.play_audio(goodbye_file)
 
     def record_message(self, call_no, caller):
+        """
+        Records a message.
+        """
         # Build the filename used for a potential message
         path = os.path.join(
             self.config['ROOT_PATH'],
@@ -100,8 +110,8 @@ class VoiceMail:
             sql = """
                 INSERT INTO Message(
                     CallLogID,
-                    AudioFilename,
-                    SystemDateTime)
+                    Filename,
+                    DateTime)
                 VALUES(?,?,?)
             """
             arguments = [
@@ -112,19 +122,126 @@ class VoiceMail:
             self.db.execute(sql, arguments)
             self.db.commit()
 
+            # Return the CallLogID
+            query = "select last_insert_rowid()"
+            curs = self.db.cursor()
+            curs.execute(query)
+            msg_no = curs.fetchone()[0]
+            curs.close()
 
-def test(args):
+            return msg_no
+        else:
+            return None
 
-    from modem import Modem
+    def delete_message(self, msg_no):
+        """
+        Removes the message record and associated wav file.
+        """
+        sql = "SELECT Filename FROM Message WHERE MessageID=:msg_no"
+        arguments = {'msg_no': msg_no}
+        curs = self.db.execute(sql, arguments)
+        results = curs.fetchone()
+        curs.close()
 
-    modem = Modem(None)
-    messenger = Messenger(None, modem)
+        success = True
+        if len(results) > 0:
+            # Remove the wav file
+            filename = results[0]
+            print("Deleting message: {}".format(filename))
+            try:
+                os.remove(filename)
+            except OSError as error:
+                pprint(error)
+                print("{} cannot be removed".format(filename))
+                success = False
 
+            # Delete the row
+            if success:
+                sql = "DELETE FROM Message WHERE MessageID=:msg_no"
+                arguments = {'msg_no': msg_no}
+                self.db.execute(sql, arguments)
+                self.db.commit()
+
+                if self.config["DEBUG"]:
+                    print("Message entry removed")
+                    pprint(arguments)
+
+        return success
+
+    def update_played(self, msg_no, played=1):
+        """
+        Updates the played status of the given message
+        """
+        try:
+            sql = "UPDATE Message SET Played=:played WHERE MessageID=:msg_no"
+            arguments = {'msg_no': msg_no, 'played': played}
+            self.db.execute(sql, arguments)
+            self.db.commit()
+        except Exception as e:
+            print("** Error updating message played status:")
+            pprint(e)
+            return False
+        return True
+
+def test(db, config):
+    """
+     Unit Tests
+    """
+
+    print("*** Running VoiceMail Unit Tests ***")
+
+    # Create dependencies
+    from hardware.modem import Modem
+    from screening.calllogger import CallLogger
+    modem = Modem(config, lambda: print("is_ringing"), lambda: print("caller"))
+    modem.open_serial_port()
+    logger = CallLogger(db, config)
+    # Create the object to be tested
+    voicemail = VoiceMail(db, config, modem)
+
+    # Test data
+    caller = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
+
+    try:
+        call_no = logger.log_caller(caller)
+
+        msg_no = voicemail.record_message(call_no, caller)
+
+        # List the records
+        query = 'select * from Message'
+        curs = db.execute(query)
+        print(query + " results:")
+        pprint(curs.fetchall())
+
+        voicemail.delete_message(msg_no)
+
+    except AssertionError as e:
+        print("*** Unit Test FAILED ***")
+        pprint(e)
+        return 1
+
+    print("*** Unit Tests PASSED ***")
     return 0
 
 
 if __name__ == '__main__':
 
+    # Create the test db in RAM
+    import sqlite3
+    db = sqlite3.connect(":memory:")
+
+    # Add the parent directory to the path so callattendant can be found
+    import os
     import sys
-    sys.path.append('../hardware')
-    sys.exit(test(sys.argv))
+    currentdir = os.path.dirname(os.path.realpath(__file__))
+    parentdir = os.path.dirname(currentdir)
+    sys.path.append(parentdir)
+
+    # Create and tweak a default config suitable for unit testing
+    from callattendant import make_config, print_config
+    config = make_config()
+    config['DEBUG'] = True
+    print_config(config)
+
+    # Run the tests
+    sys.exit(test(db, config))

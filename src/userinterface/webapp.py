@@ -29,10 +29,12 @@
 # https://iotbytes.wordpress.com/incoming-call-details-logger-with-raspberry-pi/
 # ==============================================================================
 from __future__ import division
-from flask import Flask, request, g, current_app, render_template, redirect, url_for
+from flask import Flask, request, g, current_app, render_template, redirect, \
+    jsonify, url_for
 from flask_paginate import Pagination, get_page_args
 from screening.blacklist import Blacklist
 from screening.whitelist import Whitelist
+from messaging.voicemail import VoiceMail
 import glob
 import os
 import screening.utils
@@ -329,70 +331,52 @@ def messages():
     """
     Display the voice messages for playback and/or deletion.
     """
-    # Get values used for pagination of the messages
+    # Get values used for the pagination of the messages page
     total = get_row_count('Message')
     page, per_page, offset = get_page_args(
         page_parameter="page", per_page_parameter="per_page"
     )
+    # Get the number of unread messages
+    sql = "select count(*) from message where Played = 0"
+    g.cur.execute(sql)
+    unplayed_count = g.cur.fetchone()[0]
 
     # Get the messages subset, limited to the pagination settings
-    sql = """select
+    sql = """SELECT
+        b.MessageID,
         a.CallLogID,
         a.Name,
         a.Number,
-        b.AudioFilename,
-        b.PlayedStatus,
-        b.SystemDateTime
-    from CallLog as a
-    inner join Message as b ON a.CallLogID = b.CallLogID
-    order by a.SystemDateTime desc
-    limit {}, {}""".format(offset, per_page)
+        b.Filename,
+        b.Played,
+        b.DateTime
+    FROM CallLog as a
+    INNER JOIN Message AS b ON a.CallLogID = b.CallLogID
+    ORDER BY b.DateTime DESC
+    LIMIT {}, {}""".format(offset, per_page)
     g.cur.execute(sql)
     result_set = g.cur.fetchall()
 
+    # Create an array of messages that we'll supply to the rendered page
     messages = []
     for row in result_set:
         # Flask pages use the static folder to get resources.
-        # We have created soft-link to the data/messsages
-        # folder containing the actual messages (wav files)
-        basename = os.path.basename(row[3])
+        # In the static folder we have created a soft-link to the
+        # data/messsages folder containing the actual messages.
+        # We'll use the static-based path for the wav-file urls
+        # in the web apge
+        basename = os.path.basename(row[4])
         filepath = os.path.join("../static/messages", basename)
-        number = row[2]
+        number = row[3]
         messages.append(dict(
-            call_no=row[0],
+            msg_no=row[0],
+            call_no=row[1],
+            name=row[2],
             phone_no='{}-{}-{}'.format(number[0:3], number[3:6], number[6:]),
-            name=row[1],
-            date_time=row[5][:19],
-            wav_file=filepath))
-
-    #~ # Get list of wav files from MESSAGES folder
-    #~ msgdir = os.path.join(app.config["ROOT_PATH"], app.config["VOICE_MAIL_MESSAGE_FOLDER"])
-    #~ msglist = []
-    #~ filelist = os.scandir(msgdir)
-    #~ for entry in filelist:
-        #~ if entry.is_file and entry.name.lower().endswith("wav"):
-            #~ # Flask pages use the static folder to get resources.
-            #~ # There We have created soft-link to the data/messsages
-            #~ # folder containing the actual messages (wav files)
-            #~ msgfile = os.path.join("../static/messages", entry.name)
-
-            #~ # Split the filename up into fields
-            #~ # Example name: 2077_8055551080_BRUCE_200805_1737.wav
-            #~ split = entry.name.split('_')
-            #~ msglist.append(dict(
-                #~ call_no=split[0],
-                #~ phone_no="{}-{}-{}".format(split[1][0:3], split[1][3:6], split[1][6:]),
-                #~ name=split[2],
-                #~ date_time="{} {}".format(split[3], split[4].strip(".wav")),
-                #~ wav_file=msgfile))
-    #~ from operator import itemgetter
-    #~ messages = sorted(msglist, key=itemgetter('call_no'), reverse=True)
-
-    #~ # Get values used for pagination of the messages
-    #~ total = len(messages)
-    #~ page, per_page, offset = get_page_args(
-        #~ page_parameter="page",
-        #~ per_page_parameter="per_page")
+            wav_file=filepath,
+            played_status=row[5],
+            date_time=row[6],
+            ))
 
     # Create a pagination object for the page
     pagination = get_pagination(
@@ -407,40 +391,46 @@ def messages():
     return render_template(
         "messages.htm",
         messages=messages,
+        total_messages=total,
+        total_unplayed=unplayed_count,
         page=page,
         per_page=per_page,
         pagination=pagination,
     )
 
-
-@app.route('/delete_message/<int:call_no>', methods=['GET'])
-def delete_message(call_no):
+@app.route('/messages/delete/<int:msg_no>', methods=['GET'])
+def message_delete(msg_no):
     """
     Delete the voice message associated with call number.
     """
-    import glob
-    # Get list of wav files from MESSAGES folder
-    msgdir = os.path.join(app.config["ROOT_PATH"], app.config["VOICE_MAIL_MESSAGE_FOLDER"])
-    files = glob.glob(os.path.join(msgdir, "{}_*".format(call_no)))
-
-    success = True
-    if len(files) > 0:
-        print("Deleting message: {}".format(files[0]))
-        try:
-            os.remove(files[0])
-        except OSError as error:
-            print(error)
-            print("{} cannot be removed".format(files[0]))
-            success = False
-    else:
-        print("The message file does not exist")
-        success = False
-
+    print("Removing message")
+    voicemail = VoiceMail(get_db(), current_app.config, None)
+    success = voicemail.delete_message(msg_no)
     # Redisplay the messages page
     if success:
         return redirect("/messages", code=301)  # (re)moved permamently
     else:
-        return redirect("/messages", code=333)  # Other
+        return redirect("/messages", code=303)  # Other
+
+
+@app.route('/messages/played', methods=['POST'])
+def message_played():
+    """
+    Update the played status for the message.
+    Called by JQuery in messages view.
+    """
+    msg_no = request.form["msg_no"]
+    played = request.form["status"]
+    voicemail = VoiceMail(get_db(), current_app.config, None)
+    success = voicemail.update_played(msg_no, played)
+
+    # Get the number of unread messages
+    sql = "select count(*) from message where Played = 0"
+    g.cur.execute(sql)
+    unplayed_count = g.cur.fetchone()[0]
+
+    # Return the results as JSON
+    return jsonify(success=success, msg_no=msg_no, unplayed_count=unplayed_count)
 
 
 @app.route('/manage_caller/<int:call_log_id>', methods=['GET', 'POST'])
