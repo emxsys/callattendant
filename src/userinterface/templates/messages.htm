@@ -77,7 +77,6 @@ $("audio").on('play', function(e) {
     // Set the status to 1; "played"
     var data = { msg_no: message_no, status: 1 }
     $.post("/messages/played", data, function(results) {
-        alert("Success: " + results.success)
         if (results.success) {
           $('#msg-'+results.msg_no).remove()
           $('#total-unplayed').text(results.unplayed_count)
