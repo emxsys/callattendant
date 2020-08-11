@@ -12,7 +12,13 @@ from pprint import pprint
 class CallLogger(object):
 
     def log_caller(self, callerid, action="Screened", reason=""):
-        query = """INSERT INTO CallLog(
+        """
+        Logs the given caller into the Call Log table.
+            :param caller: a dict object containing the caller ID info
+            :return: The CallLogID of the new record
+        """
+        # Add a row
+        sql = """INSERT INTO CallLog(
             Name,
             Number,
             Action,
@@ -25,13 +31,14 @@ class CallLogger(object):
                      callerid['NMBR'],
                      action,
                      reason,
-                     datetime.strptime(callerid['DATE'], '%m%d').strftime('%d-%b'),
-                     datetime.strptime(callerid['TIME'], '%H%M').strftime('%I:%M %p'),
+                     datetime.strptime(callerid['DATE'], '%m%d'). strftime('%d-%b'),
+                     datetime.strptime(callerid['TIME'], '%H%M'). strftime('%I:%M %p'),
                      (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:19])]
 
-        self.db.execute(query, arguments)
+        self.db.execute(sql, arguments)
         self.db.commit()
 
+        # Return the CallLogID
         query = "select last_insert_rowid()"
         result = utils.query_db(self.db, query, (), True)
         call_no = result[0]
@@ -39,7 +46,6 @@ class CallLogger(object):
         if self.config["DEBUG"]:
             print("> New call log entry #{}".format(call_no))
             pprint(arguments)
-
         return call_no
 
     def __init__(self, db, config):
@@ -57,8 +63,6 @@ class CallLogger(object):
             CallLogID INTEGER PRIMARY KEY AUTOINCREMENT,
             Name TEXT,
             Number TEXT,
-            `Action` TEXT,
-            Reason TEXT,
             Date TEXT,
             Time TEXT,
             SystemDateTime TEXT);"""
@@ -66,9 +70,9 @@ class CallLogger(object):
         curs.executescript(sql)
 
         try:
-            # Early versions of callattendant (<= v0.3) do not contain an Action
-            # column or Reason column. This hack/code attempts to add the columns
-            # if they don't exit.
+            # Early versions of callattendant (<= v0.3.1) do not contain
+            # an Action column or Reason column. This hack/code attempts
+            # to add the columns if they don't exit.
             sql = """SELECT COUNT(*) AS CNTREC
                 FROM pragma_table_info('CallLog')
                 WHERE name='Action'"""
@@ -76,7 +80,7 @@ class CallLogger(object):
             count = curs.fetchone()[0]
             if count == 0:
 
-                # Dependencies: ensures tables used in queries exist
+                # Dependencies: ensures tables used in the sql exist
                 from whitelist import Whitelist
                 from blacklist import Blacklist
                 whitelist = Whitelist(db, config)
