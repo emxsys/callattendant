@@ -46,131 +46,138 @@
       </div>
     </div>
   </div>
+
   <div>
-
-  <div class="container">
-
-    <div class="row">
-      <div class="m-2 col-lg border border-info">
-
-        <h4 class="pt-2">Recent Calls</h4>
-
-        {% if recent_calls %}
-        <table id="recent-calls" class="table table-hover table-sm" width="100%">
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>Caller</th>
-              <th>Actions</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-          {% for item in recent_calls %}
-            <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}" data-call-no="{{ item.call_no }}">
-              <td class="manage-caller">
-                <b>{{ item.time }}</b>
-                <span class="d-md-none"><br></span>
-                {{ item.date }}
-              </td>
-              <td class="manage-caller">
-                <b>{{ item.phone_no }}</b> -
-                <span class="d-md-none"><br></span>
-                <i>{{ item.name }}</i>
-              </td>
-              <td class="callno">
-                <span class="manage-caller badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
-                  {{ item.action }}
-                </span>
-                <span>
-                {% if item.msg_no is not none %}
-                  <button type="button" class="message-btn btn btn-sm btn-outline-light text-dark" data-toggle="modal" data-target="#messageModal"
-                      data-message-no="{{ item.msg_no }}" data-call-no="{{ item.call_no }}" data-phone-no="{{ item.phone_no }}" data-wav-file="{{ item.wav_file }}"  >
-                    <img src={% if item.msg_played == 0 %}"../static/chat-left-text.svg"{% else %}"../static/chat-left.svg"{% endif %} alt="" width="16" height="16" title="Message">
-                  </button>
-                {% endif %}
-                </span>
-              </td>
-            </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-        {% endif %}
-      </div>
+    {% if new_messages > 0 %}
+    <div class="container m-2">
+      <button id="new-messages" type="button" class="btn btn-secondary">
+        <i>New Messages Waiting</i><span class="badge badge-primary"><span id="total-unplayed">{{ new_messages }}</span>
+      </button>
     </div>
+    {% endif %}
+    <div class="container">
 
-    <div class="row">
-      <div class="m-2 col-lg border border-danger">
+      <div class="row">
+        <div class="m-2 col-lg border border-info">
 
-        <h4 class="pt-2">Blocked Calls Per Day</h4>
+          <h4 class="pt-2">Recent Calls</h4>
 
-        {% if blocked_per_day %}
-        <div class="content">
-          <canvas id="bar-chart" width="800" height="450"></canvas>
+          {% if recent_calls %}
+          <table id="recent-calls" class="table table-hover table-sm" width="100%">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Caller</th>
+                <th>Actions</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for item in recent_calls %}
+              <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}" data-call-no="{{ item.call_no }}">
+                <td class="manage-caller">
+                  <b>{{ item.time }}</b>
+                  <span class="d-md-none"><br></span>
+                  {{ item.date }}
+                </td>
+                <td class="manage-caller">
+                  <b>{{ item.phone_no }}</b> -
+                  <span class="d-md-none"><br></span>
+                  <i>{{ item.name }}</i>
+                </td>
+                <td class="callno">
+                  <span class="manage-caller badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
+                    {{ item.action }}
+                  </span>
+                  <span>
+                  {% if item.msg_no is not none %}
+                    <button type="button" class="message-btn btn btn-sm btn-outline-light text-dark" data-toggle="modal" data-target="#messageModal"
+                        data-message-no="{{ item.msg_no }}" data-call-no="{{ item.call_no }}" data-phone-no="{{ item.phone_no }}" data-wav-file="{{ item.wav_file }}"  >
+                      <img src={% if item.msg_played == 0 %}"../static/chat-left-text.svg"{% else %}"../static/chat-left.svg"{% endif %} alt="" width="16" height="16" title="Message">
+                    </button>
+                  {% endif %}
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
         </div>
-        {% endif %}
       </div>
-    </div>
 
-    <div class="row">
-      <div class="m-2 col-md border border-success">
+      <div class="row">
+        <div class="m-2 col-lg border border-danger">
 
-        <h4  class="pt-2">Top Permitted Callers</h4>
+          <h4 class="pt-2">Blocked Calls Per Day</h4>
 
-        {% if top_permitted %}
-        <table id="top_permitted" class="table table-hover table-sm" width="100%">
-          <thead>
-            <tr>
-              <th>Caller</th>
-              <th>Count</th>
-            </tr>
-          </thead>
-          <tbody>
-          {% for item in top_permitted %}
-              <td>
-                <b>{{ item.phone_no }}</b> -
-                <span class="d-sm-none"><br></span>
-                <i>{{ item.name }}</i>
-              </td>
-              <td >
-                  {{ item.count }}
-              </td>
-            </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-        {% endif %}
+          {% if blocked_per_day %}
+          <div class="content">
+            <canvas id="bar-chart" width="800" height="300"></canvas>
+          </div>
+          {% endif %}
+        </div>
       </div>
-      <div class="m-2 col-md border border-danger">
 
-        <h4 class="pt-2">Top Blocked Callers</h4>
+      <div class="row">
+        <div class="m-2 col-md border border-success">
 
-        {% if top_blocked %}
-        <table id="top_blocked" class="table table-hover table-sm" width="100%">
-          <thead>
-            <tr>
-              <th>Caller</th>
-              <th>Count</th>
-            </tr>
-          </thead>
-          <tbody>
-          {% for item in top_blocked %}
-              <td>
-                <b>{{ item.phone_no }}</b> -
-                <span class="d-sm-none"><br></span>
-                <i>{{ item.name }}</i>
-              </td>
-              <td >
-                  {{ item.count }}
-              </td>
-            </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-        {% endif %}
-      </div>
-    </div>
+          <h4  class="pt-2">Top Permitted Callers</h4>
 
+          {% if top_permitted %}
+          <table id="top_permitted" class="table table-hover table-sm" width="100%">
+            <thead>
+              <tr>
+                <th>Caller</th>
+                <th>Count</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for item in top_permitted %}
+                <td>
+                  <b>{{ item.phone_no }}</b> -
+                  <span class="d-sm-none"><br></span>
+                  <i>{{ item.name }}</i>
+                </td>
+                <td >
+                    {{ item.count }}
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
+        </div>
+        <div class="m-2 col-md border border-danger">
+
+          <h4 class="pt-2">Top Blocked Callers</h4>
+
+          {% if top_blocked %}
+          <table id="top_blocked" class="table table-hover table-sm" width="100%">
+            <thead>
+              <tr>
+                <th>Caller</th>
+                <th>Count</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for item in top_blocked %}
+                <td>
+                  <b>{{ item.phone_no }}</b> -
+                  <span class="d-sm-none"><br></span>
+                  <i>{{ item.name }}</i>
+                </td>
+                <td >
+                    {{ item.count }}
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
+        </div>
+      </div> <!-- row -->
+    </div> <!-- container -->
   </div>
 
 </div>
@@ -210,6 +217,7 @@
 
 <script type="text/javascript">
 
+// Display the Blocked Calls per Day bar graph
 $(function(){
   // Get the bar chart canvas
   var ctx = $("#bar-chart")
@@ -243,9 +251,13 @@ $(function(){
 })
 
 
+// Open the Messages page
+$('#new-messages').on('click', function (event) {
+  window.location.href = "/messages"
+});
 
 
-
+// Open the manage caller page for the selected row
 $('.manage-caller').on('click', function (event) {
   var $elem = $(event.currentTarget)
   // find the parent table row which has the call no.
@@ -254,6 +266,8 @@ $('.manage-caller').on('click', function (event) {
   window.location.href = "/manage_caller/" + call_no
 });
 
+
+// Open the Play Voice Message dialog for the selected msg
 $('#messageModal').on('show.bs.modal', function (event) {
   // Button that triggered the modal
   var $button = $(event.relatedTarget)
@@ -274,10 +288,13 @@ $('#messageModal').on('show.bs.modal', function (event) {
   });
 });
 
+
+// Update the Main Menu
 $(document).ready( function () {
   // Highlight this page in the menu
   $('#home').addClass('active');
 });
+
 </script>
 </body>
 </html>

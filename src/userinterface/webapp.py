@@ -87,6 +87,11 @@ def dashboard():
     if total_calls > 0:
         percent_blocked = total_blocked / total_calls * 100
 
+    # Get the number of unread messages
+    sql = "SELECT COUNT(*) FROM Message WHERE Played = 0"
+    g.cur.execute(sql)
+    new_messages = g.cur.fetchone()[0]
+
     # Get the Recent Calls subset
     max_num_rows = 10
     sql = """SELECT
@@ -196,6 +201,7 @@ def dashboard():
         top_permitted=top_permitted,
         top_blocked=top_blocked,
         blocked_per_day=blocked_per_day,
+        new_messages=new_messages,
         total_calls='{:,}'.format(total_calls),
         blocked_calls='{:,}'.format(total_blocked),
         percent_blocked='{0:.0f}%'.format(percent_blocked),
