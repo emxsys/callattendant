@@ -174,12 +174,28 @@ def dashboard():
             phone_no=format_phone_no(row[1]),
             name=row[2]))
 
+    # Get num calls per day for graphing
+    num_days = 30
+    sql = """SELECT COUNT(DATE(SystemDateTime)) Count, DATE(SystemDateTime) CallDate
+        FROM CallLog
+        WHERE SystemDateTime > DATETIME('now','-{} day') AND Action = 'Blocked'
+        GROUP BY CallDate
+        ORDER BY CallDate""".format(num_days)
+    g.cur.execute(sql)
+    result_set = g.cur.fetchall()
+    blocked_per_day = []
+    for row in result_set:
+        blocked_per_day.append(dict(
+            count=row[0],
+            call_date=row[1]))
+
     # Render the resullts
     return render_template(
         'dashboard.htm',
         recent_calls=recent_calls,
         top_permitted=top_permitted,
         top_blocked=top_blocked,
+        blocked_per_day=blocked_per_day,
         total_calls='{:,}'.format(total_calls),
         blocked_calls='{:,}'.format(total_blocked),
         percent_blocked='{0:.0f}%'.format(percent_blocked),

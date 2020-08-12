@@ -49,56 +49,74 @@
   <div>
 
   <div class="container">
+
     <div class="row">
-  <div class="m-2 col-lg border border-info">
-    <h4>Recent Calls</h4>
-    {% if recent_calls %}
-    <table id="recent-calls" class="table table-hover table-sm" width="100%">
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>Caller</th>
-          <th>Actions</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for item in recent_calls %}
-        <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}" data-call-no="{{ item.call_no }}">
-          <td class="manage-caller">
-            <b>{{ item.time }}</b>
-            <span class="d-md-none"><br></span>
-            {{ item.date }}
-          </td>
-          <td class="manage-caller">
-            <b>{{ item.phone_no }}</b> -
-            <span class="d-md-none"><br></span>
-            <i>{{ item.name }}</i>
-          </td>
-          <td class="callno">
-            <span class="manage-caller badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
-              {{ item.action }}
-            </span>
-            <span>
-            {% if item.msg_no is not none %}
-              <button type="button" class="message-btn btn btn-sm btn-outline-light text-dark" data-toggle="modal" data-target="#messageModal"
-                  data-message-no="{{ item.msg_no }}" data-call-no="{{ item.call_no }}" data-phone-no="{{ item.phone_no }}" data-wav-file="{{ item.wav_file }}"  >
-                <img src={% if item.msg_played == 0 %}"../static/chat-left-text.svg"{% else %}"../static/chat-left.svg"{% endif %} alt="" width="16" height="16" title="Message">
-              </button>
-            {% endif %}
-            </span>
-          </td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    {% endif %}
-  </div>
+      <div class="m-2 col-lg border border-info">
+
+        <h4 class="pt-2">Recent Calls</h4>
+
+        {% if recent_calls %}
+        <table id="recent-calls" class="table table-hover table-sm" width="100%">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Caller</th>
+              <th>Actions</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for item in recent_calls %}
+            <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}" data-call-no="{{ item.call_no }}">
+              <td class="manage-caller">
+                <b>{{ item.time }}</b>
+                <span class="d-md-none"><br></span>
+                {{ item.date }}
+              </td>
+              <td class="manage-caller">
+                <b>{{ item.phone_no }}</b> -
+                <span class="d-md-none"><br></span>
+                <i>{{ item.name }}</i>
+              </td>
+              <td class="callno">
+                <span class="manage-caller badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
+                  {{ item.action }}
+                </span>
+                <span>
+                {% if item.msg_no is not none %}
+                  <button type="button" class="message-btn btn btn-sm btn-outline-light text-dark" data-toggle="modal" data-target="#messageModal"
+                      data-message-no="{{ item.msg_no }}" data-call-no="{{ item.call_no }}" data-phone-no="{{ item.phone_no }}" data-wav-file="{{ item.wav_file }}"  >
+                    <img src={% if item.msg_played == 0 %}"../static/chat-left-text.svg"{% else %}"../static/chat-left.svg"{% endif %} alt="" width="16" height="16" title="Message">
+                  </button>
+                {% endif %}
+                </span>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="m-2 col-lg border border-danger">
+
+        <h4 class="pt-2">Blocked Calls Per Day</h4>
+
+        {% if blocked_per_day %}
+        <div class="content">
+          <canvas id="bar-chart" width="800" height="450"></canvas>
+        </div>
+        {% endif %}
+      </div>
     </div>
 
     <div class="row">
       <div class="m-2 col-md border border-success">
-        <h4>Top Permitted Callers</h4>
+
+        <h4  class="pt-2">Top Permitted Callers</h4>
+
         {% if top_permitted %}
         <table id="top_permitted" class="table table-hover table-sm" width="100%">
           <thead>
@@ -123,9 +141,10 @@
         </table>
         {% endif %}
       </div>
-
       <div class="m-2 col-md border border-danger">
-        <h4>Top Blocked Callers</h4>
+
+        <h4 class="pt-2">Top Blocked Callers</h4>
+
         {% if top_blocked %}
         <table id="top_blocked" class="table table-hover table-sm" width="100%">
           <thead>
@@ -151,6 +170,7 @@
         {% endif %}
       </div>
     </div>
+
   </div>
 
 </div>
@@ -186,7 +206,45 @@
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+
 <script type="text/javascript">
+
+$(function(){
+  // Get the bar chart canvas
+  var ctx = $("#bar-chart")
+  var call_counts = []
+  var call_dates = []
+  {% for item in blocked_per_day %}
+      call_counts.push({{ item.count }})
+      call_dates.push("{{ item.call_date }}")
+  {% endfor %}
+  // Create the Bar chart
+  var chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: call_dates,
+      datasets: [
+        {
+          label: "Num Calls",
+          backgroundColor: "#DC3545",
+          data: call_counts
+        }
+      ]
+    },
+    options: {
+      legend: { display: false },
+      title: {
+        display: false,
+        text: 'Calls per Day'
+      }
+    }
+  });
+})
+
+
+
+
 
 $('.manage-caller').on('click', function (event) {
   var $elem = $(event.currentTarget)
