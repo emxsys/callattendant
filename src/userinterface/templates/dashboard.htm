@@ -48,9 +48,11 @@
   </div>
   <div>
 
-  {% if recent_calls %}
-  <div>
+  <div class="container">
+    <div class="row">
+  <div class="m-2 col-lg border border-info">
     <h4>Recent Calls</h4>
+    {% if recent_calls %}
     <table id="recent-calls" class="table table-hover table-sm" width="100%">
       <thead>
         <tr>
@@ -90,62 +92,66 @@
       {% endfor %}
       </tbody>
     </table>
+    {% endif %}
   </div>
-  {% endif %}
+    </div>
 
-  {% if top_permitted %}
-  <div>
-    <h4>Top Permitted Callers</h4>
-    <table id="top_permitted" class="table table-hover table-sm" width="100%">
-      <thead>
-        <tr>
-          <th>Caller</th>
-          <th>Count</th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for item in top_permitted %}
-          <td>
-            <b>{{ item.phone_no }}</b> -
-            <span class="d-sm-none"><br></span>
-            <i>{{ item.name }}</i>
-          </td>
-          <td >
-              {{ item.count }}
-          </td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% endif %}
+    <div class="row">
+      <div class="m-2 col-md border border-success">
+        <h4>Top Permitted Callers</h4>
+        {% if top_permitted %}
+        <table id="top_permitted" class="table table-hover table-sm" width="100%">
+          <thead>
+            <tr>
+              <th>Caller</th>
+              <th>Count</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for item in top_permitted %}
+              <td>
+                <b>{{ item.phone_no }}</b> -
+                <span class="d-sm-none"><br></span>
+                <i>{{ item.name }}</i>
+              </td>
+              <td >
+                  {{ item.count }}
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+      </div>
 
-  {% if top_blocked %}
-  <div>
-    <h4>Top Blocked Callers</h4>
-    <table id="top_blocked" class="table table-hover table-sm" width="100%">
-      <thead>
-        <tr>
-          <th>Caller</th>
-          <th>Count</th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for item in top_blocked %}
-          <td>
-            <b>{{ item.phone_no }}</b> -
-            <span class="d-sm-none"><br></span>
-            <i>{{ item.name }}</i>
-          </td>
-          <td >
-              {{ item.count }}
-          </td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
+      <div class="m-2 col-md border border-danger">
+        <h4>Top Blocked Callers</h4>
+        {% if top_blocked %}
+        <table id="top_blocked" class="table table-hover table-sm" width="100%">
+          <thead>
+            <tr>
+              <th>Caller</th>
+              <th>Count</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for item in top_blocked %}
+              <td>
+                <b>{{ item.phone_no }}</b> -
+                <span class="d-sm-none"><br></span>
+                <i>{{ item.name }}</i>
+              </td>
+              <td >
+                  {{ item.count }}
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+      </div>
+    </div>
   </div>
-  {% endif %}
 
 </div>
 
