@@ -3,20 +3,38 @@ body {
   min-height: 75rem;
   padding-top: 4.5rem;
 }
+
+
+.stats-card {
+    min-width: 215px;
+}
+
 /* Set a fixed width for the Call # column */
 .callno {
-   width: 100px;
-}/* Set a fixed width for the phone column */
-.phoneno {
-   width: 125px;
+   width: 60px;
 }
+
+/* Set a fixed width for the phone column */
+.phoneno {
+   min-width: 115px;
+}
+
+.name {
+   width: 200px;
+}
+
+.reason {
+   width: 600px;
+}
+
 /* Set a fixed width for the date column */
 .date {
    width: 90px;
 }
+
 /* Set a fixed width for the time column */
 .time {
-   width: 95px;
+   min-width: 95px;
 }
 .clickable {
     cursor: pointer;

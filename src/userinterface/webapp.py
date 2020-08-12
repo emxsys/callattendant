@@ -35,7 +35,8 @@ from flask_paginate import Pagination, get_page_args
 from screening.blacklist import Blacklist
 from screening.whitelist import Whitelist
 from messaging.voicemail import VoiceMail
-import glob
+from datetime import datetime
+from glob import glob
 import os
 import screening.utils
 import sqlite3
@@ -120,20 +121,22 @@ def call_log():
             basename = os.path.basename(filepath)
             filepath = os.path.join("../static/messages", basename)
 
+        # Make a pretty date/time string
+        date_time = datetime.strptime(row[12][:19], '%Y-%m-%d %H:%M:%S')
+
         calls.append(dict(
             call_no=row[0],
             phone_no=phone_no,
             name=row[1],
-            date=row[3],
-            time=row[4],
+            date=date_time.strftime('%d-%b-%y'),
+            time=date_time.strftime('%I:%M %p'),
             action=row[5],
             reason=row[6],
             whitelisted=row[7],
             blacklisted=row[8],
             msg_no=row[9],
             msg_played=row[10],
-            wav_file=filepath,
-            date_time=row[12][:19]))
+            wav_file=filepath))
 
     # Create a pagination object for the page
     pagination = get_pagination(

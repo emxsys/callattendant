@@ -13,14 +13,14 @@
 {% include 'navbar.htm' %}
 
 <div class="container">
-  <h2>Blocked Numbers</h2>
+  <h2><span class="bg-danger text-white px-2">Blocked Numbers</span></h2>
   <div>
     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addModal">Add New</button>
   </div>
   <br/>
   {% if blacklist %}
     {{ pagination.links }}
-    <table class="table table-striped">
+    <table class="table table-striped table-responsive">
       <thead>
         <tr>
           <th>Number</th>
@@ -38,15 +38,15 @@
           <td>{{ row.Name }}</td>
           <td>{{ row.Reason }}</td>
           <td>{{ row.System_Date_Time }}</td>
-          <td>
+          <td class="px-1">
             <button type="button" class="btn btn-outline-light text-dark" data-toggle="modal" data-target="#updateModal"
                 data-blocked-phone="{{ row.Phone_Number }}" data-blocked-name="{{ row.Name }}" data-blocked-reason="{{ row.Reason }}">
-              <img src="../static/pencil.svg" alt="" width="32" height="32" title="Edit">
+              <img src="../static/pencil.svg" alt="" width="24" height="24" title="Edit">
             </button>
           </td>
-          <td>
+          <td class="px-1">
             <button type="button" class="btn btn-outline-light text-dark" onClick="location.href='/blocked/delete/{{ row.Phone_Number }}'">
-              <img src="../static/trash.svg" alt="" width="32" height="32" title="Trash">
+              <img src="../static/trash.svg" alt="" width="24" height="24" title="Trash">
             </button>
           </td>        </tr>
         {% endfor %}
