@@ -67,7 +67,7 @@ def teardown(error):
 
 
 @app.route('/')
-def callers():
+def call_log():
     """
     Display the call details from the call log table
     """
@@ -78,42 +78,62 @@ def callers():
         page_parameter="page", per_page_parameter="per_page"
     )
     # Get the call log subset, limited to the pagination settings
-    sql = '''select
+    sql = """SELECT
         a.CallLogID,
-        case
-            when b.PhoneNo is not null then b.Name
-            when c.PhoneNo is not null then c.Name
-            else a.Name
-        end Name,
+        CASE
+            WHEN b.PhoneNo is not null then b.Name
+            WHEN c.PhoneNo is not null then c.Name
+            ELSE a.Name
+        END Name,
         a.Number,
         a.Date,
         a.Time,
         a.Action,
         a.Reason,
-        case when b.PhoneNo is null then 'N' else 'Y' end Whitelisted,
-        case when c.PhoneNo is null then 'N' else 'Y' end Blacklisted
-    from CallLog as a
-    left join Whitelist as b ON a.Number = b.PhoneNo
-    left join Blacklist as c ON a.Number = c.PhoneNo
-    order by a.SystemDateTime desc limit {}, {}'''.format(offset, per_page)
+        CASE WHEN b.PhoneNo is null THEN 'N' ELSE 'Y' END Whitelisted,
+        CASE WHEN c.PhoneNo is null THEN 'N' ELSE 'Y' end Blacklisted,
+        d.MessageID,
+        d.Played,
+        d.Filename,
+        a.SystemDateTime
+    FROM CallLog as a
+    LEFT JOIN Whitelist AS b ON a.Number = b.PhoneNo
+    LEFT JOIN Blacklist AS c ON a.Number = c.PhoneNo
+    LEFT JOIN Message AS d ON a.CallLogID = d.CallLogID
+    ORDER BY a.SystemDateTime DESC
+    LIMIT {}, {}""".format(offset, per_page)
     g.cur.execute(sql)
     result_set = g.cur.fetchall()
 
     # Create a formatted list of records including some derived values
-    records = []
-    for record in result_set:
-        number = record[2]
+    calls = []
+    for row in result_set:
+        number = row[2]
         phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
-        records.append(dict(
-            Call_No=record[0],
-            Phone_Number=phone_no,
-            Name=record[1],
-            Date=record[3],
-            Time=record[4],
-            Action=record[5],
-            Reason=record[6],
-            Whitelisted=record[7],
-            Blacklisted=record[8]))
+        # Flask pages use the static folder to get resources.
+        # In the static folder we have created a soft-link to the
+        # data/messsages folder containing the actual messages.
+        # We'll use the static-based path for the wav-file urls
+        # in the web app
+        filepath = row[11]
+        if filepath is not None:
+            basename = os.path.basename(filepath)
+            filepath = os.path.join("../static/messages", basename)
+
+        calls.append(dict(
+            call_no=row[0],
+            phone_no=phone_no,
+            name=row[1],
+            date=row[3],
+            time=row[4],
+            action=row[5],
+            reason=row[6],
+            whitelisted=row[7],
+            blacklisted=row[8],
+            msg_no=row[9],
+            msg_played=row[10],
+            wav_file=filepath,
+            date_time=row[12][:19]))
 
     # Create a pagination object for the page
     pagination = get_pagination(
@@ -134,8 +154,8 @@ def callers():
         percent_blocked = blocked / total * 100
     # Render the resullts with pagination
     return render_template(
-        'call_details.htm',
-        calls=records,
+        'call_log.htm',
+        calls=calls,
         total_calls='{:,}'.format(total),
         blocked_calls='{:,}'.format(blocked),
         percent_blocked='{0:.0f}%'.format(percent_blocked),

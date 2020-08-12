@@ -53,39 +53,43 @@ The template is rendered with an array of dictionary objects named 'calls'.
         </div>
     </div>
     {{ pagination.links }}
-    <table id="calls" class="table table-hover">
+    <table id="calls" class="table table-hover table-sm">
         <thead>
           <tr>
             <th>Call #</th>
             <th>Phone</th>
             <th>Name</th>
-            <th>Date</th>
-            <th>Time</th>
+            <th>Date Time</th>
             <th>Action</th>
             <th>Reason</th>
           </tr>
         </thead>
         <tbody>
         {% for item in calls %}
-            <tr class="clickable" data-call-number="{{ item.Call_No }}" onClick="location.href='/manage_caller/{{ item.Call_No }}'"
-            {% if item.Whitelisted == 'Y' %}
-                bgcolor="#90EE90"
-            {% elif item.Blacklisted == 'Y' %}
-                bgcolor="#FFC0CB"
-            {% endif %}
-            >
-                <td class="callno">{{ item.Call_No }}</td>
-                <td class="phoneno">{{ item.Phone_Number }}</td>
-                <td class="name">{{ item.Name }}</td>
-                <td class="date">{{ item.Date }}</td>
-                <td class="time">{{ item.Time }}</td>
-                <td class="action">
-                    <span class="badge {% if item.Action=='Permitted' %}badge-primary{% elif item.Action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
-                    {{ item.Action }}
-                    </span>
-                </td>
-                <td class="reason">{{ item.Reason }}</td>
-            </tr>
+          <tr class="clickable {% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}"
+              data-call-number="{{ item.call_no }}"
+            {% if item.whitelisted == 'Y' %} bgcolor="#90EE90" {% elif item.blacklisted == 'Y' %} bgcolor="#FFC0CB" {% endif %} >
+            <td class="callno">{{ item.call_no }}
+              <span>
+              {% if item.msg_no is not none %}
+                <button type="button" class="message-btn btn btn-outline-light text-dark" data-toggle="modal" data-target="#messageModal"
+                    data-message-no="{{ item.msg_no }}" data-call-no="{{ item.call_no }}" data-phone-no="{{ item.phone_no }}" data-wav-file="{{ item.wav_file }}"  >
+                  <img src={% if item.msg_played == 0 %}"../static/chat-left-text.svg"{% else %}"../static/chat-left.svg"{% endif %} alt="" width="16" height="16" title="Message">
+                </button>
+              {% endif %}
+              </span>
+            </td>
+            <td class="phoneno">{{ item.phone_no }}</td>
+            <td class="name">{{ item.name }}</td>
+            <td class="date-time">{{ item.date_time }}</td>
+            <td class="action">
+              <span class="badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
+                {{ item.action }}
+              </span>
+            </td>
+            <td class="reason">{{ item.reason }}</td>
+
+          </tr>
         {% endfor %}
         </tbody>
     </table>
@@ -93,6 +97,36 @@ The template is rendered with an array of dictionary objects named 'calls'.
     {% endif %}
 </div>
 
+<!--
+  Play Message Modal
+-->
+<div class="modal fade" id="messageModal" tabindex="-1" role="dialog" aria-labelledby="msgModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="msgModalLabel">Playing Message</h5>
+
+        <button type="button" class="pause close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <h6 id="call-no">Voice message from call</h6>
+        <audio id="audio" controls preload="metadata">
+          <source type="audio/wav">
+          Your browser does not support the audio element.
+        </audio>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="pause btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--
+  Context Menu
+-->
 <ul id="contextMenu" class="dropdown-menu" role="menu" style="display:none" >
     <li id="permit-item"><a tabindex="-1" href="#">Permit</a></li>
     <li id="block-item"><a tabindex="-1" href="#">Block</a></li>
@@ -103,69 +137,27 @@ The template is rendered with an array of dictionary objects named 'calls'.
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 <script type="text/javascript">
-(function ($, window) {
 
-    $.fn.contextMenu = function (settings) {
-
-        return this.each(function () {
-
-            // Open context menu
-            $(this).on("contextmenu", function (e) {
-                // return native menu if pressing control
-                if (e.ctrlKey) return;
-
-                //open menu
-                var $menu = $(settings.menuSelector)
-                    .data("invokedOn", $(e.target))
-                    .show()
-                    .css({
-                        position: "absolute",
-                        left: getMenuPosition(e.clientX, 'width', 'scrollLeft'),
-                        top: getMenuPosition(e.clientY, 'height', 'scrollTop')
-                    })
-                    .off('click')
-                    .on('click', 'a', function (e) {
-                        $menu.hide();
-
-                        var $invokedOn = $menu.data("invokedOn");
-                        var $selectedMenu = $(e.target);
-
-                        settings.menuSelected.call(this, $invokedOn, $selectedMenu);
-                    });
-
-                return false;
-            });
-
-            //make sure menu closes on any click
-            $('body').click(function () {
-                $(settings.menuSelector).hide();
-            });
-        });
-
-        function getMenuPosition(mouse, direction, scrollDir) {
-            var win = $(window)[direction](),
-                scroll = $(window)[scrollDir](),
-                menu = $(settings.menuSelector)[direction](),
-                position = mouse + scroll;
-
-            // opening menu would pass the side of the page
-            if (mouse + menu > win && menu < mouse)
-                position -= menu;
-
-            return position;
-        }
-
-    };
-})(jQuery, window);
-
-$("#calls td").contextMenu({
-    menuSelector: "#contextMenu",
-    menuSelected: function (invokedOn, selectedMenu) {
-        var msg = "You selected the menu item '" + selectedMenu.text() +
-            "' on the value '" + invokedOn.text() + "'";
-        alert(msg);
-    }
+$('#messageModal').on('show.bs.modal', function (event) {
+  // Button that triggered the modal
+  var $button = $(event.relatedTarget)
+  // Extract info from data-* attributes
+  var msg_no = $button.data('message-no')
+  var call_no = $button.data('call-no')
+  var phone_no = $button.data('phone-no')
+  var wav_file = $button.data('wav-file')
+  var $modal = $(this)
+  var $audio = $modal.find('audio')
+  $modal.find('.modal-title').text('Playing Message from ' + phone_no)
+  $modal.find('#call-no').text('Voice message from call #' + call_no)
+  $modal.find('audio source').attr("src", wav_file)
+  $modal.find('audio').trigger('load')
+  $modal.find('audio').trigger('play')
+  $modal.on('hidden.bs.modal', function () {
+    $audio.trigger('pause')
+  });
 });
+
 
 $(document).ready( function () {
   // Highlight this page in the menu
