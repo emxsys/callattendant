@@ -11,7 +11,7 @@ body {
 
 /* Set a fixed width for the Call # column */
 .callno {
-   width: 60px;
+   min-width: 60px;
 }
 
 /* Set a fixed width for the phone column */
@@ -36,7 +36,7 @@ body {
 .time {
    min-width: 95px;
 }
-.clickable {
+.manage-caller {
     cursor: pointer;
 }
 .pagination-fixed {

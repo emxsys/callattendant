@@ -68,6 +68,125 @@ def teardown(error):
 
 
 @app.route('/')
+def dashboard():
+    """
+    Display the dashboard, i.e,, the home page
+    """
+    # Count totals calls
+    sql = "SELECT COUNT(*) FROM CallLog"
+    g.cur.execute(sql)
+    total_calls = g.cur.fetchone()[0]
+
+    # Count blocked calls
+    sql = "SELECT COUNT(*) FROM CallLog WHERE `Action` = 'Blocked'"
+    g.cur.execute(sql)
+    total_blocked = g.cur.fetchone()[0]
+
+    # Compute percentage blocked
+    percent_blocked = 0
+    if total_calls > 0:
+        percent_blocked = total_blocked / total_calls * 100
+
+    # Get the Recent Calls subset
+    max_num_rows = 10
+    sql = """SELECT
+        a.CallLogID,
+        CASE
+            WHEN b.PhoneNo is not null then b.Name
+            WHEN c.PhoneNo is not null then c.Name
+            ELSE a.Name
+        END Name,
+        a.Number,
+        a.Date,
+        a.Time,
+        a.Action,
+        a.Reason,
+        CASE WHEN b.PhoneNo is null THEN 'N' ELSE 'Y' END Whitelisted,
+        CASE WHEN c.PhoneNo is null THEN 'N' ELSE 'Y' end Blacklisted,
+        d.MessageID,
+        d.Played,
+        d.Filename,
+        a.SystemDateTime
+    FROM CallLog as a
+    LEFT JOIN Whitelist AS b ON a.Number = b.PhoneNo
+    LEFT JOIN Blacklist AS c ON a.Number = c.PhoneNo
+    LEFT JOIN Message AS d ON a.CallLogID = d.CallLogID
+    ORDER BY a.SystemDateTime DESC
+    LIMIT {}""".format(max_num_rows)
+    g.cur.execute(sql)
+    result_set = g.cur.fetchall()
+    recent_calls = []
+    for row in result_set:
+        # Flask pages use the static folder to get resources.
+        # In the static folder we have created a soft-link to the
+        # data/messsages folder containing the actual messages.
+        # We'll use the static-based path for the wav-file urls
+        # in the web app
+        filepath = row[11]
+        if filepath is not None:
+            basename = os.path.basename(filepath)
+            filepath = os.path.join("../static/messages", basename)
+
+        # Create a date object from the date time string
+        date_time = datetime.strptime(row[12][:19], '%Y-%m-%d %H:%M:%S')
+
+        recent_calls.append(dict(
+            call_no=row[0],
+            name=row[1],
+            phone_no=format_phone_no(row[2]),
+            date=date_time.strftime('%d-%b-%y'),
+            time=date_time.strftime('%I:%M %p'),
+            action=row[5],
+            reason=row[6],
+            whitelisted=row[7],
+            blacklisted=row[8],
+            msg_no=row[9],
+            msg_played=row[10],
+            wav_file=filepath))
+
+    # Get top permitted callers
+    sql = """SELECT COUNT(Number), Number, Name
+        FROM CallLog
+        WHERE Action IN ('Permitted', 'Screened')
+        GROUP BY Number
+        ORDER BY COUNT(Number) DESC LIMIT 10"""
+    g.cur.execute(sql)
+    result_set = g.cur.fetchall()
+    top_permitted = []
+    for row in result_set:
+        top_permitted.append(dict(
+            count=row[0],
+            phone_no=format_phone_no(row[1]),
+            name=row[2]))
+
+    # Get top blocked callers
+    sql = """SELECT COUNT(Number), Number, Name
+        FROM CallLog
+        WHERE Action = 'Blocked'
+        GROUP BY Number
+        ORDER BY COUNT(Number) DESC LIMIT 10"""
+    g.cur.execute(sql)
+    result_set = g.cur.fetchall()
+    top_blocked = []
+    for row in result_set:
+        top_blocked.append(dict(
+            count=row[0],
+            phone_no=format_phone_no(row[1]),
+            name=row[2]))
+
+    # Render the resullts
+    return render_template(
+        'dashboard.htm',
+        recent_calls=recent_calls,
+        top_permitted=top_permitted,
+        top_blocked=top_blocked,
+        total_calls='{:,}'.format(total_calls),
+        blocked_calls='{:,}'.format(total_blocked),
+        percent_blocked='{0:.0f}%'.format(percent_blocked),
+    )
+
+
+@app.route('/calls')
 def call_log():
     """
     Display the call details from the call log table
@@ -121,7 +240,7 @@ def call_log():
             basename = os.path.basename(filepath)
             filepath = os.path.join("../static/messages", basename)
 
-        # Make a pretty date/time string
+        # Create a date object from the date time string
         date_time = datetime.strptime(row[12][:19], '%Y-%m-%d %H:%M:%S')
 
         calls.append(dict(
@@ -559,6 +678,9 @@ def get_row_count(table_name):
     g.cur.execute(sql)
     total = g.cur.fetchone()[0]
     return total
+
+def format_phone_no(number):
+    return'{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
 
 
 def get_css_framework():
