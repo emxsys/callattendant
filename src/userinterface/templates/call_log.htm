@@ -17,83 +17,82 @@ The template is rendered with an array of dictionary objects named 'calls'.
 
 {% include 'navbar.htm' %}
 
-<div class="container">
+<div class="container" >
   <h2>Call Log</h2>
-
-    {% if calls %}
-    <div class="container">
-        <div class="card-columns">
-          <div class="card rounded-pill bg-primary text-white">
-            <img class="card-img-top" src="/static/telephone-inbound.svg" alt="Card image" height="100" style="opacity: 0.2;">
-            <div class="card-img-overlay">
-             <div class="card-body">
-              Calls processed:
-              <h3 class="font-weight-bolder">{{ total_calls }}</h3>
-             </div>
-            </div>
-          </div>
-          <div class="card rounded-pill bg-danger text-white">
-            <img class="card-img-top" src="/static/telephone-x.svg" alt="Card image" height="100" style="opacity: 0.2;">
-            <div class="card-img-overlay">
-             <div class="card-body">
-              Calls blocked:
-              <h3 class="font-weight-bolder">{{ blocked_calls }}</h3>
-             </div>
-            </div>
-          </div>
-          <div class="card rounded-pill bg-success text-white">
-            <img class="card-img-top" src="/static/bar-chart.svg" alt="Card image" height="100" style="opacity: 0.2;">
-            <div class="card-img-overlay">
-            <div class="card-body">
-              Percent blocked:
-              <h3 class="font-weight-bolder">{{ percent_blocked }}</h3>
-             </div>
-            </div>
-          </div>
+  {% if calls %}
+  <div>
+    <div class="card-columns">
+      <div class="card rounded-pill bg-primary text-white">
+        <img class="card-img-top" src="/static/telephone-inbound.svg" alt="Card image" height="100" style="opacity: 0.2;">
+        <div class="card-img-overlay">
+         <div class="card-body">
+          Calls processed:
+          <h3 class="font-weight-bolder">{{ total_calls }}</h3>
+         </div>
         </div>
+      </div>
+      <div class="card rounded-pill bg-danger text-white">
+        <img class="card-img-top" src="/static/telephone-x.svg" alt="Card image" height="100" style="opacity: 0.2;">
+        <div class="card-img-overlay">
+         <div class="card-body">
+          Calls blocked:
+          <h3 class="font-weight-bolder">{{ blocked_calls }}</h3>
+         </div>
+        </div>
+      </div>
+      <div class="card rounded-pill bg-success text-white">
+        <img class="card-img-top" src="/static/bar-chart.svg" alt="Card image" height="100" style="opacity: 0.2;">
+        <div class="card-img-overlay">
+        <div class="card-body">
+          Percent blocked:
+          <h3 class="font-weight-bolder">{{ percent_blocked }}</h3>
+         </div>
+        </div>
+      </div>
     </div>
-    {{ pagination.links }}
-    <table id="calls" class="table table-hover">
-        <thead>
-          <tr>
-            <th>Call #</th>
-            <th>Phone</th>
-            <th>Name</th>
-            <th>Date Time</th>
-            <th>Action</th>
-            <th>Reason</th>
-          </tr>
-        </thead>
-        <tbody>
-        {% for item in calls %}
-          <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}" data-call-no="{{ item.call_no }}">
-            <td class="callno">
-              <span class="manage-caller clickable">{{ item.call_no }}</span>
-              <span>
-              {% if item.msg_no is not none %}
-                <button type="button" class="message-btn btn btn-outline-light text-dark" data-toggle="modal" data-target="#messageModal"
-                    data-message-no="{{ item.msg_no }}" data-call-no="{{ item.call_no }}" data-phone-no="{{ item.phone_no }}" data-wav-file="{{ item.wav_file }}"  >
-                  <img src={% if item.msg_played == 0 %}"../static/chat-left-text.svg"{% else %}"../static/chat-left.svg"{% endif %} alt="" width="16" height="16" title="Message">
-                </button>
-              {% endif %}
-              </span>
-            </td>
-            <td class="phoneno manage-caller clickable">{{ item.phone_no }}</td>
-            <td class="name manage-caller clickable">{{ item.name }}</td>
-            <td class="date-time manage-caller clickable">{{ item.date_time }}</td>
-            <td class="action manage-caller clickable">
-              <span class="badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
-                {{ item.action }}
-              </span>
-            </td>
-            <td class="reason manage-caller clickable">{{ item.reason }}</td>
+  </div>
+  {{ pagination.links }}
+  <table id="calls" class="table table-hover table-responsive">
+    <thead>
+      <tr>
+        <th>Call #</th>
+        <th>Phone</th>
+        <th>Name</th>
+        <th>Date Time</th>
+        <th>Action</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for item in calls %}
+      <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}" data-call-no="{{ item.call_no }}">
+        <td class="callno">
+          <span class="manage-caller clickable">{{ item.call_no }}</span>
+          <span>
+          {% if item.msg_no is not none %}
+            <button type="button" class="message-btn btn btn-outline-light text-dark" data-toggle="modal" data-target="#messageModal"
+                data-message-no="{{ item.msg_no }}" data-call-no="{{ item.call_no }}" data-phone-no="{{ item.phone_no }}" data-wav-file="{{ item.wav_file }}"  >
+              <img src={% if item.msg_played == 0 %}"../static/chat-left-text.svg"{% else %}"../static/chat-left.svg"{% endif %} alt="" width="16" height="16" title="Message">
+            </button>
+          {% endif %}
+          </span>
+        </td>
+        <td class="phoneno manage-caller clickable">{{ item.phone_no }}</td>
+        <td class="name manage-caller clickable">{{ item.name }}</td>
+        <td class="date-time manage-caller clickable">{{ item.date_time }}</td>
+        <td class="action manage-caller clickable">
+          <span class="badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
+            {{ item.action }}
+          </span>
+        </td>
+        <td class="reason manage-caller clickable">{{ item.reason }}</td>
 
-          </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    {{ pagination.links }}
-    {% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {{ pagination.links }}
+  {% endif %}
 </div>
 
 <!--
