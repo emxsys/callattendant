@@ -21,39 +21,8 @@ The template is rendered with an array of dictionary objects named 'calls'.
   <h2>Call Log</h2>
   {% if calls %}
   <div>
-    <div class="card-columns">
-      <div class="card rounded-pill bg-primary text-white stats-card">
-        <img class="card-img-top" src="/static/telephone-inbound.svg" alt="Card image" height="100" style="opacity: 0.2;">
-        <div class="card-img-overlay">
-         <div class="card-body">
-          Calls processed:
-          <h3 class="font-weight-bolder">{{ total_calls }}</h3>
-         </div>
-        </div>
-      </div>
-      <div class="card rounded-pill bg-danger text-white stats-card">
-        <img class="card-img-top" src="/static/telephone-x.svg" alt="Card image" height="100" style="opacity: 0.2;">
-        <div class="card-img-overlay">
-         <div class="card-body">
-          Calls blocked:
-          <h3 class="font-weight-bolder">{{ blocked_calls }}</h3>
-         </div>
-        </div>
-      </div>
-      <div class="card rounded-pill bg-success text-white stats-card">
-        <img class="card-img-top" src="/static/bar-chart.svg" alt="Card image" height="100" style="opacity: 0.2;">
-        <div class="card-img-overlay">
-        <div class="card-body">
-          Percent blocked:
-          <h3 class="font-weight-bolder">{{ percent_blocked }}</h3>
-         </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div>
     {{ pagination.links }}
-    <table id="calls" class="table table-hover table-responsive" width="100%">
+    <table id="calls" class="table table-hover table-sm" width="100%">
       <thead>
         <tr>
           <th>Call</th>
