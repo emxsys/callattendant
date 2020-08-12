@@ -53,7 +53,7 @@ The template is rendered with an array of dictionary objects named 'calls'.
         </div>
     </div>
     {{ pagination.links }}
-    <table id="calls" class="table table-hover table-sm">
+    <table id="calls" class="table table-hover">
         <thead>
           <tr>
             <th>Call #</th>
@@ -66,10 +66,9 @@ The template is rendered with an array of dictionary objects named 'calls'.
         </thead>
         <tbody>
         {% for item in calls %}
-          <tr class="clickable {% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}"
-              data-call-number="{{ item.call_no }}"
-            {% if item.whitelisted == 'Y' %} bgcolor="#90EE90" {% elif item.blacklisted == 'Y' %} bgcolor="#FFC0CB" {% endif %} >
-            <td class="callno">{{ item.call_no }}
+          <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}" data-call-no="{{ item.call_no }}">
+            <td class="callno">
+              <span class="manage-caller clickable">{{ item.call_no }}</span>
               <span>
               {% if item.msg_no is not none %}
                 <button type="button" class="message-btn btn btn-outline-light text-dark" data-toggle="modal" data-target="#messageModal"
@@ -79,15 +78,15 @@ The template is rendered with an array of dictionary objects named 'calls'.
               {% endif %}
               </span>
             </td>
-            <td class="phoneno">{{ item.phone_no }}</td>
-            <td class="name">{{ item.name }}</td>
-            <td class="date-time">{{ item.date_time }}</td>
-            <td class="action">
+            <td class="phoneno manage-caller clickable">{{ item.phone_no }}</td>
+            <td class="name manage-caller clickable">{{ item.name }}</td>
+            <td class="date-time manage-caller clickable">{{ item.date_time }}</td>
+            <td class="action manage-caller clickable">
               <span class="badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
                 {{ item.action }}
               </span>
             </td>
-            <td class="reason">{{ item.reason }}</td>
+            <td class="reason manage-caller clickable">{{ item.reason }}</td>
 
           </tr>
         {% endfor %}
@@ -138,6 +137,14 @@ The template is rendered with an array of dictionary objects named 'calls'.
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 <script type="text/javascript">
 
+$('.manage-caller').on('click', function (event) {
+  var $elem = $(event.currentTarget)
+  // find the parent table row which has the call no.
+  var $tr = $elem.parents('tr')
+  var call_no = $($tr[0]).data('call-no')
+  window.location.href = "/manage_caller/" + call_no
+});
+
 $('#messageModal').on('show.bs.modal', function (event) {
   // Button that triggered the modal
   var $button = $(event.relatedTarget)
@@ -157,7 +164,6 @@ $('#messageModal').on('show.bs.modal', function (event) {
     $audio.trigger('pause')
   });
 });
-
 
 $(document).ready( function () {
   // Highlight this page in the menu
