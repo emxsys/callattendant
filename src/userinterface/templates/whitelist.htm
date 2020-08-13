@@ -13,7 +13,7 @@
 {% include 'navbar.htm' %}
 
 <div class="container">
-  <h2>Permitted Numbers</h2>
+  <h2><span class="bg-success text-white px-2">Permitted Numbers</span></h2>
   <div>
     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addModal">Add New</button>
   </div>
@@ -21,13 +21,14 @@
   <div>
   {% if whitelist %}
     {{ pagination.links }}
-    <table class="table table-striped">
+    <table id="permitted-table" class="table table-striped table-sm">
       <thead>
         <tr>
           <th>Number</th>
-          <th>Name</th>
           <th>Reason</th>
-          <th>System Date Time</th>
+<!--
+          <th>Time</th>
+-->
           <th></th>
           <th></th>
         </tr>
@@ -35,19 +36,24 @@
       <tbody>
         {% for item in whitelist %}
         <tr>
-          <td>{{ item.Phone_Number }}</td>
-          <td>{{ item.Name }}</td>
+          <td class="manage-caller">
+            <b>{{ item.Phone_Number }}</b> -
+            <span class="d-md-none"><br></span>
+            <i>{{ item.Name }}</i>
+          </td>
           <td>{{ item.Reason }}</td>
+<!--
           <td>{{ item.System_Date_Time }}</td>
-          <td>
+-->
+          <td class="px-1">
             <button type="button" class="btn btn-outline-light text-dark" data-toggle="modal" data-target="#updateModal"
                 data-permitted-phone="{{ item.Phone_Number }}" data-permitted-name="{{ item.Name }}" data-permitted-reason="{{ item.Reason }}">
-              <img src="../static/pencil.svg" alt="" width="32" height="32" title="Edit">
+              <img src="../static/pencil.svg" alt="" width="24" height="24" title="Edit">
             </button>
           </td>
-          <td>
+          <td class="px-1">
             <button type="button" class="btn btn-outline-light text-dark" onClick="location.href='/permitted/delete/{{ item.Phone_Number }}'">
-              <img src="../static/trash.svg" alt="" width="32" height="32" title="Trash">
+              <img src="../static/trash.svg" alt="" width="24" height="24" title="Trash">
             </button>
           </td>
         </tr>
@@ -152,6 +158,21 @@ $(document).ready( function () {
   // Highlight the current page in the menu
   $('#whitelist').addClass('active');
 });
+
+// Make the table responsive when small
+function handleMediaQuery(x) {
+  if (x.matches) { // If media query matches
+      $('table').addClass('table-responsive')
+      //document.body.style.backgroundColor = "yellow";
+  } else {
+      $('table').removeClass('table-responsive')
+      //document.body.style.backgroundColor = "pink";
+  }
+}
+var x = window.matchMedia("(max-width: 600px)")
+handleMediaQuery(x)             // Call listener function at run time
+x.addListener(handleMediaQuery) // Attach listener function on state changes
+
 </script>
 </body>
 </html>

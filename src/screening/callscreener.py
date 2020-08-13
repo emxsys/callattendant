@@ -50,7 +50,7 @@ class CallScreener(object):
             if is_blacklisted:
                 return True, reason
             else:
-                print("Checking blocked CID patterns...")
+                print(">> Checking blocked patterns...")
                 for key in block["name_patterns"].keys():
                     match = re.search(key, name)
                     if match:
@@ -63,11 +63,12 @@ class CallScreener(object):
                         reason = block["number_patterns"][key]
                         print(reason)
                         return True, reason
-                print("Checking nomorobo...")
+                print(">> Checking nomorobo...")
                 result = self._nomorobo.lookup_number(number)
                 if result["spam"]:
-                    reason = "Nomorobo: {} with score {}".format(result["reason"], result["score"])
-                    print (reason)
+                    reason = "{} with score {}".format(result["reason"], result["score"])
+                    if self.config["DEBUG"]:
+                        print (">>> {}".format(reason))
                     self.blacklist_caller(callerid, reason)
                     return True, reason
                 print("Caller has been screened")

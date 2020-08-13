@@ -1,73 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Voice Messages | Call Attendant</title>
+  <title>Call Log | Call Attendant</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="300">
   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.png') }}">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <link rel="stylesheet" href="../static/css/callattendant.css">
 </head>
+<!--
+This template displays the list of callers in the call log.
+The template is rendered with an array of dictionary objects named 'calls'.
+-->
 <body>
 
 {% include 'navbar.htm' %}
 
 <div class="container">
-  <h2>Voice Messages <img src="../static/chat-left-text.svg" alt="" width="32" height="32">
-  {% if total_unplayed > 0 %}
-    <i><span class="badge badge-primary"><span id="total-unplayed">{{ total_unplayed }}</span> New </span></i>
+  <h2>Call Log <img src="../static/telephone-inbound.svg" alt="" width="32" height="32"></h2>
+  {% if search_criteria %}
+      <strong>Search: {{ search_criteria }}&nbsp;&nbsp;</strong>
+      <button id="cancel-search" type="button" class="btn btn-secondary btn-sm" aria-label="Cancel">Cancel</button>
   {% endif %}
-  </h2>
-
-  {% if total_messages == 0 %}
-  <h4><i>None</i></h4>
+  {% if not calls %}
+  <p><strong><i>Results: None</i></strong></p>
   {% else %}
-   {{ pagination.links }}
-    <table class="table table-striped table-sm">
+  <div>
+    <div class="p-1">
+    {{ pagination.info }}
+    {{ pagination.links }}
+    </div>
+    <table id="calls" class="table table-hover table-sm" width="100%">
       <thead>
         <tr>
-          <th>Play</th>
           <th>Time</th>
           <th>Caller</th>
-          <th>Delete</th>
+          <th>Actions</th>
+          <th>Reason</th>
         </tr>
       </thead>
       <tbody>
-        {% for item in messages %}
-        <tr data-call-no="{{ item.call_no }}">
-          <td>
-            <span>
-              <button type="button" class="message-btn btn btn-sm btn-outline-light text-dark" data-toggle="modal" data-target="#messageModal"
-                  data-message-no="{{ item.msg_no }}" data-msg-played="{{ item.msg_played}}" data-call-no="{{ item.call_no }}"
-                  data-phone-no="{{ item.phone_no }}" data-wav-file="{{ item.wav_file }}"  >
-                <img src={% if item.msg_played == 0 %}"../static/play-fill.svg"{% else %}"../static/play.svg"{% endif %} alt="" width="24" height="24" title="Play Message">
-              </button>
-            </span>
-            {% if item.msg_played == 0 %}
-            <span id="msg-{{ item.msg_no }}" class="badge badge-pill badge-primary"><i> New </i></span>
-            {% endif %}
-          </td>
+      {% for item in calls %}
+        <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}" data-call-no="{{ item.call_no }}">
           <td class="manage-caller time">
             <b>{{ item.time }}</b>
-            <span class="d-sm-none"><br></span>
+            <span class="d-xl-none"><br></span>
             {{ item.date }}
           </td>
           <td class="manage-caller">
             <b>{{ item.phone_no }}</b> -
-            <span class="d-sm-none"><br></span>
+            <span class="d-md-none"><br></span>
             <i>{{ item.name }}</i>
           </td>
-          <td class="px-1">
-            <button type="button" class="btn btn-outline-light text-dark" onClick="location.href='/messages/delete/{{ item.msg_no }}'">
-              <img src="../static/trash.svg" alt="" width="24" height="24" title="Delete Message">
-            </button>
+          <td class="callno">
+            <span class="manage-caller badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
+              {{ item.action }}
+            </span>
+            <span>
+            {% if item.msg_no is not none %}
+              <button type="button" class="message-btn btn btn-sm btn-outline-light text-dark" data-toggle="modal" data-target="#messageModal"
+                  data-message-no="{{ item.msg_no }}" data-call-no="{{ item.call_no }}" data-phone-no="{{ item.phone_no }}" data-wav-file="{{ item.wav_file }}"  >
+                <img src={% if item.msg_played == 0 %}"../static/chat-left-text.svg"{% else %}"../static/chat-left.svg"{% endif %} alt="" width="16" height="16" title="Message">
+              </button>
+            {% endif %}
+            </span>
+          </td>
+          <td class="manage-caller">
+            {{ item.reason }}
           </td>
         </tr>
-        {% endfor %}
+      {% endfor %}
       </tbody>
     </table>
     {{ pagination.links }}
     {% endif %}
+  </div>
 </div>
 
 <!--
@@ -97,11 +105,21 @@
   </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.3.1.min.js"  crossorigin="anonymous"></script>
+<!--
+  Context Menu
+-->
+<ul id="contextMenu" class="dropdown-menu" role="menu" style="display:none" >
+    <li id="permit-item"><a tabindex="-1" href="#">Permit</a></li>
+    <li id="block-item"><a tabindex="-1" href="#">Block</a></li>
+</ul>
+
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-<script type="text/javascript">
 
+<script type="text/javascript">
+// A table element was clicked: display the manage caller page
 $('.manage-caller').on('click', function (event) {
   var $elem = $(event.currentTarget)
   // find the parent table row which has the call no.
@@ -110,15 +128,20 @@ $('.manage-caller').on('click', function (event) {
   window.location.href = "/manage_caller/" + call_no
 });
 
+// Cancel call-log history display and revert to full log
+$('#cancel-search').on('click', function (event) {
+  window.location.href = "/calls"
+});
+
+// Show the play voice message dialog
 $('#messageModal').on('show.bs.modal', function (event) {
   // Button that triggered the modal
   var $button = $(event.relatedTarget)
   // Extract info from data-* attributes
   var msg_no = $button.data('message-no')
-  var msg_played = $button.data('msg-played')
-  var wav_file = $button.data('wav-file')
   var call_no = $button.data('call-no')
   var phone_no = $button.data('phone-no')
+  var wav_file = $button.data('wav-file')
   var $modal = $(this)
   var $audio = $modal.find('audio')
   $modal.find('.modal-title').text('Playing Message from ' + phone_no)
@@ -128,41 +151,27 @@ $('#messageModal').on('show.bs.modal', function (event) {
   $modal.find('audio').trigger('play')
   $modal.on('hidden.bs.modal', function () {
     $audio.trigger('pause')
+});
   });
-  if (msg_played == 0) {
-  // Set the status to 1; "played"
-  var data = { msg_no: msg_no, status: 1 }
-  $.post("/messages/played", data, function(results) {
-      if (results.success) {
-        $('#msg-'+results.msg_no).remove()
-        $('#total-unplayed').text(results.unplayed_count)
-      }
-    });
-  }
-});
 
 
-$("audio").on('play', function(e) {
-  var $audio = $(e.currentTarget)
-  var message_no = $audio.data('message-no')
-  var msg_played = $audio.data('played-status')
-  if (msg_played == 0) {
-    // Set the status to 1; "played"
-    var data = { msg_no: message_no, status: 1 }
-    $.post("/messages/played", data, function(results) {
-        if (results.success) {
-          $('#msg-'+results.msg_no).remove()
-          $('#total-unplayed').text(results.unplayed_count)
-        }
-    });
-  }
-});
-
-
+// Highlight this page in the menu
 $(document).ready( function () {
-  // Highlight the current page in the menu
-  $('#messages').addClass('active');
+  $('#log').addClass('active');
 });
+
+// Make the table responsive on small screens
+function handleMediaQuery(x) {
+  if (x.matches) { // If media query matches
+      $('table').addClass('table-responsive')
+  } else {
+      $('table').removeClass('table-responsive')
+  }
+}
+var x = window.matchMedia("(max-width: 770px)")
+handleMediaQuery(x)             // Call listener function at run time
+x.addListener(handleMediaQuery) // Attach listener function on state changes
+
 </script>
 </body>
 </html>

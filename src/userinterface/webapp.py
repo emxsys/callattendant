@@ -35,8 +35,10 @@ from flask_paginate import Pagination, get_page_args
 from screening.blacklist import Blacklist
 from screening.whitelist import Whitelist
 from messaging.voicemail import VoiceMail
-import glob
+from datetime import datetime
+from glob import glob
 import os
+import re
 import screening.utils
 import sqlite3
 import _thread
@@ -67,53 +69,230 @@ def teardown(error):
 
 
 @app.route('/')
-def callers():
+def dashboard():
     """
-    Display the call details from the call log table
+    Display the dashboard, i.e,, the home page
     """
+    # Count totals calls
+    sql = "SELECT COUNT(*) FROM CallLog"
+    g.cur.execute(sql)
+    total_calls = g.cur.fetchone()[0]
 
-    # Get values used for pagination of the call log
-    total = get_row_count('CallLog')
-    page, per_page, offset = get_page_args(
-        page_parameter="page", per_page_parameter="per_page"
-    )
-    # Get the call log subset, limited to the pagination settings
-    sql = '''select
+    # Count blocked calls
+    sql = "SELECT COUNT(*) FROM CallLog WHERE `Action` = 'Blocked'"
+    g.cur.execute(sql)
+    total_blocked = g.cur.fetchone()[0]
+
+    # Compute percentage blocked
+    percent_blocked = 0
+    if total_calls > 0:
+        percent_blocked = total_blocked / total_calls * 100
+
+    # Get the number of unread messages
+    sql = "SELECT COUNT(*) FROM Message WHERE Played = 0"
+    g.cur.execute(sql)
+    new_messages = g.cur.fetchone()[0]
+
+    # Get the Recent Calls subset
+    max_num_rows = 10
+    sql = """SELECT
         a.CallLogID,
-        case
-            when b.PhoneNo is not null then b.Name
-            when c.PhoneNo is not null then c.Name
-            else a.Name
-        end Name,
+        CASE
+            WHEN b.PhoneNo is not null then b.Name
+            WHEN c.PhoneNo is not null then c.Name
+            ELSE a.Name
+        END Name,
         a.Number,
         a.Date,
         a.Time,
         a.Action,
         a.Reason,
-        case when b.PhoneNo is null then 'N' else 'Y' end Whitelisted,
-        case when c.PhoneNo is null then 'N' else 'Y' end Blacklisted
-    from CallLog as a
-    left join Whitelist as b ON a.Number = b.PhoneNo
-    left join Blacklist as c ON a.Number = c.PhoneNo
-    order by a.SystemDateTime desc limit {}, {}'''.format(offset, per_page)
+        CASE WHEN b.PhoneNo is null THEN 'N' ELSE 'Y' END Whitelisted,
+        CASE WHEN c.PhoneNo is null THEN 'N' ELSE 'Y' end Blacklisted,
+        d.MessageID,
+        d.Played,
+        d.Filename,
+        a.SystemDateTime
+    FROM CallLog as a
+    LEFT JOIN Whitelist AS b ON a.Number = b.PhoneNo
+    LEFT JOIN Blacklist AS c ON a.Number = c.PhoneNo
+    LEFT JOIN Message AS d ON a.CallLogID = d.CallLogID
+    ORDER BY a.SystemDateTime DESC
+    LIMIT {}""".format(max_num_rows)
+    g.cur.execute(sql)
+    result_set = g.cur.fetchall()
+    recent_calls = []
+    for row in result_set:
+        # Flask pages use the static folder to get resources.
+        # In the static folder we have created a soft-link to the
+        # data/messsages folder containing the actual messages.
+        # We'll use the static-based path for the wav-file urls
+        # in the web app
+        filepath = row[11]
+        if filepath is not None:
+            basename = os.path.basename(filepath)
+            filepath = os.path.join("../static/messages", basename)
+
+        # Create a date object from the date time string
+        date_time = datetime.strptime(row[12][:19], '%Y-%m-%d %H:%M:%S')
+
+        recent_calls.append(dict(
+            call_no=row[0],
+            name=row[1],
+            phone_no=format_phone_no(row[2]),
+            date=date_time.strftime('%d-%b-%y'),
+            time=date_time.strftime('%I:%M %p'),
+            action=row[5],
+            reason=row[6],
+            whitelisted=row[7],
+            blacklisted=row[8],
+            msg_no=row[9],
+            msg_played=row[10],
+            wav_file=filepath))
+
+    # Get top permitted callers
+    sql = """SELECT COUNT(Number), Number, Name
+        FROM CallLog
+        WHERE Action IN ('Permitted', 'Screened')
+        GROUP BY Number
+        ORDER BY COUNT(Number) DESC LIMIT 10"""
+    g.cur.execute(sql)
+    result_set = g.cur.fetchall()
+    top_permitted = []
+    for row in result_set:
+        top_permitted.append(dict(
+            count=row[0],
+            phone_no=format_phone_no(row[1]),
+            name=row[2]))
+
+    # Get top blocked callers
+    sql = """SELECT COUNT(Number), Number, Name
+        FROM CallLog
+        WHERE Action = 'Blocked'
+        GROUP BY Number
+        ORDER BY COUNT(Number) DESC LIMIT 10"""
+    g.cur.execute(sql)
+    result_set = g.cur.fetchall()
+    top_blocked = []
+    for row in result_set:
+        top_blocked.append(dict(
+            count=row[0],
+            phone_no=format_phone_no(row[1]),
+            name=row[2]))
+
+    # Get num calls per day for graphing
+    num_days = 30
+    sql = """SELECT COUNT(DATE(SystemDateTime)) Count, DATE(SystemDateTime) CallDate
+        FROM CallLog
+        WHERE SystemDateTime > DATETIME('now','-{} day') AND Action = 'Blocked'
+        GROUP BY CallDate
+        ORDER BY CallDate""".format(num_days)
+    g.cur.execute(sql)
+    result_set = g.cur.fetchall()
+    blocked_per_day = []
+    for row in result_set:
+        blocked_per_day.append(dict(
+            count=row[0],
+            call_date=row[1]))
+
+    # Render the resullts
+    return render_template(
+        'dashboard.htm',
+        recent_calls=recent_calls,
+        top_permitted=top_permitted,
+        top_blocked=top_blocked,
+        blocked_per_day=blocked_per_day,
+        new_messages=new_messages,
+        total_calls='{:,}'.format(total_calls),
+        blocked_calls='{:,}'.format(total_blocked),
+        percent_blocked='{0:.0f}%'.format(percent_blocked),
+    )
+
+
+@app.route('/calls', methods=['GET'])
+def call_log():
+    """
+    Display the call history from the call log table.
+    """
+
+    # Get GET request args, if available
+    number = request.args.get('number')
+    search_text = request.args.get('search')
+
+    # Get search criteria, if applicable
+    search_criteria = ""
+    if search_text:
+        num_list = re.findall('[0-9]+', search_text)
+        number = "".join(num_list)  # override GET arg if we're searching
+        search_criteria = "WHERE Number='{}'".format(number)
+
+    # Get values used for pagination of the call log
+    sql = "SELECT COUNT(*) FROM CallLog {}".format(search_criteria)
+    g.cur.execute(sql)
+    total = g.cur.fetchone()[0]
+    page, per_page, offset = get_page_args(
+        page_parameter="page",
+        per_page_parameter="per_page")
+
+    # Get the call log subset, limited to the pagination settings
+    sql = """SELECT
+        a.CallLogID,
+        CASE
+            WHEN b.PhoneNo is not null then b.Name
+            WHEN c.PhoneNo is not null then c.Name
+            ELSE a.Name
+        END Name,
+        a.Number Number,
+        a.Date,
+        a.Time,
+        a.Action,
+        a.Reason,
+        CASE WHEN b.PhoneNo is null THEN 'N' ELSE 'Y' END Whitelisted,
+        CASE WHEN c.PhoneNo is null THEN 'N' ELSE 'Y' end Blacklisted,
+        d.MessageID,
+        d.Played,
+        d.Filename,
+        a.SystemDateTime
+    FROM CallLog as a
+    LEFT JOIN Whitelist AS b ON a.Number = b.PhoneNo
+    LEFT JOIN Blacklist AS c ON a.Number = c.PhoneNo
+    LEFT JOIN Message AS d ON a.CallLogID = d.CallLogID
+    {}
+    ORDER BY a.SystemDateTime DESC
+    LIMIT {}, {}""".format(search_criteria, offset, per_page)
     g.cur.execute(sql)
     result_set = g.cur.fetchall()
 
     # Create a formatted list of records including some derived values
-    records = []
-    for record in result_set:
-        number = record[2]
+    calls = []
+    for row in result_set:
+        number = row[2]
         phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
-        records.append(dict(
-            Call_No=record[0],
-            Phone_Number=phone_no,
-            Name=record[1],
-            Date=record[3],
-            Time=record[4],
-            Action=record[5],
-            Reason=record[6],
-            Whitelisted=record[7],
-            Blacklisted=record[8]))
+        # Flask pages use the static folder to get resources.
+        # In the static folder we have created a soft-link to the
+        # data/messsages folder containing the actual messages.
+        # We'll use the static-based path for the wav-file urls
+        filepath = row[11]
+        if filepath is not None:
+            basename = os.path.basename(filepath)
+            filepath = os.path.join("../static/messages", basename)
+
+        # Create a date object from the date time string
+        date_time = datetime.strptime(row[12][:19], '%Y-%m-%d %H:%M:%S')
+
+        calls.append(dict(
+            call_no=row[0],
+            phone_no=phone_no,
+            name=row[1],
+            date=date_time.strftime('%d-%b-%y'),
+            time=date_time.strftime('%I:%M %p'),
+            action=row[5],
+            reason=row[6],
+            whitelisted=row[7],
+            blacklisted=row[8],
+            msg_no=row[9],
+            msg_played=row[10],
+            wav_file=filepath))
 
     # Create a pagination object for the page
     pagination = get_pagination(
@@ -122,27 +301,16 @@ def callers():
         total=total,
         record_name="calls",
         format_total=True,
-        format_number=True,
-    )
-    # Gather some metrics
-    sql = "select count(*) from CallLog where `Action` = 'Blocked'"""
-    g.cur.execute(sql)
-    blocked = g.cur.fetchone()[0]
-    if total == 0:
-        percent_blocked = 0
-    else:
-        percent_blocked = blocked / total * 100
+        format_number=True)
+
     # Render the resullts with pagination
     return render_template(
-        'call_details.htm',
-        calls=records,
-        total_calls='{:,}'.format(total),
-        blocked_calls='{:,}'.format(blocked),
-        percent_blocked='{0:.0f}%'.format(percent_blocked),
+        'call_log.htm',
+        calls=calls,
+        search_criteria=search_criteria,
         page=page,
         per_page=per_page,
-        pagination=pagination,
-    )
+        pagination=pagination)
 
 
 @app.route('/blocked')
@@ -155,11 +323,11 @@ def blacklist():
     page, per_page, offset = get_page_args(
         page_parameter="page", per_page_parameter="per_page"
     )
+
     # Get the blacklist subset, limited to the pagination settings
     sql = 'SELECT * from Blacklist ORDER BY datetime(SystemDateTime) DESC limit {}, {}'.format(offset, per_page)
     g.cur.execute(sql)
     result_set = g.cur.fetchall()
-
     records = []
     for record in result_set:
         number = record[0]
@@ -368,14 +536,18 @@ def messages():
         basename = os.path.basename(row[4])
         filepath = os.path.join("../static/messages", basename)
         number = row[3]
+        # Create a date object from the date time string
+        date_time = datetime.strptime(row[6][:19], '%Y-%m-%d %H:%M:%S')
+
         messages.append(dict(
             msg_no=row[0],
             call_no=row[1],
             name=row[2],
             phone_no='{}-{}-{}'.format(number[0:3], number[3:6], number[6:]),
             wav_file=filepath,
-            played_status=row[5],
-            date_time=row[6],
+            msg_played=row[5],
+            date=date_time.strftime('%d-%b-%y'),
+            time=date_time.strftime('%I:%M %p')
             ))
 
     # Create a pagination object for the page
@@ -536,6 +708,9 @@ def get_row_count(table_name):
     g.cur.execute(sql)
     total = g.cur.fetchone()[0]
     return total
+
+def format_phone_no(number):
+    return'{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
 
 
 def get_css_framework():
