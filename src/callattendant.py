@@ -214,7 +214,7 @@ def make_config(filename=None):
         "BLOCK_ENABLED": True,
         "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID", },
         "BLOCK_NUMBER_PATTERNS": {},
-        "BLOCKED_ACTIONS": ("play_message", ),
+        "BLOCKED_ACTIONS": ("greeting", ),
         "BLOCKED_GREETING_FILE": "resources/blocked_greeting.wav",
         "VOICE_MAIL_GREETING_FILE": "resources/general_greeting.wav",
         "VOICE_MAIL_GOODBYE_FILE": "resources/goodbye.wav",
