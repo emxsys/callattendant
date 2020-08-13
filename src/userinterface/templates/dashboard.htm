@@ -16,6 +16,7 @@
 
 <div class="container" >
   <div>
+    <h4 class="pt-2">Statistics</h4>
     <div class="card-columns">
       <div class="card rounded-pill bg-primary text-white stats-card">
         <img class="card-img-top" src="/static/telephone-inbound.svg" alt="Card image" height="100" style="opacity: 0.2;">
@@ -51,7 +52,7 @@
     {% if new_messages > 0 %}
     <div class="container m-2">
       <button id="new-messages" type="button" class="btn btn-secondary">
-        <i>New Messages Waiting</i><span class="badge badge-primary"><span id="total-unplayed">{{ new_messages }}</span>
+        <i>New Messages Waiting </i><span class="badge badge-primary"><span id="total-unplayed">{{ new_messages }}</span>
       </button>
     </div>
     {% endif %}

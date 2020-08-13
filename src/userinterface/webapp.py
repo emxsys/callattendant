@@ -38,6 +38,7 @@ from messaging.voicemail import VoiceMail
 from datetime import datetime
 from glob import glob
 import os
+import re
 import screening.utils
 import sqlite3
 import _thread
@@ -208,17 +209,31 @@ def dashboard():
     )
 
 
-@app.route('/calls')
+@app.route('/calls', methods=['GET'])
 def call_log():
     """
-    Display the call details from the call log table
+    Display the call history from the call log table.
     """
 
+    # Get GET request args, if available
+    number = request.args.get('number')
+    search_text = request.args.get('search')
+
+    # Get search criteria, if applicable
+    search_criteria = ""
+    if search_text:
+        num_list = re.findall('[0-9]+', search_text)
+        number = "".join(num_list)  # override GET arg if we're searching
+        search_criteria = "WHERE Number='{}'".format(number)
+
     # Get values used for pagination of the call log
-    total = get_row_count('CallLog')
+    sql = "SELECT COUNT(*) FROM CallLog {}".format(search_criteria)
+    g.cur.execute(sql)
+    total = g.cur.fetchone()[0]
     page, per_page, offset = get_page_args(
-        page_parameter="page", per_page_parameter="per_page"
-    )
+        page_parameter="page",
+        per_page_parameter="per_page")
+
     # Get the call log subset, limited to the pagination settings
     sql = """SELECT
         a.CallLogID,
@@ -227,7 +242,7 @@ def call_log():
             WHEN c.PhoneNo is not null then c.Name
             ELSE a.Name
         END Name,
-        a.Number,
+        a.Number Number,
         a.Date,
         a.Time,
         a.Action,
@@ -242,8 +257,9 @@ def call_log():
     LEFT JOIN Whitelist AS b ON a.Number = b.PhoneNo
     LEFT JOIN Blacklist AS c ON a.Number = c.PhoneNo
     LEFT JOIN Message AS d ON a.CallLogID = d.CallLogID
+    {}
     ORDER BY a.SystemDateTime DESC
-    LIMIT {}, {}""".format(offset, per_page)
+    LIMIT {}, {}""".format(search_criteria, offset, per_page)
     g.cur.execute(sql)
     result_set = g.cur.fetchall()
 
@@ -256,7 +272,6 @@ def call_log():
         # In the static folder we have created a soft-link to the
         # data/messsages folder containing the actual messages.
         # We'll use the static-based path for the wav-file urls
-        # in the web app
         filepath = row[11]
         if filepath is not None:
             basename = os.path.basename(filepath)
@@ -286,27 +301,16 @@ def call_log():
         total=total,
         record_name="calls",
         format_total=True,
-        format_number=True,
-    )
-    # Gather some metrics
-    sql = "select count(*) from CallLog where `Action` = 'Blocked'"""
-    g.cur.execute(sql)
-    blocked = g.cur.fetchone()[0]
-    if total == 0:
-        percent_blocked = 0
-    else:
-        percent_blocked = blocked / total * 100
+        format_number=True)
+
     # Render the resullts with pagination
     return render_template(
         'call_log.htm',
         calls=calls,
-        total_calls='{:,}'.format(total),
-        blocked_calls='{:,}'.format(blocked),
-        percent_blocked='{0:.0f}%'.format(percent_blocked),
+        search_criteria=search_criteria,
         page=page,
         per_page=per_page,
-        pagination=pagination,
-    )
+        pagination=pagination)
 
 
 @app.route('/blocked')
@@ -319,11 +323,11 @@ def blacklist():
     page, per_page, offset = get_page_args(
         page_parameter="page", per_page_parameter="per_page"
     )
+
     # Get the blacklist subset, limited to the pagination settings
     sql = 'SELECT * from Blacklist ORDER BY datetime(SystemDateTime) DESC limit {}, {}'.format(offset, per_page)
     g.cur.execute(sql)
     result_set = g.cur.fetchall()
-
     records = []
     for record in result_set:
         number = record[0]

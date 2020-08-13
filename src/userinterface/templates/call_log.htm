@@ -19,10 +19,17 @@ The template is rendered with an array of dictionary objects named 'calls'.
 
 <div class="container">
   <h2>Call Log <img src="../static/telephone-inbound.svg" alt="" width="32" height="32"></h2>
-  {% if calls %}
-  <div class="container">
-    <p>Search criteria goes here</p>
+  {% if search_criteria %}
+  <div class="row">
+    <div class="w-400">
+      <strong>{{ search_criteria }}&nbsp;&nbsp;</strong>
+      <button id="cancel-search" type="button" class="close" aria-label="Cancel Search">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
   </div>
+  {% endif %}
+  {% if calls %}
   <div>
     <div class="p-1 container">
     {{ pagination.info }}
@@ -116,6 +123,7 @@ The template is rendered with an array of dictionary objects named 'calls'.
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 <script type="text/javascript">
 
+// A table element was clicked: display the manage caller page
 $('.manage-caller').on('click', function (event) {
   var $elem = $(event.currentTarget)
   // find the parent table row which has the call no.
@@ -124,6 +132,12 @@ $('.manage-caller').on('click', function (event) {
   window.location.href = "/manage_caller/" + call_no
 });
 
+// Cancel call-log history display and revert to full log
+$('#cancel-search').on('click', function (event) {
+  window.location.href = "/calls"
+});
+
+// Show the play voice message dialog
 $('#messageModal').on('show.bs.modal', function (event) {
   // Button that triggered the modal
   var $button = $(event.relatedTarget)
@@ -141,23 +155,21 @@ $('#messageModal').on('show.bs.modal', function (event) {
   $modal.find('audio').trigger('play')
   $modal.on('hidden.bs.modal', function () {
     $audio.trigger('pause')
-  });
 });
+  });
 
 
+// Highlight this page in the menu
 $(document).ready( function () {
-  // Highlight this page in the menu
   $('#log').addClass('active');
 });
 
-
+// Make the table responsive on small screens
 function handleMediaQuery(x) {
   if (x.matches) { // If media query matches
       $('table').addClass('table-responsive')
-      //document.body.style.backgroundColor = "yellow";
   } else {
       $('table').removeClass('table-responsive')
-      //document.body.style.backgroundColor = "pink";
   }
 }
 var x = window.matchMedia("(max-width: 770px)")
