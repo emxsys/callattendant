@@ -191,11 +191,9 @@ class Modem(object):
 
                     # https://stackoverflow.com/questions/1285911/how-do-i-check-that-multiple-keys-are-in-a-dict-in-a-single-pass
                     if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
-                        print("> Screening call...")
-
+                        # Screen caller
                         self.handle_caller(call_record)
                         call_record = {}
-
                         # Sleep for a short duration ( secs) to allow the
                         # call attendant to screen the call before resuming
                         time.sleep(2)
@@ -268,7 +266,8 @@ class Modem(object):
             :param audio_file_name: a wav file with 8-bit linear
                 compression recored at 8.0 kHz sampling rate
         """
-        print("> Playing {}...".format(audio_file_name))
+        if self.config["DEBUG"]:
+            print("> Playing {}...".format(audio_file_name))
 
         self._serial.cancel_read()
         with self._lock:
@@ -311,7 +310,8 @@ class Modem(object):
                 recorded audio; recored with 8-bit linear compression
                 at 8.0 kHz sampling rate
         """
-        print("> Recording {}...".format(audio_file_name))
+        if self.config["DEBUG"]:
+            print("> Recording {}...".format(audio_file_name))
 
         debugging = self.config["DEBUG"]
 

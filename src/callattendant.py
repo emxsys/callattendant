@@ -135,6 +135,11 @@ class CallAttendant(object):
                 # Wait (blocking) for a caller
                 caller = self._caller_queue.get()
 
+                # An incoming call has occurred, log it
+                number = caller["NMBR"]
+                phone_no = "{}-{}-{}".format(number[0:3], number[3:6], number[6:])
+                print("Incoming call from {}".format(phone_no))
+
                 # Perform the call screening
                 caller_permitted = False
                 caller_blocked = False
@@ -143,7 +148,7 @@ class CallAttendant(object):
 
                 # Check the whitelist
                 if "whitelist" in screening_mode:
-                    print("Checking whitelist(s)")
+                    print("> Checking whitelist(s)")
                     is_whitelisted, reason = self.screener.is_whitelisted(caller)
                     if is_whitelisted:
                         caller_permitted = True
@@ -152,7 +157,7 @@ class CallAttendant(object):
 
                 # Now check the blacklist if not preempted by whitelist
                 if not caller_permitted and "blacklist" in screening_mode:
-                    print("Checking blacklist(s)")
+                    print("> Checking blacklist(s)")
                     is_blacklisted, reason = self.screener.is_blacklisted(caller)
                     if is_blacklisted:
                         caller_blocked = True
@@ -162,8 +167,9 @@ class CallAttendant(object):
                 if not caller_permitted and not caller_blocked:
                     action = "Screened"
 
-                # Log every call to the database
+                # Log every call to the database (and console)
                 call_no = self.logger.log_caller(caller, action, reason)
+                print("--> {} {}: {}".format(phone_no, action, reason))
 
                 # Apply the configured actions to blocked callers
                 if caller_blocked:
@@ -173,13 +179,16 @@ class CallAttendant(object):
                         try:
                             # Play greeting
                             if "greeting" in blocked["actions"]:
+                                print(">> Playing greeting...")
                                 self.modem.play_audio(blocked_greeting_file)
 
                             # Record message
                             if "record_message" in blocked["actions"]:
+                                print(">> Recording message...")
                                 self.voice_mail.record_message(call_no, caller)
 
                             elif "voice_mail" in blocked["actions"]:
+                                print(">> Starting voice mail...")
                                 self.voice_mail.voice_messaging_menu(call_no, caller)
 
                         except RuntimeError as e:

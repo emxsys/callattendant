@@ -35,7 +35,7 @@ class NomoroboService(object):
     def lookup_number(self, number):
         number = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
         url = "https://www.nomorobo.com/lookup/%s" % number
-        print(url)
+        # print(url)
         headers = {}
         allowed_codes = [404]  # allow not found response
         content = self.http_get(url, headers, allowed_codes)
@@ -47,10 +47,10 @@ class NomoroboService(object):
         if len(positions) > 0:
             position = positions[0].get_text()
             if position.upper().find("DO NOT ANSWER") > -1:
-                print("Spammer!")
+                # print("Spammer!")
                 score = 2  # = is spam
             else:
-                print("Nuisance!")
+                # print("Nuisance!")
                 score = 1  # = might be spam (caller is "Political", "Charity", or "Debt Collector")
 
         reason = ""
