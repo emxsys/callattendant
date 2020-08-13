@@ -69,13 +69,12 @@
                 <th>Time</th>
                 <th>Caller</th>
                 <th>Actions</th>
-                <th></th>
               </tr>
             </thead>
             <tbody>
             {% for item in recent_calls %}
               <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}" data-call-no="{{ item.call_no }}">
-                <td class="manage-caller">
+                <td class="manage-caller time">
                   <b>{{ item.time }}</b>
                   <span class="d-md-none"><br></span>
                   {{ item.date }}
@@ -288,6 +287,17 @@ $('#messageModal').on('show.bs.modal', function (event) {
   });
 });
 
+// Make table(s) responsive when small
+function handleMediaQuery(x) {
+  if (x.matches) { // If media query matches
+      $('#recent-calls').addClass('table-responsive')
+  } else {
+      $('#recent-calls').removeClass('table-responsive')
+  }
+}
+var x = window.matchMedia("(max-width: 500px)")
+handleMediaQuery(x)             // Call listener function at run time
+x.addListener(handleMediaQuery) // Attach listener function on state changes
 
 // Update the Main Menu
 $(document).ready( function () {

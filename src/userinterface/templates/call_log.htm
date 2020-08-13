@@ -21,27 +21,38 @@ The template is rendered with an array of dictionary objects named 'calls'.
   <h2>Call Log</h2>
   {% if calls %}
   <div>
+    <div class="p-1">
+    {{ pagination.info }}
     {{ pagination.links }}
+    </div>
     <table id="calls" class="table table-hover table-sm" width="100%">
       <thead>
         <tr>
-          <th>Call</th>
-          <th>Caller</th>
           <th>Time</th>
-          <th>Action</th>
+          <th>Caller</th>
+          <th>Actions</th>
+          <th>Reason</th>
         </tr>
       </thead>
       <tbody>
       {% for item in calls %}
         <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}" data-call-no="{{ item.call_no }}">
-          <td class="px-1 py-2 callno">
-            <span class="manage-caller clickable">{{ item.call_no }}</span>
-            <span class="badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
+          <td class="manage-caller time">
+            <b>{{ item.time }}</b>
+            <span class="d-xl-none"><br></span>
+            {{ item.date }}
+          </td>
+          <td class="manage-caller">
+            <b>{{ item.phone_no }}</b> -
+            <span class="d-md-none"><br></span>
+            <i>{{ item.name }}</i>
+          </td>
+          <td class="callno">
+            <span class="manage-caller badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
               {{ item.action }}
             </span>
             <span>
             {% if item.msg_no is not none %}
-              <br/>
               <button type="button" class="message-btn btn btn-sm btn-outline-light text-dark" data-toggle="modal" data-target="#messageModal"
                   data-message-no="{{ item.msg_no }}" data-call-no="{{ item.call_no }}" data-phone-no="{{ item.phone_no }}" data-wav-file="{{ item.wav_file }}"  >
                 <img src={% if item.msg_played == 0 %}"../static/chat-left-text.svg"{% else %}"../static/chat-left.svg"{% endif %} alt="" width="16" height="16" title="Message">
@@ -49,14 +60,7 @@ The template is rendered with an array of dictionary objects named 'calls'.
             {% endif %}
             </span>
           </td>
-          <td class="px-2 py-2 phoneno manage-caller clickable">
-            <b>{{ item.phone_no }}</b><br>
-            <i>{{ item.name }}</i></td>
-          <td class="p-2 time manage-caller clickable">
-            <b>{{ item.time }}</b><br>
-            {{ item.date }}
-          </td>
-          <td class="p-2 reason manage-caller clickable">
+          <td class="manage-caller">
             {{ item.reason }}
           </td>
         </tr>
@@ -137,10 +141,26 @@ $('#messageModal').on('show.bs.modal', function (event) {
   });
 });
 
+
 $(document).ready( function () {
   // Highlight this page in the menu
   $('#log').addClass('active');
 });
+
+
+function handleMediaQuery(x) {
+  if (x.matches) { // If media query matches
+      $('table').addClass('table-responsive')
+      //document.body.style.backgroundColor = "yellow";
+  } else {
+      $('table').removeClass('table-responsive')
+      //document.body.style.backgroundColor = "pink";
+  }
+}
+var x = window.matchMedia("(max-width: 770px)")
+handleMediaQuery(x)             // Call listener function at run time
+x.addListener(handleMediaQuery) // Attach listener function on state changes
+
 </script>
 </body>
 </html>
