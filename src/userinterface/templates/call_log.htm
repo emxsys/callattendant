@@ -17,11 +17,14 @@ The template is rendered with an array of dictionary objects named 'calls'.
 
 {% include 'navbar.htm' %}
 
-<div class="container" >
-  <h2>Call Log</h2>
+<div class="container">
+  <h2>Call Log <img src="../static/telephone-inbound.svg" alt="" width="32" height="32"></h2>
   {% if calls %}
+  <div class="container">
+    <p>Search criteria goes here</p>
+  </div>
   <div>
-    <div class="p-1">
+    <div class="p-1 container">
     {{ pagination.info }}
     {{ pagination.links }}
     </div>
