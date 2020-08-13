@@ -20,16 +20,12 @@ The template is rendered with an array of dictionary objects named 'calls'.
 <div class="container">
   <h2>Call Log <img src="../static/telephone-inbound.svg" alt="" width="32" height="32"></h2>
   {% if search_criteria %}
-  <div class="row">
-    <div class="w-400">
-      <strong>{{ search_criteria }}&nbsp;&nbsp;</strong>
-      <button id="cancel-search" type="button" class="close" aria-label="Cancel Search">
-        <span aria-hidden="true">&times;</span>
-      </button>
-    </div>
-  </div>
+      <strong>Search: {{ search_criteria }}&nbsp;&nbsp;</strong>
+      <button id="cancel-search" type="button" class="btn btn-secondary btn-sm" aria-label="Cancel">Cancel</button>
   {% endif %}
-  {% if calls %}
+  {% if not calls %}
+  <p><strong><i>Results: None</i></strong></p>
+  {% else %}
   <div>
     <div class="p-1 container">
     {{ pagination.info }}
