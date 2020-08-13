@@ -532,14 +532,18 @@ def messages():
         basename = os.path.basename(row[4])
         filepath = os.path.join("../static/messages", basename)
         number = row[3]
+        # Create a date object from the date time string
+        date_time = datetime.strptime(row[6][:19], '%Y-%m-%d %H:%M:%S')
+
         messages.append(dict(
             msg_no=row[0],
             call_no=row[1],
             name=row[2],
             phone_no='{}-{}-{}'.format(number[0:3], number[3:6], number[6:]),
             wav_file=filepath,
-            played_status=row[5],
-            date_time=row[6],
+            msg_played=row[5],
+            date=date_time.strftime('%d-%b-%y'),
+            time=date_time.strftime('%I:%M %p')
             ))
 
     # Create a pagination object for the page
