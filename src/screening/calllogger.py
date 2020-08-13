@@ -63,6 +63,8 @@ class CallLogger(object):
             CallLogID INTEGER PRIMARY KEY AUTOINCREMENT,
             Name TEXT,
             Number TEXT,
+            Action TEXT,
+            Reason TEXT,
             Date TEXT,
             Time TEXT,
             SystemDateTime TEXT);"""
