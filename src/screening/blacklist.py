@@ -135,13 +135,6 @@ class Blacklist(object):
                 Name TEXT,
                 Reason TEXT,
                 SystemDateTime TEXT);
-
-            CREATE TABLE IF NOT EXISTS Cache (
-                PhoneNo TEXT PRIMARY KEY,
-                SpamScore INTEGER,
-                Reason TEXT,
-                SystemDateTime TEXT);
-
             '''
         curs = self.db.cursor()
         curs.executescript(sql)
