@@ -64,6 +64,7 @@ class VoiceMail:
         self.message_indicator.blink()
 
         tries = 0
+        rec_msg = False
         while tries < 3:
             self.modem.play_audio(voice_mail_menu_file)
             success, digit = self.modem.wait_for_keypress(5)
@@ -71,6 +72,7 @@ class VoiceMail:
                 break
             if digit == '1':
                 self.record_message(call_no, caller)
+                rec_msg = True  # prevent a duplicate reset_message_indicator
                 break
             elif digit == '0':
                 # End this call
@@ -80,7 +82,8 @@ class VoiceMail:
                 self.modem.play_audio(invalid_response_file)
                 tries += 1
         self.modem.play_audio(goodbye_file)
-        self.reset_message_indicator()
+        if not rec_msg:
+            self.reset_message_indicator()
 
     def record_message(self, call_no, caller):
         """
