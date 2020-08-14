@@ -27,17 +27,19 @@ import os
 from pprint import pprint
 from datetime import datetime
 
+
 class Message:
 
-    def __init__(self, db, config):
+    def __init__(self, db, config, message_indicator):
         """
         Initialize the database tables for voice messages.
         """
+        if config["DEBUG"]:
+            print("Initializing Message")
+
         self.db = db
         self.config = config
-
-        if self.config["DEBUG"]:
-            print("Initializing Message")
+        self.message_indicator = message_indicator
 
         # Create the message table if it does not exist
         if self.db:
@@ -54,7 +56,7 @@ class Message:
             curs.executescript(sql)
             curs.close()
 
-        if self.config["DEBUG"]:
+        if config["DEBUG"]:
             print("Message initialized")
 
     def add(self, call_no, filepath):
@@ -153,38 +155,20 @@ class Message:
         return unplayed_count
 
     def reset_message_indicator(self):
-        message_indicator = self.config["MESSAGE_INDICATOR_LED"]
         if self.get_unplayed_count() > 0:
-            message_indicator.pulse()
+            self.message_indicator.pulse()
         else:
-            message_indicator.turn_off()
+            self.message_indicator.turn_off()
 
 
 def test(db, config):
     """
      Unit Tests
     """
-
     print("*** Running Message Unit Tests ***")
 
-    msg = Message(db, config)
-
-    # Test data
-    caller = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
-
     try:
-
-
-        count = voicemail.get_unplayed_count()
-        assert count == 1, "Unplayed count should be 1"
-
-        # List the records
-        query = 'select * from Message'
-        curs = db.execute(query)
-        print(query + " results:")
-        pprint(curs.fetchall())
-
-        voicemail.delete_message(msg_no)
+        assert False, "Unit tests have not been implemented"
 
     except AssertionError as e:
         print("*** Unit Test FAILED ***")

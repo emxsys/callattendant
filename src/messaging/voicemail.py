@@ -41,7 +41,7 @@ class VoiceMail:
         self.config = config
         self.modem = modem
         self.message_indicator = message_indicator
-        self.messages = Message(db, config)
+        self.messages = Message(db, config, message_indicator)
 
         # Pulse the indicator if an unplayed msg is waiting
         self.reset_message_indicator()
