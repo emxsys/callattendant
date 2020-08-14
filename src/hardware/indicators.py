@@ -51,11 +51,16 @@ class LEDIndicator(object):
 
 
 class PWMLEDIndicator(LEDIndicator):
+
     def turn_on(self):
         self.led.on()
 
     def blink(self, max_times=10):
         # blink in a separate thread
+        self.led.blink(0.5, 0.2, n=max_times)
+
+    def pulse(self, max_times=10):
+        # pulse in a separate thread
         self.led.pulse(n=max_times)
 
     def turn_off(self):
@@ -69,7 +74,6 @@ class RingIndicator(LEDIndicator):
 
     def __init__(self, gpio_pin=GPIO_RING):
         LEDIndicator.__init__(self, gpio_pin)
-
 
 class ApprovedIndicator(LEDIndicator):
 
@@ -85,12 +89,24 @@ class BlockedIndicator(LEDIndicator):
 
 class MessageIndicator(PWMLEDIndicator):
 
-    def blink(self, max_times=None):
-        # blink in a separate thread
-        self.led.pulse(n=max_times)
+    def turn_off(self):
+        print("{MSG LED OFF}")
+        super().turn_off()
+
+    def turn_on(self):
+        print("{MSG LED ON}")
+        super().turn_on()
+
+    def blink(self):
+        print("{MSG LED Blinking}")
+        super().blink(max_times=None)   # None = forever
+
+    def pulse(self):
+        print("{MSG LED Pulsing}")
+        super().pulse(max_times=None)   # None = forever
 
     def __init__(self, gpio_pin=GPIO_MESSAGE):
-        PWMLEDIndicator.__init__(self, gpio_pin)
+        super().__init__(gpio_pin)
 
 
 def test():

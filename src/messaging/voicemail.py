@@ -26,6 +26,7 @@
 import os
 from pprint import pprint
 from datetime import datetime
+from message import Message
 
 class VoiceMail:
 
@@ -33,31 +34,17 @@ class VoiceMail:
         """
         Initialize the database tables for voice messages.
         """
+        if config["DEBUG"]:
+            print("Initializing VoiceMail")
+
         self.db = db
         self.config = config
         self.modem = modem
         self.message_indicator = message_indicator
+        self.messages = Message(db, config)
 
-        if self.config["DEBUG"]:
-            print("Initializing VoiceMail")
-
-        # Create the message table if it does not exist
-        if self.db:
-            sql = """
-                CREATE TABLE IF NOT EXISTS Message (
-                    MessageID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    CallLogID INTEGER,
-                    Played BOOLEAN DEFAULT 0 NOT NULL CHECK (Played IN (0,1)),
-                    Filename TEXT,
-                    DateTime TEXT,
-                    FOREIGN KEY(CallLogID) REFERENCES CallLog(CallLogID));"""
-
-            curs = self.db.cursor()
-            curs.executescript(sql)
-            curs.close()
-
-        if self.get_unplayed_count() > 0:
-            self.message_indicator.blink()
+        # Pulse the indicator if an unplayed msg is waiting
+        self.reset_message_indicator()
 
         if self.config["DEBUG"]:
             print("VoiceMail initialized")
@@ -72,6 +59,9 @@ class VoiceMail:
         voice_mail_menu_file = os.path.join(root_path, voice_mail['menu_file'])
         invalid_response_file = os.path.join(root_path, voice_mail['invalid_response_file'])
         goodbye_file = os.path.join(root_path, voice_mail['goodbye_file'])
+
+        # Indicate the user is in the menu
+        self.message_indicator.blink()
 
         tries = 0
         while tries < 3:
@@ -89,8 +79,8 @@ class VoiceMail:
                 # Try again--up to a limit
                 self.modem.play_audio(invalid_response_file)
                 tries += 1
-
         self.modem.play_audio(goodbye_file)
+        self.reset_message_indicator()
 
     def record_message(self, call_no, caller):
         """
@@ -108,105 +98,31 @@ class VoiceMail:
 
         self.modem.play_audio(self.config["VOICE_MAIL_LEAVE_MESSAGE_FILE"])
 
-        # Recording in progress
+        # Show recording in progress
         self.message_indicator.turn_on()
+
         if self.modem.record_audio(filepath):
-
-            # Save to Message table
-            sql = """
-                INSERT INTO Message(
-                    CallLogID,
-                    Filename,
-                    DateTime)
-                VALUES(?,?,?)
-            """
-            arguments = [
-                call_no,
-                filepath,
-                (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:19])
-            ]
-            self.db.execute(sql, arguments)
-            self.db.commit()
-
-            # Return the MessageID
-            query = "select last_insert_rowid()"
-            curs = self.db.cursor()
-            curs.execute(query)
-            msg_no = curs.fetchone()[0]
-            curs.close()
-
-            # Indicate a new message is waiting
-            self.message_indicator.blink()
-
+            # Save to Message table (message.add will update the indicator)
+            msg_no = self.messages.add(call_no, filepath)
+            # Return the messageID on success
             return msg_no
         else:
-            if self.get_unplayed_count() > 0:
-                self.message_indicator.blink()
-            else:
-                self.message_indicator.turn_off()
+            self.reset_message_indicator()
+            # Return failure
             return None
 
     def delete_message(self, msg_no):
         """
         Removes the message record and associated wav file.
         """
-        sql = "SELECT Filename FROM Message WHERE MessageID=:msg_no"
-        arguments = {'msg_no': msg_no}
-        curs = self.db.execute(sql, arguments)
-        results = curs.fetchone()
-        curs.close()
+        # Remove  message and file (message.delete will update the indicator)
+        return self.messages.delete(msg_no)
 
-        success = True
-        if len(results) > 0:
-            # Remove the wav file
-            filename = results[0]
-            print("Deleting message: {}".format(filename))
-            try:
-                os.remove(filename)
-            except OSError as error:
-                pprint(error)
-                print("{} cannot be removed".format(filename))
-                success = False
-
-            # Delete the row
-            if success:
-                sql = "DELETE FROM Message WHERE MessageID=:msg_no"
-                arguments = {'msg_no': msg_no}
-                self.db.execute(sql, arguments)
-                self.db.commit()
-
-                if self.config["DEBUG"]:
-                    print("Message entry removed")
-                    pprint(arguments)
-
-        if self.get_unplayed_count() > 0:
-            self.message_indicator.blink()
-
-        return success
-
-    def update_played(self, msg_no, played=1):
-        """
-        Updates the played status of the given message
-        """
-        try:
-            sql = "UPDATE Message SET Played=:played WHERE MessageID=:msg_no"
-            arguments = {'msg_no': msg_no, 'played': played}
-            self.db.execute(sql, arguments)
-            self.db.commit()
-        except Exception as e:
-            print("** Error updating message played status:")
-            pprint(e)
-            return False
-        return True
-
-    def get_unplayed_count(self):
-        # Get the number of unread messages
-        sql = "SELECT COUNT(*) FROM Message WHERE Played = 0"
-        curs = self.db.execute(sql)
-        unplayed_count = curs.fetchone()[0]
-        if self.config["DEBUG"]:
-            print("Unplayed message count is {}".format(unplayed_count))
-        return unplayed_count
+    def reset_message_indicator(self):
+        if self.messages.get_unplayed_count() > 0:
+            self.message_indicator.pulse()
+        else:
+            self.message_indicator.turn_off()
 
 
 def test(db, config):

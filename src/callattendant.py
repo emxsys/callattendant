@@ -73,6 +73,8 @@ class CallAttendant(object):
         self.blocked_indicator = BlockedIndicator()
         self.ring_indicator = RingIndicator()
         self.message_indicator = MessageIndicator()
+        # The message indicator is shared with the webapp
+        self.config["MESSAGE_INDICATOR_LED"] = self.message_indicator
 
         # Screening subsystem
         self.logger = CallLogger(self.db, self.config)
@@ -90,7 +92,6 @@ class CallAttendant(object):
         # we use a memory database which can't be shared between threads.
         if not self.config["TESTING"]:
             print("Staring the Flask webapp")
-            self.config["VOICE_MAIL_SYSTEM"] = self.voice_mail
             webapp.start(self.config)
 
     def handle_caller(self, caller):
@@ -200,11 +201,6 @@ class CallAttendant(object):
                         finally:
                             # Go "on-hook"
                             self.modem.hang_up()
-
-                if self.voice_mail.get_unplayed_count() > 0:
-                    self.message_indicator.blink()
-                else:
-                    self.message_indicator.turn_off()
 
             except Exception as e:
                 pprint(e)
