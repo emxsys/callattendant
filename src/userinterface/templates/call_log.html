@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Call Log{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2>Call Log <img src="../static/telephone-inbound.svg" alt="" width="32" height="32"></h2>
+  {% if search_criteria %}
+      <strong>Search: {{ search_criteria }}&nbsp;&nbsp;</strong>
+      <button id="cancel-search" type="button" class="btn btn-secondary btn-sm" aria-label="Cancel">Cancel</button>
+  {% endif %}
+  {% if not calls %}
+  <p><strong><i>Results: None</i></strong></p>
+  {% else %}
+  <div class="mb-2">
+    <div>
+    {{ pagination.info }}
+    {{ pagination.links }}
+    </div>
+    <table id="calls" class="table table-hover table-sm" width="100%">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Caller</th>
+          <th>Actions</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for item in calls %}
+        <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}" data-call-no="{{ item.call_no }}">
+          <td class="manage-caller time">
+            <b>{{ item.time }}</b>
+            <span class="d-xl-none"><br></span>
+            {{ item.date }}
+          </td>
+          <td class="manage-caller">
+            <b>{{ item.phone_no }}</b> -
+            <span class="d-md-none"><br></span>
+            <i>{{ item.name }}</i>
+          </td>
+          <td class="callno">
+            <span class="manage-caller badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
+              {{ item.action }}
+            </span>
+            <span>
+            {% if item.msg_no is not none %}
+              <button type="button" class="message-btn btn btn-sm btn-outline-light text-dark" data-toggle="modal" data-target="#modal-play-message"
+                  data-message-no="{{ item.msg_no }}"
+                  data-msg-played="{{ item.msg_played}}"
+                  data-call-no="{{ item.call_no }}"
+                  data-phone-no="{{ item.phone_no }}"
+                  data-wav-file="{{ item.wav_file }}"  >
+                <img src={% if item.msg_played == 0 %}"../static/chat-left-text.svg"{% else %}"../static/chat-left.svg"{% endif %} alt="" width="16" height="16" title="Message">
+              </button>
+            {% endif %}
+            </span>
+          </td>
+          <td class="manage-caller">
+            {{ item.reason }}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {{ pagination.links }}
+    {% endif %}
+  </div>
+</div>
+{% include 'modal_play_message.html' %}
+{% endblock %}
+
+{% block js %}
+<script>
+  // A table element was clicked: display the manage caller page
+  $('.manage-caller').on('click', function (event) {
+    var $elem = $(event.currentTarget)
+    // find the parent table row which has the call no.
+    var $tr = $elem.parents('tr')
+    var call_no = $($tr[0]).data('call-no')
+    window.location.href = "/manage_caller/" + call_no
+  });
+
+  // Cancel call-log history display and revert to full log
+  $('#cancel-search').on('click', function (event) {
+    window.location.href = "/calls"
+  });
+
+  // Show the play voice message dialog
+  $('#modal-play-message').on('show.bs.modal', function (event) {
+    // Button that triggered the modal
+    var $button = $(event.relatedTarget)
+    // Extract info from data-* attributes
+    var msg_no = $button.data('message-no')
+    var msg_played = $button.data('msg-played')
+    var call_no = $button.data('call-no')
+    var phone_no = $button.data('phone-no')
+    var wav_file = $button.data('wav-file')
+    var $modal = $(this)
+    var $audio = $modal.find('audio')
+    $modal.find('.modal-title').text('Playing Message from ' + phone_no)
+    $modal.find('#call-no').text('Voice message from call #' + call_no)
+    $modal.find('audio source').attr("src", wav_file)
+    $modal.find('audio').trigger('load')
+    $modal.find('audio').trigger('play')
+    $modal.on('hidden.bs.modal', function () { $audio.trigger('pause') });
+    if (msg_played == 0) {
+      // Set the status to 1; "played"
+      var data = { msg_no: msg_no, status: 1 }
+      $.post("/messages/played", data, function(results) {
+        if (results.success) {
+          $('#msg-'+results.msg_no).remove()
+          $('#total-unplayed').text(results.unplayed_count)
+        }
+      });
+    }
+  });
+
+  // Make the table responsive on small screens
+  function handleMediaQuery(x) {
+    if (x.matches) { // If media query matches
+        $('table').addClass('table-responsive')
+    } else {
+        $('table').removeClass('table-responsive')
+    }
+  }
+  var x = window.matchMedia("(max-width: 770px)")
+  handleMediaQuery(x)             // Call listener function at run time
+  x.addListener(handleMediaQuery) // Attach listener function on state changes
+</script>
+{% endblock %}

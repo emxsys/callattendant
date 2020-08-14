@@ -197,7 +197,8 @@ def dashboard():
 
     # Render the resullts
     return render_template(
-        'dashboard.htm',
+        'dashboard.html',
+        active_nav_item="home",
         recent_calls=recent_calls,
         top_permitted=top_permitted,
         top_blocked=top_blocked,
@@ -305,7 +306,8 @@ def call_log():
 
     # Render the resullts with pagination
     return render_template(
-        'call_log.htm',
+        'call_log.html',
+        active_nav_item='call-log',
         calls=calls,
         search_criteria=search_criteria,
         page=page,
@@ -561,7 +563,8 @@ def messages():
     )
     # Render the results with pagination
     return render_template(
-        "messages.htm",
+        "messages.html",
+        active_nav_item='messages',
         messages=messages,
         total_messages=total,
         total_unplayed=unplayed_count,
@@ -605,7 +608,7 @@ def message_played():
     return jsonify(success=success, msg_no=msg_no, unplayed_count=unplayed_count)
 
 
-@app.route('/manage_caller/<int:call_log_id>', methods=['GET', 'POST'])
+@app.route('/caller/manage/<int:call_log_id>', methods=['GET', 'POST'])
 def manage_caller(call_log_id):
     """
     Display the Manage Caller form
@@ -660,23 +663,23 @@ def manage_caller(call_log_id):
         record = result_set[0]
         number = record[2]
         caller.update(dict(
-            Call_ID=record[0],
-            Phone_Number='{}-{}-{}'.format(number[0:3], number[3:6], number[6:]),
-            Name=record[1],
-            Whitelisted=record[3],
-            Blacklisted=record[4],
-            WhitelistReason=record[5],
-            BlacklistReason=record[6]))
+            call_no=record[0],
+            phone_no='{}-{}-{}'.format(number[0:3], number[3:6], number[6:]),
+            name=record[1],
+            whitelisted=record[3],
+            blacklisted=record[4],
+            whitelist_reason=record[5],
+            blacklist_reason=record[6]))
     else:
         caller.update(dict(
-            Call_ID=call_log_id,
-            Phone_Number='Number Not Found',
-            Name='',
-            Whitelisted='N',
-            Blacklisted='N',
-            WhitelistReason='',
-            BlacklistReason=''))
-    return render_template('manage_caller.htm', caller=caller)
+            call_no=call_log_id,
+            phone_no='Number Not Found',
+            name='',
+            whitelisted='N',
+            blacklisted='N',
+            whitelist_reason='',
+            blacklist_reason=''))
+    return render_template('manage_caller.html', caller=caller)
 
 
 def get_db():

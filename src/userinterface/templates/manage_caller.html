@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Caller #{{ caller.call_no }}{% endblock %}
+
+{% block content %}
+ <div class="container">
+  <h4>Manage Caller {{ caller.phone_no }}</h4>
+  <h5>Name: {{ caller.name }}</h5>
+  {% if caller.whitelisted == 'Y' %}
+  <div class="alert alert-success" role="alert">
+     <h5><i>This caller is permitted and calls will not be screened or blocked</i></h4>
+  </div>
+  {% elif caller.blacklisted == 'Y' %}
+  <div class="alert alert-danger" role="alert">
+     <h5><b><i>This caller is blocked and calls will be immediately intercepted</i></b></h5>
+  </div>
+  {% else %}
+  <div class="alert alert-info" role="alert">
+     <h5>This caller is allowed but will be screened for robocalling, scams, patterns, etc.</h5>
+  </div>
+  {% endif %}
+  {% if caller.whitelisted == 'N' %}
+  <div class="alert alert-success" role="alert">
+     <form name="permit" action="/caller/manage/{{ caller.call_no }}" method="post">
+        <h5>Add to Permitted List</h5>
+        <input name="action" type="hidden" value="Permit">
+        <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
+        <div class="row">
+           <div class="col">
+              <label for="name">Name:</label>
+              <input id="name" name="name" type="text" class="form-control" placeholder="Name" value="{{ caller.name }}" />
+           </div>
+           <div class="col">
+              <label for="reason">Reason:</label>
+              <input id="reason" name="reason" type="text" class="form-control" placeholder="Reason" value="{{ caller.whitelist_reason }}" />
+           </div>
+        </div>
+        <button type="submit" class="btn btn-primary mb-2">Add</button>
+     </form>
+  </div>
+  {% else %}
+  <div class="alert alert-warning" role="alert">
+     <form name="remove-permit" action="/caller/manage/{{ caller.call_no }}" method="post">
+        <h5>Remove from Permitted List</h5>
+        <input name="action" type="hidden" value="RemovePermit">
+        <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
+        <div class="row">
+           <div class="col">
+              <label for="name">Name:</label>
+              <input id="name" name="name" type="text" disabled class="form-control" placeholder="Name" value="{{ caller.name }}" />
+           </div>
+           <div class="col">
+              <label for="reason">Reason:</label>
+              <input id="reason" name="reason" type="text" disabled class="form-control" placeholder="Reason" value="{{ caller.whitelist_reason }}" />
+           </div>
+        </div>
+        <button type="submit" class="btn btn-primary mb-2">Remove</button>
+     </form>
+  </div>
+  {% endif %}
+  {% if caller.blacklisted == 'N' %}
+  <div class="alert alert-danger" role="alert">
+     <form name="block" action="/caller/manage/{{ caller.call_no }}" method="post">
+        <h5>Add to Blocked List</h5>
+        <input name="action" type="hidden" value="Block">
+        <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
+        <div class="row">
+           <div class="col">
+              <label for="name">Name:</label>
+              <input id="name" name="name" type="text" class="form-control" placeholder="Name" value="{{ caller.name }}" />
+           </div>
+           <div class="col">
+              <label for="reason">Reason:</label>
+              <input id="reason" name="reason" type="text" class="form-control" placeholder="Reason" value="{{ caller.blacklist_reason }}" />
+           </div>
+        </div>
+        <button type="submit" class="btn btn-primary mb-2">Add</button>
+     </form>
+  </div>
+  {% else %}
+  <div class="alert alert-warning" role="alert">
+     <form name="block" action="/caller/manage/{{ caller.call_no }}" method="post">
+        <h5>Remove from Blocked List</h5>
+        <input name="action" type="hidden" value="RemoveBlock">
+        <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
+        <div class="row">
+           <div class="col">
+              <label for="name">Name:</label>
+              <input id="name" name="name" type="text" disabled class="form-control" placeholder="Name" value="{{ caller.name }}" />
+           </div>
+           <div class="col">
+              <label for="reason">Reason:</label>
+              <input id="reason" name="reason" type="text" disabled class="form-control" placeholder="Reason" value="{{ caller.blacklist_reason }}" />
+           </div>
+        </div>
+        <button type="submit" class="btn btn-primary mb-2">Remove</button>
+     </form>
+  </div>
+  {% endif %}
+ </div>
+{% endblock %}
+
