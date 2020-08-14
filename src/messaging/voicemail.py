@@ -26,35 +26,25 @@
 import os
 from pprint import pprint
 from datetime import datetime
-
+from message import Message
 
 class VoiceMail:
 
-    def __init__(self, db, config, modem):
+    def __init__(self, db, config, modem, message_indicator):
         """
         Initialize the database tables for voice messages.
         """
+        if config["DEBUG"]:
+            print("Initializing VoiceMail")
+
         self.db = db
         self.config = config
         self.modem = modem
+        self.message_indicator = message_indicator
+        self.messages = Message(db, config, message_indicator)
 
-        if self.config["DEBUG"]:
-            print("Initializing VoiceMail")
-
-        # Create the message table if it does not exist
-        if self.db:
-            sql = """
-                CREATE TABLE IF NOT EXISTS Message (
-                    MessageID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    CallLogID INTEGER,
-                    Played BOOLEAN DEFAULT 0 NOT NULL CHECK (Played IN (0,1)),
-                    Filename TEXT,
-                    DateTime TEXT,
-                    FOREIGN KEY(CallLogID) REFERENCES CallLog(CallLogID));"""
-
-            curs = self.db.cursor()
-            curs.executescript(sql)
-            curs.close()
+        # Pulse the indicator if an unplayed msg is waiting
+        self.reset_message_indicator()
 
         if self.config["DEBUG"]:
             print("VoiceMail initialized")
@@ -70,7 +60,11 @@ class VoiceMail:
         invalid_response_file = os.path.join(root_path, voice_mail['invalid_response_file'])
         goodbye_file = os.path.join(root_path, voice_mail['goodbye_file'])
 
+        # Indicate the user is in the menu
+        self.message_indicator.blink()
+
         tries = 0
+        rec_msg = False
         while tries < 3:
             self.modem.play_audio(voice_mail_menu_file)
             success, digit = self.modem.wait_for_keypress(5)
@@ -78,6 +72,7 @@ class VoiceMail:
                 break
             if digit == '1':
                 self.record_message(call_no, caller)
+                rec_msg = True  # prevent a duplicate reset_message_indicator
                 break
             elif digit == '0':
                 # End this call
@@ -86,8 +81,9 @@ class VoiceMail:
                 # Try again--up to a limit
                 self.modem.play_audio(invalid_response_file)
                 tries += 1
-
         self.modem.play_audio(goodbye_file)
+        if not rec_msg:
+            self.reset_message_indicator()
 
     def record_message(self, call_no, caller):
         """
@@ -105,83 +101,32 @@ class VoiceMail:
 
         self.modem.play_audio(self.config["VOICE_MAIL_LEAVE_MESSAGE_FILE"])
 
+        # Show recording in progress
+        self.message_indicator.turn_on()
+
         if self.modem.record_audio(filepath):
-            # TODO: Save to Message table
-            sql = """
-                INSERT INTO Message(
-                    CallLogID,
-                    Filename,
-                    DateTime)
-                VALUES(?,?,?)
-            """
-            arguments = [
-                call_no,
-                filepath,
-                (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:19])
-            ]
-            self.db.execute(sql, arguments)
-            self.db.commit()
-
-            # Return the CallLogID
-            query = "select last_insert_rowid()"
-            curs = self.db.cursor()
-            curs.execute(query)
-            msg_no = curs.fetchone()[0]
-            curs.close()
-
+            # Save to Message table (message.add will update the indicator)
+            msg_no = self.messages.add(call_no, filepath)
+            # Return the messageID on success
             return msg_no
         else:
+            self.reset_message_indicator()
+            # Return failure
             return None
 
     def delete_message(self, msg_no):
         """
         Removes the message record and associated wav file.
         """
-        sql = "SELECT Filename FROM Message WHERE MessageID=:msg_no"
-        arguments = {'msg_no': msg_no}
-        curs = self.db.execute(sql, arguments)
-        results = curs.fetchone()
-        curs.close()
+        # Remove  message and file (message.delete will update the indicator)
+        return self.messages.delete(msg_no)
 
-        success = True
-        if len(results) > 0:
-            # Remove the wav file
-            filename = results[0]
-            print("Deleting message: {}".format(filename))
-            try:
-                os.remove(filename)
-            except OSError as error:
-                pprint(error)
-                print("{} cannot be removed".format(filename))
-                success = False
+    def reset_message_indicator(self):
+        if self.messages.get_unplayed_count() > 0:
+            self.message_indicator.pulse()
+        else:
+            self.message_indicator.turn_off()
 
-            # Delete the row
-            if success:
-                sql = "DELETE FROM Message WHERE MessageID=:msg_no"
-                arguments = {'msg_no': msg_no}
-                self.db.execute(sql, arguments)
-                self.db.commit()
-
-                if self.config["DEBUG"]:
-                    print("Message entry removed")
-                    pprint(arguments)
-
-        return success
-
-    def update_played(self, msg_no, played=1):
-        """
-        Updates the played status of the given message
-        """
-        try:
-            sql = "UPDATE Message SET Played=:played WHERE MessageID=:msg_no"
-            arguments = {'msg_no': msg_no, 'played': played}
-            self.db.execute(sql, arguments)
-            self.db.commit()
-        except Exception as e:
-            print("** Error updating message played status:")
-            pprint(e)
-            return False
-        return True
 
 def test(db, config):
     """
@@ -193,7 +138,7 @@ def test(db, config):
     # Create dependencies
     from hardware.modem import Modem
     from screening.calllogger import CallLogger
-    modem = Modem(config, lambda: print("is_ringing"), lambda: print("caller"))
+    modem = Modem(config, lambda arg: arg, lambda arg: arg)
     modem.open_serial_port()
     logger = CallLogger(db, config)
     # Create the object to be tested
@@ -206,6 +151,9 @@ def test(db, config):
         call_no = logger.log_caller(caller)
 
         msg_no = voicemail.record_message(call_no, caller)
+
+        count = voicemail.get_unplayed_count()
+        assert count == 1, "Unplayed count should be 1"
 
         # List the records
         query = 'select * from Message'

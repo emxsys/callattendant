@@ -34,7 +34,7 @@ from flask import Flask, request, g, current_app, render_template, redirect, \
 from flask_paginate import Pagination, get_page_args
 from screening.blacklist import Blacklist
 from screening.whitelist import Whitelist
-from messaging.voicemail import VoiceMail
+from messaging.voicemail import Message
 from datetime import datetime
 from glob import glob
 import os
@@ -576,8 +576,8 @@ def message_delete(msg_no):
     Delete the voice message associated with call number.
     """
     print("Removing message")
-    voicemail = VoiceMail(get_db(), current_app.config, None)
-    success = voicemail.delete_message(msg_no)
+    message = Message(get_db(), current_app.config, get_message_indicator())
+    success = message.delete(msg_no)
     # Redisplay the messages page
     if success:
         return redirect("/messages", code=301)  # (re)moved permamently
@@ -593,8 +593,8 @@ def message_played():
     """
     msg_no = request.form["msg_no"]
     played = request.form["status"]
-    voicemail = VoiceMail(get_db(), current_app.config, None)
-    success = voicemail.update_played(msg_no, played)
+    message = Message(get_db(), current_app.config, get_message_indicator())
+    success = message.update_played(msg_no, played)
 
     # Get the number of unread messages
     sql = "select count(*) from message where Played = 0"
@@ -692,6 +692,10 @@ def get_db():
     return g.db
 
 
+def get_message_indicator():
+    return current_app.config.get("MESSAGE_INDICATOR_LED")
+
+
 def close_db(e=None):
     '''Clost the connection to the database'''
     # Flask template for database connections
@@ -753,6 +757,7 @@ def run_flask(config):
         app.config["ROOT_PATH"] = config["ROOT_PATH"]
         app.config["DATABASE"] = config["DATABASE"]
         app.config["VOICE_MAIL_MESSAGE_FOLDER"] = config["VOICE_MAIL_MESSAGE_FOLDER"]
+        app.config["MESSAGE_INDICATOR_LED"] = config["MESSAGE_INDICATOR_LED"]
         # Add a new derived setting
         app.config["DB_PATH"] = os.path.join(config["ROOT_PATH"], config["DATABASE"])
 
