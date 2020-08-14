@@ -27,16 +27,16 @@ import os
 from pprint import pprint
 from datetime import datetime
 
-
 class VoiceMail:
 
-    def __init__(self, db, config, modem):
+    def __init__(self, db, config, modem, message_indicator):
         """
         Initialize the database tables for voice messages.
         """
         self.db = db
         self.config = config
         self.modem = modem
+        self.message_indicator = message_indicator
 
         if self.config["DEBUG"]:
             print("Initializing VoiceMail")
@@ -55,6 +55,9 @@ class VoiceMail:
             curs = self.db.cursor()
             curs.executescript(sql)
             curs.close()
+
+        if self.get_unplayed_count() > 0:
+            self.message_indicator.blink()
 
         if self.config["DEBUG"]:
             print("VoiceMail initialized")
@@ -105,8 +108,11 @@ class VoiceMail:
 
         self.modem.play_audio(self.config["VOICE_MAIL_LEAVE_MESSAGE_FILE"])
 
+        # Recording in progress
+        self.message_indicator.turn_on()
         if self.modem.record_audio(filepath):
-            # TODO: Save to Message table
+
+            # Save to Message table
             sql = """
                 INSERT INTO Message(
                     CallLogID,
@@ -122,15 +128,22 @@ class VoiceMail:
             self.db.execute(sql, arguments)
             self.db.commit()
 
-            # Return the CallLogID
+            # Return the MessageID
             query = "select last_insert_rowid()"
             curs = self.db.cursor()
             curs.execute(query)
             msg_no = curs.fetchone()[0]
             curs.close()
 
+            # Indicate a new message is waiting
+            self.message_indicator.blink()
+
             return msg_no
         else:
+            if self.get_unplayed_count() > 0:
+                self.message_indicator.blink()
+            else:
+                self.message_indicator.turn_off()
             return None
 
     def delete_message(self, msg_no):
@@ -166,6 +179,9 @@ class VoiceMail:
                     print("Message entry removed")
                     pprint(arguments)
 
+        if self.get_unplayed_count() > 0:
+            self.message_indicator.blink()
+
         return success
 
     def update_played(self, msg_no, played=1):
@@ -183,6 +199,16 @@ class VoiceMail:
             return False
         return True
 
+    def get_unplayed_count(self):
+        # Get the number of unread messages
+        sql = "SELECT COUNT(*) FROM Message WHERE Played = 0"
+        curs = self.db.execute(sql)
+        unplayed_count = curs.fetchone()[0]
+        if self.config["DEBUG"]:
+            print("Unplayed message count is {}".format(unplayed_count))
+        return unplayed_count
+
+
 def test(db, config):
     """
      Unit Tests
@@ -193,7 +219,7 @@ def test(db, config):
     # Create dependencies
     from hardware.modem import Modem
     from screening.calllogger import CallLogger
-    modem = Modem(config, lambda: print("is_ringing"), lambda: print("caller"))
+    modem = Modem(config, lambda arg: arg, lambda arg: arg)
     modem.open_serial_port()
     logger = CallLogger(db, config)
     # Create the object to be tested
@@ -206,6 +232,9 @@ def test(db, config):
         call_no = logger.log_caller(caller)
 
         msg_no = voicemail.record_message(call_no, caller)
+
+        count = voicemail.get_unplayed_count()
+        assert count == 1, "Unplayed count should be 1"
 
         # List the records
         query = 'select * from Message'

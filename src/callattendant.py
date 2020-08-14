@@ -41,7 +41,7 @@ from screening.calllogger import CallLogger
 from screening.callscreener import CallScreener
 from messaging.voicemail import VoiceMail
 from hardware.modem import Modem
-from hardware.indicators import RingIndicator, ApprovedIndicator, BlockedIndicator
+from hardware.indicators import RingIndicator, ApprovedIndicator, BlockedIndicator, MessageIndicator
 import userinterface.webapp as webapp
 
 
@@ -68,27 +68,30 @@ class CallAttendant(object):
         # Create a synchronized queue for incoming callers from the modem
         self._caller_queue = queue.Queue()
 
-        # Screening subsystem
-        self.logger = CallLogger(self.db, self.config)
-        self.screener = CallScreener(self.db, self.config)
-
-        # Hardware subsystem
-        #  Create the modem with callback functions
-        self.modem = Modem(self.config, self.phone_ringing, self.handle_caller)
         #  Initialize the visual indicators (LEDs)
         self.approved_indicator = ApprovedIndicator()
         self.blocked_indicator = BlockedIndicator()
         self.ring_indicator = RingIndicator()
+        self.message_indicator = MessageIndicator()
+
+        # Screening subsystem
+        self.logger = CallLogger(self.db, self.config)
+        self.screener = CallScreener(self.db, self.config)
+
+        #  Hardware subsystem
+        #  Create (and starts) the modem with callback functions
+        self.modem = Modem(self.config, self.phone_ringing, self.handle_caller)
 
         # Messaging subsystem
-        self.voice_mail = VoiceMail(self.db, self.config, self.modem)
+        self.voice_mail = VoiceMail(self.db, self.config, self.modem, self.message_indicator)
 
         # Start the User Interface subsystem (Flask)
         # Skip if we're running functional tests, because when testing
         # we use a memory database which can't be shared between threads.
         if not self.config["TESTING"]:
             print("Staring the Flask webapp")
-            webapp.start(config)
+            self.config["VOICE_MAIL_SYSTEM"] = self.voice_mail
+            webapp.start(self.config)
 
     def handle_caller(self, caller):
         """
@@ -109,7 +112,7 @@ class CallAttendant(object):
             :param enabled: If True, signals the phone is ringing
         """
         if enabled:
-            self.ring_indicator.turn_on()
+            self.ring_indicator.blink()
         else:
             self.ring_indicator.turn_off()
 
@@ -153,7 +156,7 @@ class CallAttendant(object):
                     if is_whitelisted:
                         caller_permitted = True
                         action = "Permitted"
-                        self.approved_indicator.turn_on()
+                        self.approved_indicator.blink()
 
                 # Now check the blacklist if not preempted by whitelist
                 if not caller_permitted and "blacklist" in screening_mode:
@@ -162,7 +165,7 @@ class CallAttendant(object):
                     if is_blacklisted:
                         caller_blocked = True
                         action = "Blocked"
-                        self.blocked_indicator.turn_on()
+                        self.blocked_indicator.blink()
 
                 if not caller_permitted and not caller_blocked:
                     action = "Screened"
@@ -197,6 +200,11 @@ class CallAttendant(object):
                         finally:
                             # Go "on-hook"
                             self.modem.hang_up()
+
+                if self.voice_mail.get_unplayed_count() > 0:
+                    self.message_indicator.blink()
+                else:
+                    self.message_indicator.turn_off()
 
             except Exception as e:
                 pprint(e)

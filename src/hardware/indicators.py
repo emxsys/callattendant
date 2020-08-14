@@ -85,6 +85,10 @@ class BlockedIndicator(LEDIndicator):
 
 class MessageIndicator(PWMLEDIndicator):
 
+    def blink(self, max_times=None):
+        # blink in a separate thread
+        self.led.pulse(n=max_times)
+
     def __init__(self, gpio_pin=GPIO_MESSAGE):
         PWMLEDIndicator.__init__(self, gpio_pin)
 
