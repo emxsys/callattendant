@@ -16,7 +16,7 @@ body {
 
 /* Set a fixed width for the phone column */
 .phoneno {
-   min-width: 115px;
+   min-width: 125px;
 }
 
 .name {

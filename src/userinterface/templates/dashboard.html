@@ -71,11 +71,12 @@
                   <span class="d-md-none"><br></span>
                   {{ item.date }}
                 </td>
-                <td>
+                <td class="phoneno">
                   <a href="/calls/view/{{ item.call_no }}">
-                    <b>{{ item.phone_no }}</b></a> -
+                    <b>{{ item.phone_no }}</b>
+                  </a> -
                   <span class="d-md-none"><br></span>
-                  <i>{{ item.name }}</i>
+                  <span class="text-break"><i>{{ item.name }}</i></span>
                 </td>
                 <td>
                   <span class="badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
@@ -83,10 +84,7 @@
                     </span>
                   <span>
                   {% if item.msg_no is not none %}
-                    <button type="button" class="message-btn btn btn-sm btn-outline-light text-dark" data-toggle="modal" data-target="#messageModal"
-                        data-message-no="{{ item.msg_no }}" data-call-no="{{ item.call_no }}" data-phone-no="{{ item.phone_no }}" data-wav-file="{{ item.wav_file }}"  >
-                      <img src={% if item.msg_played == 0 %}"../static/chat-left-text.svg"{% else %}"../static/chat-left.svg"{% endif %} alt="" width="16" height="16" title="Message">
-                    </button>
+                    <img src={% if item.msg_played == 0 %}"../static/chat-left-text.svg"{% else %}"../static/chat-left.svg"{% endif %} alt="" width="16" height="16" title="Message available">
                   {% endif %}
                   </span>
                 </td>
@@ -216,28 +214,6 @@
   // Open the Messages page
   $('#new-messages').on('click', function (event) {
     window.location.href = "/messages"
-  });
-
-
-  // Open the Play Voice Message dialog for the selected msg
-  $('#messageModal').on('show.bs.modal', function (event) {
-    // Button that triggered the modal
-    var $button = $(event.relatedTarget)
-    // Extract info from data-* attributes
-    var msg_no = $button.data('message-no')
-    var call_no = $button.data('call-no')
-    var phone_no = $button.data('phone-no')
-    var wav_file = $button.data('wav-file')
-    var $modal = $(this)
-    var $audio = $modal.find('audio')
-    $modal.find('.modal-title').text('Playing Message from ' + phone_no)
-    $modal.find('#call-no').text('Voice message from call #' + call_no)
-    $modal.find('audio source').attr("src", wav_file)
-    $modal.find('audio').trigger('load')
-    $modal.find('audio').trigger('play')
-    $modal.on('hidden.bs.modal', function () {
-      $audio.trigger('pause')
-    });
   });
 
 </script>
