@@ -199,7 +199,7 @@ def dashboard():
     # Render the resullts
     return render_template(
         'dashboard.html',
-        active_nav_item="home",
+        active_nav_item="dashboard",
         recent_calls=recent_calls,
         top_permitted=top_permitted,
         top_blocked=top_blocked,
@@ -319,8 +319,9 @@ def calls():
 @app.route('/calls/view/<int:call_no>', methods=['GET'])
 def calls_view(call_no):
     """
-    Display the call.
+    Display the call details
     """
+
     # Get the call log subset, limited to the pagination settings
     sql = """SELECT
         a.CallLogID,
@@ -381,7 +382,6 @@ def calls_view(call_no):
         # ~ Flash and return to referer
         pass
 
-    # Render the resullts with pagination
     return render_template(
         'calls_view.html',
         caller=caller)
@@ -392,36 +392,42 @@ def callers_manage(call_no):
     """
     Display the Manage Caller form
     """
-    print(request.referrer)
+
+    original_referrer = None
 
     # Post changes to the blacklist or whitelist table before rendering
     if request.method == 'POST':
         number = request.form['phone_no'].replace('-', '')
-        if request.form['action'] == 'Permit':
+        if request.form['action'] == 'add-permit':
             caller = {}
             caller['NMBR'] = number
             caller['NAME'] = request.form['name']
-            print("Adding " + caller['NAME'] + " to whitelist")
+            print(" >> Adding " + caller['NAME'] + " to whitelist")
             whitelist = Whitelist(get_db(), current_app.config)
             whitelist.add_caller(caller, request.form['reason'])
 
-        elif request.form['action'] == 'RemovePermit':
-            print("Removing " + number + " from whitelist")
+        elif request.form['action'] == 'remove-permit':
+            print(" >> Removing " + number + " from whitelist")
             whitelist = Whitelist(get_db(), current_app.config)
             whitelist.remove_number(number)
 
-        elif request.form['action'] == 'Block':
+        elif request.form['action'] == 'add-block':
             caller = {}
             caller['NMBR'] = number
             caller['NAME'] = request.form['name']
-            print("Adding " + caller['NAME'] + " to blacklist")
+            print(" >> Adding " + caller['NAME'] + " to blacklist")
             blacklist = Blacklist(get_db(), current_app.config)
             blacklist.add_caller(caller, request.form['reason'])
 
-        elif request.form['action'] == 'RemoveBlock':
-            print("Removing " + number + " from blacklist")
+        elif request.form['action'] == 'remove-block':
+            print(" >> Removing " + number + " from blacklist")
             blacklist = Blacklist(get_db(), current_app.config)
             blacklist.remove_number(number)
+        # We want the form's Back button 'href' set to the original page
+        # that invoked the form, not set to this form.
+        original_referrer = request.form['original_referrer']
+    else:
+        original_referrer = request.referrer
 
     # Retrieve the caller information for the given call log entry
     query = """SELECT
@@ -460,7 +466,11 @@ def callers_manage(call_no):
             blacklisted='N',
             whitelist_reason='',
             blacklist_reason=''))
-    return render_template('callers_manage.html', caller=caller)
+
+    # Re-render the same page to show the updated content
+    return render_template('callers_manage.html',
+        caller=caller,
+        original_referrer=original_referrer)
 
 
 @app.route('/callers/blocked')
@@ -741,9 +751,9 @@ def messages_delete(msg_no):
     success = message.delete(msg_no)
     # Redisplay the messages page
     if success:
-        return redirect("/messages", code=301)  # (re)moved permamently
+        return redirect(request.referrer, code=301)  # (re)moved permamently
     else:
-        return redirect("/messages", code=303)  # Other
+        return redirect(request.referrer, code=303)  # Other
 
 
 @app.route('/messages/played', methods=['POST'])
@@ -758,7 +768,7 @@ def messages_played():
     success = message.update_played(msg_no, played)
 
     # Get the number of unread messages
-    sql = "select count(*) from message where Played = 0"
+    sql = "SELECT COUNT(*) FROM Message WHERE Played = 0"
     g.cur.execute(sql)
     unplayed_count = g.cur.fetchone()[0]
 

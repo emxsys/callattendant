@@ -23,8 +23,9 @@
   {% if caller.whitelisted == 'N' %}
   <div class="alert alert-success" role="alert">
      <form name="permit" action="/callers/manage/{{ caller.call_no }}" method="post">
+        <input name="original_referrer" type="hidden" value="{{ original_referrer }}">
+        <input name="action" type="hidden" value="add-permit">
         <h5>Add to Permitted List</h5>
-        <input name="action" type="hidden" value="Permit">
         <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
         <div class="row">
            <div class="col">
@@ -42,8 +43,9 @@
   {% else %}
   <div class="alert alert-warning" role="alert">
      <form name="remove-permit" action="/callers/manage/{{ caller.call_no }}" method="post">
+        <input name="original_referrer" type="hidden" value="{{ original_referrer }}">
+        <input name="action" type="hidden" value="remove-permit">
         <h5>Remove from Permitted List</h5>
-        <input name="action" type="hidden" value="RemovePermit">
         <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
         <div class="row">
            <div class="col">
@@ -62,8 +64,9 @@
   {% if caller.blacklisted == 'N' %}
   <div class="alert alert-danger" role="alert">
      <form name="block" action="/callers/manage/{{ caller.call_no }}" method="post">
+        <input name="original_referrer" type="hidden" value="{{ original_referrer }}">
+        <input name="action" type="hidden" value="add-block">
         <h5>Add to Blocked List</h5>
-        <input name="action" type="hidden" value="Block">
         <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
         <div class="row">
            <div class="col">
@@ -81,8 +84,9 @@
   {% else %}
   <div class="alert alert-warning" role="alert">
      <form name="block" action="/callers/manage/{{ caller.call_no }}" method="post">
+        <input name="original_referrer" type="hidden" value="{{ original_referrer }}">
+        <input name="action" type="hidden" value="remove-block">
         <h5>Remove from Blocked List</h5>
-        <input name="action" type="hidden" value="RemoveBlock">
         <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
         <div class="row">
            <div class="col">
@@ -98,7 +102,7 @@
      </form>
   </div>
   {% endif %}
-  <a href="#" class="btn btn-secondary">Back</a>
+  <a href="{{ original_referrer }}" class="btn btn-secondary">Back</a>
  </div>
 {% endblock %}
 
