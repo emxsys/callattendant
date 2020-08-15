@@ -219,16 +219,6 @@
   });
 
 
-  // Open the manage caller page for the selected row
-  $('.manage-caller').on('click', function (event) {
-    var $elem = $(event.currentTarget)
-    // find the parent table row which has the call no.
-    var $tr = $elem.parents('tr')
-    var call_no = $($tr[0]).data('call-no')
-    window.location.href = "/manage_caller/" + call_no
-  });
-
-
   // Open the Play Voice Message dialog for the selected msg
   $('#messageModal').on('show.bs.modal', function (event) {
     // Button that triggered the modal

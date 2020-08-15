@@ -211,7 +211,6 @@ def dashboard():
     )
 
 
-
 @app.route('/calls', methods=['GET'])
 def calls():
     """
@@ -308,19 +307,93 @@ def calls():
 
     # Render the resullts with pagination
     return render_template(
-        'call_log.html',
-        active_nav_item='call-log',
+        'calls.html',
+        active_nav_item='calls',
         calls=calls,
         search_criteria=search_criteria,
         page=page,
         per_page=per_page,
         pagination=pagination)
 
+
+@app.route('/calls/view/<int:call_no>', methods=['GET'])
+def calls_view(call_no):
+    """
+    Display the call.
+    """
+    # Get the call log subset, limited to the pagination settings
+    sql = """SELECT
+        a.CallLogID,
+        CASE
+            WHEN b.PhoneNo is not null then b.Name
+            WHEN c.PhoneNo is not null then c.Name
+            ELSE a.Name
+        END Name,
+        a.Number Number,
+        a.Date,
+        a.Time,
+        a.Action,
+        a.Reason,
+        CASE WHEN b.PhoneNo is null THEN 'N' ELSE 'Y' END Whitelisted,
+        CASE WHEN c.PhoneNo is null THEN 'N' ELSE 'Y' end Blacklisted,
+        d.MessageID,
+        d.Played,
+        d.Filename,
+        a.SystemDateTime
+    FROM CallLog as a
+    LEFT JOIN Whitelist AS b ON a.Number = b.PhoneNo
+    LEFT JOIN Blacklist AS c ON a.Number = c.PhoneNo
+    LEFT JOIN Message AS d ON a.CallLogID = d.CallLogID
+    WHERE a.CallLogID={}""".format(call_no)
+    g.cur.execute(sql)
+    row = g.cur.fetchone()
+
+    caller = {}
+    if len(row) > 0:
+        number = row[2]
+        phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
+        # Flask pages use the static folder to get resources.
+        # In the static folder we have created a soft-link to the
+        # data/messsages folder containing the actual messages.
+        # We'll use the static-based path for the wav-file urls
+        filepath = row[11]
+        if filepath is not None:
+            basename = os.path.basename(filepath)
+            filepath = os.path.join("../../static/messages", basename)
+
+        # Create a date object from the date time string
+        date_time = datetime.strptime(row[12][:19], '%Y-%m-%d %H:%M:%S')
+
+        caller.update(dict(
+            call_no=row[0],
+            phone_no=phone_no,
+            name=row[1],
+            date=date_time.strftime('%d-%b-%y'),
+            time=date_time.strftime('%I:%M %p'),
+            action=row[5],
+            reason=row[6],
+            whitelisted=row[7],
+            blacklisted=row[8],
+            msg_no=row[9],
+            msg_played=row[10],
+            wav_file=filepath))
+    else:
+        # ~ Flash and return to referer
+        pass
+
+    # Render the resullts with pagination
+    return render_template(
+        'calls_view.html',
+        caller=caller)
+
+
 @app.route('/callers/manage/<int:call_no>', methods=['GET', 'POST'])
 def callers_manage(call_no):
     """
     Display the Manage Caller form
     """
+    print(request.referrer)
+
     # Post changes to the blacklist or whitelist table before rendering
     if request.method == 'POST':
         number = request.form['phone_no'].replace('-', '')
@@ -387,79 +460,7 @@ def callers_manage(call_no):
             blacklisted='N',
             whitelist_reason='',
             blacklist_reason=''))
-    return render_template('manage_caller.html', caller=caller)
-
-
-
-@app.route('/calls/view/<int:call_no>', methods=['GET'])
-def calls_view(call_no):
-    """
-    Display the call.
-    """
-    # Get the call log subset, limited to the pagination settings
-    sql = """SELECT
-        a.CallLogID,
-        CASE
-            WHEN b.PhoneNo is not null then b.Name
-            WHEN c.PhoneNo is not null then c.Name
-            ELSE a.Name
-        END Name,
-        a.Number Number,
-        a.Date,
-        a.Time,
-        a.Action,
-        a.Reason,
-        CASE WHEN b.PhoneNo is null THEN 'N' ELSE 'Y' END Whitelisted,
-        CASE WHEN c.PhoneNo is null THEN 'N' ELSE 'Y' end Blacklisted,
-        d.MessageID,
-        d.Played,
-        d.Filename,
-        a.SystemDateTime
-    FROM CallLog as a
-    LEFT JOIN Whitelist AS b ON a.Number = b.PhoneNo
-    LEFT JOIN Blacklist AS c ON a.Number = c.PhoneNo
-    LEFT JOIN Message AS d ON a.CallLogID = d.CallLogID
-    WHERE a.CallLogID={}""".format(call_no)
-    g.cur.execute(sql)
-    row = g.cur.fetchone()
-
-    caller = {}
-    if len(row) > 0:
-        number = row[2]
-        phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
-        # Flask pages use the static folder to get resources.
-        # In the static folder we have created a soft-link to the
-        # data/messsages folder containing the actual messages.
-        # We'll use the static-based path for the wav-file urls
-        filepath = row[11]
-        if filepath is not None:
-            basename = os.path.basename(filepath)
-            filepath = os.path.join("../static/messages", basename)
-
-        # Create a date object from the date time string
-        date_time = datetime.strptime(row[12][:19], '%Y-%m-%d %H:%M:%S')
-
-        caller.update(dict(
-            call_no=row[0],
-            phone_no=phone_no,
-            name=row[1],
-            date=date_time.strftime('%d-%b-%y'),
-            time=date_time.strftime('%I:%M %p'),
-            action=row[5],
-            reason=row[6],
-            whitelisted=row[7],
-            blacklisted=row[8],
-            msg_no=row[9],
-            msg_played=row[10],
-            wav_file=filepath))
-    else:
-        #~ Flash and return to referer
-        pass
-
-    # Render the resullts with pagination
-    return render_template(
-        'view_caller.html',
-        caller=caller)
+    return render_template('callers_manage.html', caller=caller)
 
 
 @app.route('/callers/blocked')
@@ -498,7 +499,7 @@ def callers_blocked():
     )
     # Render the resullts with pagination
     return render_template(
-        'blacklist.html',
+        'callers_blocked.html',
         active_nav_item='blocked',
         blacklist=records,
         page=page,
@@ -521,10 +522,11 @@ def callers_blocked_add():
     blacklist = Blacklist(get_db(), current_app.config)
     success = blacklist.add_caller(caller, request.form["reason"])
     if success:
-        return redirect("/blocked", code=303)
+        return redirect("/callers/blocked", code=303)
     else:
         # Probably already exists... attempt to update with original form data
-        return redirect('/blocked/update/{}'.format(number), code=307)
+        return redirect('/callers/blocked/update/{}'.format(number), code=307)
+
 
 @app.route('/callers/blocked/update/<string:phone_no>', methods=['POST'])
 def callers_blocked_update(phone_no):
@@ -536,7 +538,7 @@ def callers_blocked_update(phone_no):
     blacklist = Blacklist(get_db(), current_app.config)
     blacklist.update_number(number, request.form['name'], request.form['reason'])
 
-    return redirect("/blocked", code=303)
+    return redirect("/callers/blocked", code=303)
 
 
 @app.route('/callers/blocked/delete/<string:phone_no>', methods=['GET'])
@@ -550,7 +552,7 @@ def callers_blocked_delete(phone_no):
     blacklist = Blacklist(get_db(), current_app.config)
     blacklist.remove_number(number)
 
-    return redirect("/blocked", code=301)  # (re)moved permamently
+    return redirect("/callers/blocked", code=301)  # (re)moved permamently
 
 
 @app.route('/callers/permitted')
@@ -588,7 +590,7 @@ def callers_permitted():
     )
     # Render the results with pagination
     return render_template(
-        'whitelist.html',
+        'callers_permitted.html',
         active_nav_item='permitted',
         whitelist=records,
         total_calls=total,
@@ -612,10 +614,10 @@ def callers_permitted_add():
     whitelist = Whitelist(get_db(), current_app.config)
     success = whitelist.add_caller(caller, request.form['reason'])
     if success:
-        return redirect("/permitted", code=303)
+        return redirect("/callers/permitted", code=303)
     else:
         # Probably already exists... attempt to update with POST form data
-        return redirect('/permitted/update/{}'.format(number), code=307)
+        return redirect('/callers/permitted/update/{}'.format(number), code=307)
 
 
 @app.route('/callers/permitted/update/<string:phone_no>', methods=['POST'])
@@ -628,7 +630,7 @@ def callers_permitted_update(phone_no):
     whitelist = Whitelist(get_db(), current_app.config)
     whitelist.update_number(number, request.form['name'], request.form['reason'])
 
-    return redirect("/permitted", code=303)
+    return redirect("/callers/permitted", code=303)
 
 
 @app.route('/callers/permitted/delete/<string:phone_no>', methods=['GET'])
@@ -642,7 +644,7 @@ def callers_permitted_delete(phone_no):
     whitelist = Whitelist(get_db(), current_app.config)
     whitelist.remove_number(number)
 
-    return redirect("/permitted", code=301)  # (re)moved permamently
+    return redirect("/callers/permitted", code=301)  # (re)moved permamently
 
 
 @app.route('/messages')
@@ -656,22 +658,26 @@ def messages():
         page_parameter="page", per_page_parameter="per_page"
     )
     # Get the number of unread messages
-    sql = "select count(*) from message where Played = 0"
+    sql = "SELECT COUNT(*) FROM Message WHERE Played = 0"
     g.cur.execute(sql)
     unplayed_count = g.cur.fetchone()[0]
 
     # Get the messages subset, limited to the pagination settings
     sql = """SELECT
-        b.MessageID,
-        a.CallLogID,
-        a.Name,
-        a.Number,
-        b.Filename,
-        b.Played,
-        b.DateTime
-    FROM CallLog as a
-    INNER JOIN Message AS b ON a.CallLogID = b.CallLogID
-    ORDER BY b.DateTime DESC
+        a.MessageID,
+        b.CallLogID,
+        b.Name,
+        b.Number,
+        a.Filename,
+        a.Played,
+        a.DateTime,
+        CASE WHEN c.PhoneNo is null THEN 'N' ELSE 'Y' END Whitelisted,
+        CASE WHEN d.PhoneNo is null THEN 'N' ELSE 'Y' END Blacklisted
+    FROM Message AS a
+    INNER JOIN CallLog AS b ON a.CallLogID = b.CallLogID
+    LEFT JOIN Whitelist AS c ON b.Number = c.PhoneNo
+    LEFT JOIN Blacklist AS d ON b.Number = d.PhoneNo
+    ORDER BY a.DateTime DESC
     LIMIT {}, {}""".format(offset, per_page)
     g.cur.execute(sql)
     result_set = g.cur.fetchall()
@@ -698,8 +704,10 @@ def messages():
             wav_file=filepath,
             msg_played=row[5],
             date=date_time.strftime('%d-%b-%y'),
-            time=date_time.strftime('%I:%M %p')
-            ))
+            time=date_time.strftime('%I:%M %p'),
+            whitelisted=row[7],
+            blacklisted=row[8]
+        ))
 
     # Create a pagination object for the page
     pagination = get_pagination(
@@ -722,8 +730,9 @@ def messages():
         pagination=pagination,
     )
 
+
 @app.route('/messages/delete/<int:msg_no>', methods=['GET'])
-def message_delete(msg_no):
+def messages_delete(msg_no):
     """
     Delete the voice message associated with call number.
     """
@@ -738,7 +747,7 @@ def message_delete(msg_no):
 
 
 @app.route('/messages/played', methods=['POST'])
-def message_played():
+def messages_played():
     """
     Update the played status for the message.
     Called by JQuery in messages view.
@@ -757,6 +766,9 @@ def message_played():
     return jsonify(success=success, msg_no=msg_no, unplayed_count=unplayed_count)
 
 
+def format_phone_no(number):
+    return'{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
+
 
 def get_db():
     '''Get a connection to the database'''
@@ -771,10 +783,6 @@ def get_db():
     return g.db
 
 
-def get_message_indicator():
-    return current_app.config.get("MESSAGE_INDICATOR_LED")
-
-
 def close_db(e=None):
     '''Clost the connection to the database'''
     # Flask template for database connections
@@ -784,6 +792,10 @@ def close_db(e=None):
         db.close()
 
 
+def get_message_indicator():
+    return current_app.config.get("MESSAGE_INDICATOR_LED")
+
+
 def get_row_count(table_name):
     '''Returns the row count for the given table'''
     # Using the current request's db connection
@@ -791,9 +803,6 @@ def get_row_count(table_name):
     g.cur.execute(sql)
     total = g.cur.fetchone()[0]
     return total
-
-def format_phone_no(number):
-    return'{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
 
 
 def get_css_framework():

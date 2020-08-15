@@ -14,32 +14,34 @@
   <h4><i>None</i></h4>
   {% else %}
   {{ pagination.links }}
-  <table class="table">
+  <table class="table table-sm table-responsive-sm">
     <thead>
       <tr>
+        <th>Time</th>
         <th>Message</th>
         <th></th>
       </tr>
     </thead>
     <tbody>
       {% for item in messages %}
-      <tr>
-        <td>
-          <a href="#"><b>{{ item.time }}</b></a>
+      <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}">
+        <td class="time">
+          <b>{{ item.time }}</b>
+          <span class="d-lg-none"><br></span>
           {{ item.date }}
           {% if item.msg_played == 0 %}
           <span id="msg-{{ item.msg_no }}" class="badge badge-pill badge-primary"><i> New </i></span>
           {% endif %}
-          <span class="d-lg-none"><br></span>
-          <a href="/caller/manage/{{ item.call_no }}"><b>{{ item.phone_no }}</b></a>
-          <i>{{ item.name }}</i>
-          <span class="d-lg-none"><br></span>
+        </td>
+        <td>
           <audio id="audio" controls preload="metadata" data-msg-no="{{ item.msg_no }}" data-msg-played="{{ item.msg_played }}">
             <source src="{{ item.wav_file }}" type="audio/wav">
             Your browser does not support the audio element.
           </audio>
+          <br>
+          from <a href="/callers/manage/{{ item.call_no }}"><b>{{ item.phone_no }}</b></a><small class="text-muted"> - {{ item.name }}</small>
         </td>
-        <td class="px-1">
+        <td class="px-1 align-middle">
           <button type="button" class="btn btn-outline-light text-dark" onClick="location.href='/messages/delete/{{ item.msg_no }}'">
             <img src="../static/trash.svg" alt="" width="32" height="32" title="Delete Message">
           </button>
@@ -71,16 +73,5 @@ $("audio").on('play', function(e) {
   }
 });
 
-// Make table(s) responsive when small
-function handleMediaQuery(x) {
-  if (x.matches) { // If media query matches
-      $('table').addClass('table-responsive')
-  } else {
-      $('table').removeClass('table-responsive')
-  }
-}
-var x = window.matchMedia("(max-width: 500px)")
-handleMediaQuery(x)             // Call listener function at run time
-x.addListener(handleMediaQuery) // Attach listener function on state changes
 </script>
 {% endblock %}

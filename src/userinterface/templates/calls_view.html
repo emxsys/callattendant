@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}View Call #{{ caller.call_no }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card mb-2">
+    <div class="card-header">
+      <h5 class="mb-0">Call: <b>{{ caller.time }}</b><small class="text-muted"> on {{ caller.date }}</small></h6>
+    </div>
+    <div class="card-body">
+      <h4>
+        <span class="badge
+          {% if caller.action=='Permitted' %}badge-primary
+          {% elif caller.action=='Blocked' %}badge-danger
+          {% else %}badge-info
+          {% endif %}">
+          Call was {{ caller.action }}
+        </span>
+      </h4>
+      <p class="card-text">Reason: {{ caller.reason }}</p>
+    </div>
+  </div>
+
+  <div class="card mb-2">
+    <div class="card-header">
+      <h5 class="mb-0">Caller: <b>{{ caller.phone_no }}</b><small class="text-muted"> -  {{caller.name }}</small></h5>
+    </div>
+    <div class="card-body">
+      <p class="card-text font-weight-bold
+      {% if caller.whitelisted=='Y' %}table-success
+      {% elif caller.blacklisted=='Y' %}alert-danger
+      {% else %}table-info
+      {% endif %}">
+        {% if caller.whitelisted == 'Y' %}This caller is permitted and calls will not be screened or blocked.
+        {% elif caller.blacklisted == 'Y' %}This caller is blocked and calls will be immediately intercepted.
+        {% else %}This caller is allowed but calls will be screened for robocalling, scams, patterns, etc.
+        {% endif %}
+      </p>
+      <a href="/callers/manage/{{ caller.call_no }}" class="btn btn-primary">Change</a>
+    </div>
+  </div>
+  {% if caller.msg_no is not none %}
+    <div class="card mb-2">
+      <div class="card-header">
+        <h5 class="mb-0">Voice Message</b></h5>
+      </div>
+      <div class="card-body">
+        <p>
+          <audio id="audio" controls preload="metadata" data-msg-no="{{ caller.msg_no }}" data-msg-played="{{ caller.msg_played }}">
+            <source src="{{ caller.wav_file }}" type="audio/wav">
+            Your browser does not support the audio element.
+          </audio>
+        </p>
+        <a href="/messages/delete/{{ caller.msg_no }}" class="btn btn-primary">Delete</a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+

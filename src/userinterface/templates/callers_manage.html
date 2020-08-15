@@ -4,7 +4,8 @@
 
 {% block content %}
  <div class="container">
-  <h4>View Caller {{ caller.phone_no }}</h4>
+  <h4>Viewing Caller</h4>
+  <h5>Phone: {{ caller.phone_no }}</h5>
   <h5>Name: {{ caller.name }}</h5>
   {% if caller.whitelisted == 'Y' %}
   <div class="alert alert-success" role="alert">
@@ -16,12 +17,12 @@
   </div>
   {% else %}
   <div class="alert alert-info" role="alert">
-     <h5>This caller is allowed but will be screened for robocalling, scams, patterns, etc.</h5>
+     <h5>This caller is allowed but calls will be screened for robocalling, scams, patterns, etc.</h5>
   </div>
   {% endif %}
   {% if caller.whitelisted == 'N' %}
   <div class="alert alert-success" role="alert">
-     <form name="permit" action="/caller/manage/{{ caller.call_no }}" method="post">
+     <form name="permit" action="/callers/manage/{{ caller.call_no }}" method="post">
         <h5>Add to Permitted List</h5>
         <input name="action" type="hidden" value="Permit">
         <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
@@ -40,7 +41,7 @@
   </div>
   {% else %}
   <div class="alert alert-warning" role="alert">
-     <form name="remove-permit" action="/caller/manage/{{ caller.call_no }}" method="post">
+     <form name="remove-permit" action="/callers/manage/{{ caller.call_no }}" method="post">
         <h5>Remove from Permitted List</h5>
         <input name="action" type="hidden" value="RemovePermit">
         <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
@@ -60,7 +61,7 @@
   {% endif %}
   {% if caller.blacklisted == 'N' %}
   <div class="alert alert-danger" role="alert">
-     <form name="block" action="/caller/manage/{{ caller.call_no }}" method="post">
+     <form name="block" action="/callers/manage/{{ caller.call_no }}" method="post">
         <h5>Add to Blocked List</h5>
         <input name="action" type="hidden" value="Block">
         <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
@@ -79,7 +80,7 @@
   </div>
   {% else %}
   <div class="alert alert-warning" role="alert">
-     <form name="block" action="/caller/manage/{{ caller.call_no }}" method="post">
+     <form name="block" action="/callers/manage/{{ caller.call_no }}" method="post">
         <h5>Remove from Blocked List</h5>
         <input name="action" type="hidden" value="RemoveBlock">
         <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
@@ -97,6 +98,7 @@
      </form>
   </div>
   {% endif %}
+  <a href="#" class="btn btn-secondary">Back</a>
  </div>
 {% endblock %}
 
