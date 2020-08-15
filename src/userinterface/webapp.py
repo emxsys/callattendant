@@ -267,7 +267,7 @@ def calls():
     result_set = g.cur.fetchall()
 
     # Create a formatted list of records including some derived values
-    caller = []
+    calls = []
     for row in result_set:
         number = row[2]
         phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
@@ -316,8 +316,8 @@ def calls():
         per_page=per_page,
         pagination=pagination)
 
-@app.route('/caller/manage/<int:call_log_id>', methods=['GET', 'POST'])
-def caller_manage(call_log_id):
+@app.route('/callers/manage/<int:call_log_id>', methods=['GET', 'POST'])
+def callers_manage(call_log_id):
     """
     Display the Manage Caller form
     """
@@ -452,7 +452,9 @@ def calls_view(call_no):
             msg_no=row[9],
             msg_played=row[10],
             wav_file=filepath))
-
+    else:
+        #~ Flash and return to referer
+        pass
 
     # Render the resullts with pagination
     return render_template(
@@ -460,8 +462,8 @@ def calls_view(call_no):
         caller=caller)
 
 
-@app.route('/blocked')
-def blacklist():
+@app.route('/callers/blocked')
+def callers_blocked():
     """
     Display the blocked numbers from the blacklist table
     """
@@ -505,8 +507,8 @@ def blacklist():
     )
 
 
-@app.route('/blocked/add', methods=['POST'])
-def blocked_add():
+@app.route('/callers/blocked/add', methods=['POST'])
+def callers_blocked_add():
     """
     Add a new blacklist entry
     """
@@ -524,8 +526,8 @@ def blocked_add():
         # Probably already exists... attempt to update with original form data
         return redirect('/blocked/update/{}'.format(number), code=307)
 
-@app.route('/blocked/update/<string:phone_no>', methods=['POST'])
-def blocked_update(phone_no):
+@app.route('/callers/blocked/update/<string:phone_no>', methods=['POST'])
+def callers_blocked_update(phone_no):
     """
     Update the blacklist entry associated with the phone number.
     """
@@ -537,8 +539,8 @@ def blocked_update(phone_no):
     return redirect("/blocked", code=303)
 
 
-@app.route('/blocked/delete/<string:phone_no>', methods=['GET'])
-def blocked_delete(phone_no):
+@app.route('/callers/blocked/delete/<string:phone_no>', methods=['GET'])
+def callers_blocked_delete(phone_no):
     """
     Delete the blacklist entry associated with the phone number.
     """
@@ -551,8 +553,8 @@ def blocked_delete(phone_no):
     return redirect("/blocked", code=301)  # (re)moved permamently
 
 
-@app.route('/permitted')
-def whitelist():
+@app.route('/callers/permitted')
+def callers_permitted():
     """
     Display the permitted numbers from the whitelist table
     """
@@ -596,8 +598,8 @@ def whitelist():
     )
 
 
-@app.route('/permitted/add', methods=['POST'])
-def permitted_add():
+@app.route('/callers/permitted/add', methods=['POST'])
+def callers_permitted_add():
     """
     Add a new whitelist entry
     """
@@ -616,8 +618,8 @@ def permitted_add():
         return redirect('/permitted/update/{}'.format(number), code=307)
 
 
-@app.route('/permitted/update/<string:phone_no>', methods=['POST'])
-def permitted_update(phone_no):
+@app.route('/callers/permitted/update/<string:phone_no>', methods=['POST'])
+def callers_permitted_update(phone_no):
     """
     Update the whitelist entry associated with the phone number.
     """
@@ -629,8 +631,8 @@ def permitted_update(phone_no):
     return redirect("/permitted", code=303)
 
 
-@app.route('/permitted/delete/<string:phone_no>', methods=['GET'])
-def permitted_delete(phone_no):
+@app.route('/callers/permitted/delete/<string:phone_no>', methods=['GET'])
+def callers_permitted_delete(phone_no):
     """
     Delete the whitelist entry associated with the phone number.
     """
