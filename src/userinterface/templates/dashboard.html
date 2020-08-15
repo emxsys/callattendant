@@ -55,7 +55,7 @@
           <h4 class="pt-2">Recent Calls</h4>
 
           {% if recent_calls %}
-          <table id="recent-calls" class="table table-hover table-sm" width="100%">
+          <table id="recent-calls" class="table table-hover table-sm table-responsive-sm" width="100%">
             <thead>
               <tr>
                 <th>Time</th>
@@ -65,23 +65,22 @@
             </thead>
             <tbody>
             {% for item in recent_calls %}
-              <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}" data-call-no="{{ item.call_no }}">
-                <td class="manage-caller time">
+              <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}">
+                <td class="time">
                   <b>{{ item.time }}</b>
                   <span class="d-md-none"><br></span>
                   {{ item.date }}
                 </td>
                 <td>
-                  <b>{{ item.phone_no }}</b> -
+                  <a href="/calls/{{ item.call_no }}">
+                    <b>{{ item.phone_no }}</b></a> -
                   <span class="d-md-none"><br></span>
                   <i>{{ item.name }}</i>
                 </td>
                 <td>
-                  <a href="/caller/manage/{{ item.call_no }}">
-                    <span class="manage-caller badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
-                    {{ item.action }}
+                  <span class="badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
+                  {{ item.action }}
                     </span>
-                  </a>
                   <span>
                   {% if item.msg_no is not none %}
                     <button type="button" class="message-btn btn btn-sm btn-outline-light text-dark" data-toggle="modal" data-target="#messageModal"
@@ -118,7 +117,7 @@
           <h4  class="pt-2">Top Permitted Callers</h4>
 
           {% if top_permitted %}
-          <table id="top_permitted" class="table table-hover table-sm" width="100%">
+          <table id="top_permitted" class="table table-hover table-sm table-responsive-sm" width="100%">
             <thead>
               <tr>
                 <th>Caller</th>
@@ -146,7 +145,7 @@
           <h4 class="pt-2">Top Blocked Callers</h4>
 
           {% if top_blocked %}
-          <table id="top_blocked" class="table table-hover table-sm" width="100%">
+          <table id="top_blocked" class="table table-hover table-sm table-responsive-sm" width="100%">
             <thead>
               <tr>
                 <th>Caller</th>
@@ -178,6 +177,7 @@
 
 {% block js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+
 <script type="text/javascript">
   // Display the Blocked Calls per Day bar graph
   $(function(){
@@ -187,7 +187,7 @@
     var call_dates = []
     {% for item in blocked_per_day %}
         call_counts.push({{ item.count }})
-        call_dates.push("{{ item.call_date }}")
+        call_dates.push("{{ item.call_date }}".substring(5))
     {% endfor %}
     // Create the Bar chart
     var chart = new Chart(ctx, {
@@ -250,24 +250,5 @@
     });
   });
 
-  // Make table(s) responsive when small
-  function handleMediaQuery(x) {
-    if (x.matches) { // If media query matches
-        $('#recent-calls').addClass('table-responsive')
-    } else {
-        $('#recent-calls').removeClass('table-responsive')
-    }
-  }
-  var x = window.matchMedia("(max-width: 500px)")
-  handleMediaQuery(x)             // Call listener function at run time
-  x.addListener(handleMediaQuery) // Attach listener function on state changes
-
-  // Update the Main Menu
-  $(document).ready( function () {
-    // Highlight this page in the menu
-    $('#home').addClass('active');
-  });
-  </script>
+</script>
 {% endblock %}
-</body>
-</html>

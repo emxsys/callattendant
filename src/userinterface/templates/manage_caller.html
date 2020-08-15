@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Manage Caller #{{ caller.call_no }}{% endblock %}
+{% block title %}View Caller #{{ caller.call_no }}{% endblock %}
 
 {% block content %}
  <div class="container">
-  <h4>Manage Caller {{ caller.phone_no }}</h4>
+  <h4>View Caller {{ caller.phone_no }}</h4>
   <h5>Name: {{ caller.name }}</h5>
   {% if caller.whitelisted == 'Y' %}
   <div class="alert alert-success" role="alert">

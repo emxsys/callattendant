@@ -17,7 +17,7 @@
     {{ pagination.info }}
     {{ pagination.links }}
     </div>
-    <table id="calls" class="table table-hover table-sm" width="100%">
+    <table id="calls" class="table table-hover table-sm table-responsive-sm" width="100%">
       <thead>
         <tr>
           <th>Time</th>
@@ -28,19 +28,19 @@
       </thead>
       <tbody>
       {% for item in calls %}
-        <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}" data-call-no="{{ item.call_no }}">
-          <td class="manage-caller time">
+        <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}">
+          <td class="time">
             <b>{{ item.time }}</b>
             <span class="d-xl-none"><br></span>
             {{ item.date }}
           </td>
-          <td class="manage-caller">
-            <b>{{ item.phone_no }}</b> -
+          <td>
+            <a href="/caller/manage/{{ item.call_no }}"><b>{{ item.phone_no }}</b></a> -
             <span class="d-md-none"><br></span>
             <i>{{ item.name }}</i>
           </td>
           <td class="callno">
-            <span class="manage-caller badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
+            <span class="badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
               {{ item.action }}
             </span>
             <span>
@@ -56,7 +56,7 @@
             {% endif %}
             </span>
           </td>
-          <td class="manage-caller">
+          <td>
             {{ item.reason }}
           </td>
         </tr>
@@ -72,15 +72,6 @@
 
 {% block js %}
 <script>
-  // A table element was clicked: display the manage caller page
-  $('.manage-caller').on('click', function (event) {
-    var $elem = $(event.currentTarget)
-    // find the parent table row which has the call no.
-    var $tr = $elem.parents('tr')
-    var call_no = $($tr[0]).data('call-no')
-    window.location.href = "/manage_caller/" + call_no
-  });
-
   // Cancel call-log history display and revert to full log
   $('#cancel-search').on('click', function (event) {
     window.location.href = "/calls"
@@ -116,16 +107,5 @@
     }
   });
 
-  // Make the table responsive on small screens
-  function handleMediaQuery(x) {
-    if (x.matches) { // If media query matches
-        $('table').addClass('table-responsive')
-    } else {
-        $('table').removeClass('table-responsive')
-    }
-  }
-  var x = window.matchMedia("(max-width: 770px)")
-  handleMediaQuery(x)             // Call listener function at run time
-  x.addListener(handleMediaQuery) // Attach listener function on state changes
 </script>
 {% endblock %}

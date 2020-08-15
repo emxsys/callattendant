@@ -36,6 +36,7 @@ from screening.blacklist import Blacklist
 from screening.whitelist import Whitelist
 from messaging.voicemail import Message
 from datetime import datetime
+from pprint import pprint
 from glob import glob
 import os
 import re
@@ -210,8 +211,9 @@ def dashboard():
     )
 
 
+
 @app.route('/calls', methods=['GET'])
-def call_log():
+def calls():
     """
     Display the call history from the call log table.
     """
@@ -265,7 +267,7 @@ def call_log():
     result_set = g.cur.fetchall()
 
     # Create a formatted list of records including some derived values
-    calls = []
+    caller = []
     for row in result_set:
         number = row[2]
         phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
@@ -314,6 +316,149 @@ def call_log():
         per_page=per_page,
         pagination=pagination)
 
+@app.route('/caller/manage/<int:call_log_id>', methods=['GET', 'POST'])
+def caller_manage(call_log_id):
+    """
+    Display the Manage Caller form
+    """
+    # Post changes to the blacklist or whitelist table before rendering
+    if request.method == 'POST':
+        number = request.form['phone_no'].replace('-', '')
+        if request.form['action'] == 'Permit':
+            caller = {}
+            caller['NMBR'] = number
+            caller['NAME'] = request.form['name']
+            print("Adding " + caller['NAME'] + " to whitelist")
+            whitelist = Whitelist(get_db(), current_app.config)
+            whitelist.add_caller(caller, request.form['reason'])
+
+        elif request.form['action'] == 'RemovePermit':
+            print("Removing " + number + " from whitelist")
+            whitelist = Whitelist(get_db(), current_app.config)
+            whitelist.remove_number(number)
+
+        elif request.form['action'] == 'Block':
+            caller = {}
+            caller['NMBR'] = number
+            caller['NAME'] = request.form['name']
+            print("Adding " + caller['NAME'] + " to blacklist")
+            blacklist = Blacklist(get_db(), current_app.config)
+            blacklist.add_caller(caller, request.form['reason'])
+
+        elif request.form['action'] == 'RemoveBlock':
+            print("Removing " + number + " from blacklist")
+            blacklist = Blacklist(get_db(), current_app.config)
+            blacklist.remove_number(number)
+
+    # Retrieve the caller information for the given call log entry
+    query = """SELECT
+      a.CallLogID,
+      a.Name,
+      a.Number,
+      CASE WHEN b.PhoneNo IS NULL THEN 'N' ELSE 'Y' END Whitelisted,
+      CASE WHEN c.PhoneNo IS NULL THEN 'N' ELSE 'Y' END Blacklisted,
+      CASE WHEN b.PhoneNo IS NOT NULL THEN b.Reason ELSE '' END WhitelistReason,
+      CASE WHEN c.PhoneNo IS NOT NULL THEN c.Reason ELSE '' END BlacklistReason
+    FROM calllog AS a
+    LEFT JOIN whitelist AS b ON a.Number = b.PhoneNo
+    LEFT JOIN blacklist AS c ON a.Number = c.PhoneNo
+    WHERE a.CallLogID=:call_log_id"""
+    arguments = {"call_log_id": call_log_id}
+    result_set = screening.utils.query_db(get_db(), query, arguments)
+    # Prepare a caller dictionary object for the form
+    caller = {}
+    if len(result_set) > 0:
+        record = result_set[0]
+        number = record[2]
+        caller.update(dict(
+            call_no=record[0],
+            phone_no='{}-{}-{}'.format(number[0:3], number[3:6], number[6:]),
+            name=record[1],
+            whitelisted=record[3],
+            blacklisted=record[4],
+            whitelist_reason=record[5],
+            blacklist_reason=record[6]))
+    else:
+        caller.update(dict(
+            call_no=call_log_id,
+            phone_no='Number Not Found',
+            name='',
+            whitelisted='N',
+            blacklisted='N',
+            whitelist_reason='',
+            blacklist_reason=''))
+    return render_template('manage_caller.html', caller=caller)
+
+
+
+@app.route('/calls/<int:call_no>', methods=['GET'])
+def calls_view(call_no):
+    """
+    Display the call.
+    """
+    # Get the call log subset, limited to the pagination settings
+    sql = """SELECT
+        a.CallLogID,
+        CASE
+            WHEN b.PhoneNo is not null then b.Name
+            WHEN c.PhoneNo is not null then c.Name
+            ELSE a.Name
+        END Name,
+        a.Number Number,
+        a.Date,
+        a.Time,
+        a.Action,
+        a.Reason,
+        CASE WHEN b.PhoneNo is null THEN 'N' ELSE 'Y' END Whitelisted,
+        CASE WHEN c.PhoneNo is null THEN 'N' ELSE 'Y' end Blacklisted,
+        d.MessageID,
+        d.Played,
+        d.Filename,
+        a.SystemDateTime
+    FROM CallLog as a
+    LEFT JOIN Whitelist AS b ON a.Number = b.PhoneNo
+    LEFT JOIN Blacklist AS c ON a.Number = c.PhoneNo
+    LEFT JOIN Message AS d ON a.CallLogID = d.CallLogID
+    WHERE a.CallLogID={}""".format(call_no)
+    g.cur.execute(sql)
+    row = g.cur.fetchone()
+
+    caller = {}
+    if len(row) > 0:
+        number = row[2]
+        phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
+        # Flask pages use the static folder to get resources.
+        # In the static folder we have created a soft-link to the
+        # data/messsages folder containing the actual messages.
+        # We'll use the static-based path for the wav-file urls
+        filepath = row[11]
+        if filepath is not None:
+            basename = os.path.basename(filepath)
+            filepath = os.path.join("../static/messages", basename)
+
+        # Create a date object from the date time string
+        date_time = datetime.strptime(row[12][:19], '%Y-%m-%d %H:%M:%S')
+
+        caller.update(dict(
+            call_no=row[0],
+            phone_no=phone_no,
+            name=row[1],
+            date=date_time.strftime('%d-%b-%y'),
+            time=date_time.strftime('%I:%M %p'),
+            action=row[5],
+            reason=row[6],
+            whitelisted=row[7],
+            blacklisted=row[8],
+            msg_no=row[9],
+            msg_played=row[10],
+            wav_file=filepath))
+
+
+    # Render the resullts with pagination
+    return render_template(
+        'view_caller.html',
+        caller=caller)
+
 
 @app.route('/blocked')
 def blacklist():
@@ -327,7 +472,7 @@ def blacklist():
     )
 
     # Get the blacklist subset, limited to the pagination settings
-    sql = 'SELECT * from Blacklist ORDER BY datetime(SystemDateTime) DESC limit {}, {}'.format(offset, per_page)
+    sql = 'SELECT * FROM Blacklist ORDER BY datetime(SystemDateTime) DESC LIMIT {}, {}'.format(offset, per_page)
     g.cur.execute(sql)
     result_set = g.cur.fetchall()
     records = []
@@ -351,7 +496,8 @@ def blacklist():
     )
     # Render the resullts with pagination
     return render_template(
-        'blacklist.htm',
+        'blacklist.html',
+        active_nav_item='blocked',
         blacklist=records,
         page=page,
         per_page=per_page,
@@ -360,7 +506,7 @@ def blacklist():
 
 
 @app.route('/blocked/add', methods=['POST'])
-def add_blocked():
+def blocked_add():
     """
     Add a new blacklist entry
     """
@@ -379,7 +525,7 @@ def add_blocked():
         return redirect('/blocked/update/{}'.format(number), code=307)
 
 @app.route('/blocked/update/<string:phone_no>', methods=['POST'])
-def update_blocked(phone_no):
+def blocked_update(phone_no):
     """
     Update the blacklist entry associated with the phone number.
     """
@@ -392,7 +538,7 @@ def update_blocked(phone_no):
 
 
 @app.route('/blocked/delete/<string:phone_no>', methods=['GET'])
-def delete_blocked(phone_no):
+def blocked_delete(phone_no):
     """
     Delete the blacklist entry associated with the phone number.
     """
@@ -416,7 +562,7 @@ def whitelist():
         page_parameter="page", per_page_parameter="per_page"
     )
     # Get the whitelist subset, limited to the pagination settings
-    sql = 'select * from Whitelist ORDER BY datetime(SystemDateTime) DESC limit {}, {}'.format(offset, per_page)
+    sql = 'SELECT * FROM Whitelist ORDER BY datetime(SystemDateTime) DESC LIMIT {}, {}'.format(offset, per_page)
     g.cur.execute(sql)
     result_set = g.cur.fetchall()
     # Build a list of formatted dict items
@@ -440,7 +586,8 @@ def whitelist():
     )
     # Render the results with pagination
     return render_template(
-        'whitelist.htm',
+        'whitelist.html',
+        active_nav_item='permitted',
         whitelist=records,
         total_calls=total,
         page=page,
@@ -450,7 +597,7 @@ def whitelist():
 
 
 @app.route('/permitted/add', methods=['POST'])
-def add_permitted():
+def permitted_add():
     """
     Add a new whitelist entry
     """
@@ -470,7 +617,7 @@ def add_permitted():
 
 
 @app.route('/permitted/update/<string:phone_no>', methods=['POST'])
-def update_permitted(phone_no):
+def permitted_update(phone_no):
     """
     Update the whitelist entry associated with the phone number.
     """
@@ -483,7 +630,7 @@ def update_permitted(phone_no):
 
 
 @app.route('/permitted/delete/<string:phone_no>', methods=['GET'])
-def delete_permitted(phone_no):
+def permitted_delete(phone_no):
     """
     Delete the whitelist entry associated with the phone number.
     """
@@ -607,79 +754,6 @@ def message_played():
     # Return the results as JSON
     return jsonify(success=success, msg_no=msg_no, unplayed_count=unplayed_count)
 
-
-@app.route('/caller/manage/<int:call_log_id>', methods=['GET', 'POST'])
-def manage_caller(call_log_id):
-    """
-    Display the Manage Caller form
-    """
-    # Post changes to the blacklist or whitelist table before rendering
-    if request.method == 'POST':
-        number = request.form['phone_no'].replace('-', '')
-        if request.form['action'] == 'Permit':
-            caller = {}
-            caller['NMBR'] = number
-            caller['NAME'] = request.form['name']
-            print("Adding " + caller['NAME'] + " to whitelist")
-            whitelist = Whitelist(get_db(), current_app.config)
-            whitelist.add_caller(caller, request.form['reason'])
-
-        elif request.form['action'] == 'RemovePermit':
-            print("Removing " + number + " from whitelist")
-            whitelist = Whitelist(get_db(), current_app.config)
-            whitelist.remove_number(number)
-
-        elif request.form['action'] == 'Block':
-            caller = {}
-            caller['NMBR'] = number
-            caller['NAME'] = request.form['name']
-            print("Adding " + caller['NAME'] + " to blacklist")
-            blacklist = Blacklist(get_db(), current_app.config)
-            blacklist.add_caller(caller, request.form['reason'])
-
-        elif request.form['action'] == 'RemoveBlock':
-            print("Removing " + number + " from blacklist")
-            blacklist = Blacklist(get_db(), current_app.config)
-            blacklist.remove_number(number)
-
-    # Retrieve the caller information for the given call log entry
-    query = """SELECT
-      a.CallLogID,
-      a.Name,
-      a.Number,
-      CASE WHEN b.PhoneNo IS NULL THEN 'N' ELSE 'Y' END Whitelisted,
-      CASE WHEN c.PhoneNo IS NULL THEN 'N' ELSE 'Y' END Blacklisted,
-      CASE WHEN b.PhoneNo IS NOT NULL THEN b.Reason ELSE '' END WhitelistReason,
-      CASE WHEN c.PhoneNo IS NOT NULL THEN c.Reason ELSE '' END BlacklistReason
-    FROM calllog AS a
-    LEFT JOIN whitelist AS b ON a.Number = b.PhoneNo
-    LEFT JOIN blacklist AS c ON a.Number = c.PhoneNo
-    WHERE a.CallLogID=:call_log_id"""
-    arguments = {"call_log_id": call_log_id}
-    result_set = screening.utils.query_db(get_db(), query, arguments)
-    # Prepare a caller dictionary object for the form
-    caller = {}
-    if len(result_set) > 0:
-        record = result_set[0]
-        number = record[2]
-        caller.update(dict(
-            call_no=record[0],
-            phone_no='{}-{}-{}'.format(number[0:3], number[3:6], number[6:]),
-            name=record[1],
-            whitelisted=record[3],
-            blacklisted=record[4],
-            whitelist_reason=record[5],
-            blacklist_reason=record[6]))
-    else:
-        caller.update(dict(
-            call_no=call_log_id,
-            phone_no='Number Not Found',
-            name='',
-            whitelisted='N',
-            blacklisted='N',
-            whitelist_reason='',
-            blacklist_reason=''))
-    return render_template('manage_caller.html', caller=caller)
 
 
 def get_db():
