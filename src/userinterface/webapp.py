@@ -316,8 +316,8 @@ def calls():
         per_page=per_page,
         pagination=pagination)
 
-@app.route('/callers/manage/<int:call_log_id>', methods=['GET', 'POST'])
-def callers_manage(call_log_id):
+@app.route('/callers/manage/<int:call_no>', methods=['GET', 'POST'])
+def callers_manage(call_no):
     """
     Display the Manage Caller form
     """
@@ -363,7 +363,7 @@ def callers_manage(call_log_id):
     LEFT JOIN whitelist AS b ON a.Number = b.PhoneNo
     LEFT JOIN blacklist AS c ON a.Number = c.PhoneNo
     WHERE a.CallLogID=:call_log_id"""
-    arguments = {"call_log_id": call_log_id}
+    arguments = {"call_log_id": call_no}
     result_set = screening.utils.query_db(get_db(), query, arguments)
     # Prepare a caller dictionary object for the form
     caller = {}
@@ -380,7 +380,7 @@ def callers_manage(call_log_id):
             blacklist_reason=record[6]))
     else:
         caller.update(dict(
-            call_no=call_log_id,
+            call_no=call_no,
             phone_no='Number Not Found',
             name='',
             whitelisted='N',
@@ -391,7 +391,7 @@ def callers_manage(call_log_id):
 
 
 
-@app.route('/calls/<int:call_no>', methods=['GET'])
+@app.route('/calls/view/<int:call_no>', methods=['GET'])
 def calls_view(call_no):
     """
     Display the call.

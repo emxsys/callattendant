@@ -43,7 +43,7 @@
             </button>
           </td>
           <td class="px-1">
-            <button type="button" class="btn btn-outline-light text-dark" onClick="location.href='/permitted/delete/{{ item.Phone_Number }}'">
+            <button type="button" class="btn btn-outline-light text-dark" onClick="location.href='/callers/permitted/delete/{{ item.Phone_Number }}'">
               <img src="../static/trash.svg" alt="" width="24" height="24" title="Trash">
             </button>
           </td>
@@ -126,7 +126,7 @@
 // Add
 $('#addModal').on('show.bs.modal', function (event) {
   var modal = $(this)
-  modal.find('.modal-dialog form').attr('action', '/permitted/add')
+  modal.find('.modal-dialog form').attr('action', '/callers/permitted/add')
   modal.find('.modal-dialog form').attr('method', 'post')
 })
 // Edit
@@ -139,7 +139,7 @@ $('#updateModal').on('show.bs.modal', function (event) {
   var reason = button.data('permitted-reason')
   var modal = $(this)
   modal.find('.modal-title').text('Update Permitted Number: ' + phone)
-  modal.find('.modal-dialog form').attr('action', '/permitted/update/' + phone)
+  modal.find('.modal-dialog form').attr('action', '/callers/permitted/update/' + phone)
   modal.find('.modal-dialog form').attr('method', 'post')
   modal.find('#update-name').val(name)
   modal.find('#update-reason').val(reason)
