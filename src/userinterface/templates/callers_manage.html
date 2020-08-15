@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}View Caller #{{ caller.call_no }}{% endblock %}
+
+{% block content %}
+ <div class="container">
+  <h4>Viewing Caller</h4>
+  <h5>Phone: {{ caller.phone_no }}</h5>
+  <h5>Name: {{ caller.name }}</h5>
+  {% if caller.whitelisted == 'Y' %}
+  <div class="alert alert-success" role="alert">
+     <h5><i>This caller is permitted and calls will not be screened or blocked</i></h4>
+  </div>
+  {% elif caller.blacklisted == 'Y' %}
+  <div class="alert alert-danger" role="alert">
+     <h5><b><i>This caller is blocked and calls will be immediately intercepted</i></b></h5>
+  </div>
+  {% else %}
+  <div class="alert alert-info" role="alert">
+     <h5>This caller is allowed but calls will be screened for robocalling, scams, patterns, etc.</h5>
+  </div>
+  {% endif %}
+  {% if caller.whitelisted == 'N' %}
+  <div class="alert alert-success" role="alert">
+     <form name="permit" action="/callers/manage/{{ caller.call_no }}" method="post">
+        <input name="original_referrer" type="hidden" value="{{ original_referrer }}">
+        <input name="action" type="hidden" value="add-permit">
+        <h5>Add to Permitted List</h5>
+        <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
+        <div class="row">
+           <div class="col">
+              <label for="name">Name:</label>
+              <input id="name" name="name" type="text" class="form-control" placeholder="Name" value="{{ caller.name }}" />
+           </div>
+           <div class="col">
+              <label for="reason">Reason:</label>
+              <input id="reason" name="reason" type="text" class="form-control" placeholder="Reason" value="{{ caller.whitelist_reason }}" />
+           </div>
+        </div>
+        <button type="submit" class="btn btn-primary mb-2">Add</button>
+     </form>
+  </div>
+  {% else %}
+  <div class="alert alert-warning" role="alert">
+     <form name="remove-permit" action="/callers/manage/{{ caller.call_no }}" method="post">
+        <input name="original_referrer" type="hidden" value="{{ original_referrer }}">
+        <input name="action" type="hidden" value="remove-permit">
+        <h5>Remove from Permitted List</h5>
+        <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
+        <div class="row">
+           <div class="col">
+              <label for="name">Name:</label>
+              <input id="name" name="name" type="text" disabled class="form-control" placeholder="Name" value="{{ caller.name }}" />
+           </div>
+           <div class="col">
+              <label for="reason">Reason:</label>
+              <input id="reason" name="reason" type="text" disabled class="form-control" placeholder="Reason" value="{{ caller.whitelist_reason }}" />
+           </div>
+        </div>
+        <button type="submit" class="btn btn-primary mb-2">Remove</button>
+     </form>
+  </div>
+  {% endif %}
+  {% if caller.blacklisted == 'N' %}
+  <div class="alert alert-danger" role="alert">
+     <form name="block" action="/callers/manage/{{ caller.call_no }}" method="post">
+        <input name="original_referrer" type="hidden" value="{{ original_referrer }}">
+        <input name="action" type="hidden" value="add-block">
+        <h5>Add to Blocked List</h5>
+        <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
+        <div class="row">
+           <div class="col">
+              <label for="name">Name:</label>
+              <input id="name" name="name" type="text" class="form-control" placeholder="Name" value="{{ caller.name }}" />
+           </div>
+           <div class="col">
+              <label for="reason">Reason:</label>
+              <input id="reason" name="reason" type="text" class="form-control" placeholder="Reason" value="{{ caller.blacklist_reason }}" />
+           </div>
+        </div>
+        <button type="submit" class="btn btn-primary mb-2">Add</button>
+     </form>
+  </div>
+  {% else %}
+  <div class="alert alert-warning" role="alert">
+     <form name="block" action="/callers/manage/{{ caller.call_no }}" method="post">
+        <input name="original_referrer" type="hidden" value="{{ original_referrer }}">
+        <input name="action" type="hidden" value="remove-block">
+        <h5>Remove from Blocked List</h5>
+        <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
+        <div class="row">
+           <div class="col">
+              <label for="name">Name:</label>
+              <input id="name" name="name" type="text" disabled class="form-control" placeholder="Name" value="{{ caller.name }}" />
+           </div>
+           <div class="col">
+              <label for="reason">Reason:</label>
+              <input id="reason" name="reason" type="text" disabled class="form-control" placeholder="Reason" value="{{ caller.blacklist_reason }}" />
+           </div>
+        </div>
+        <button type="submit" class="btn btn-primary mb-2">Remove</button>
+     </form>
+  </div>
+  {% endif %}
+  <a href="{{ original_referrer }}" class="btn btn-secondary">Back</a>
+ </div>
+{% endblock %}
+

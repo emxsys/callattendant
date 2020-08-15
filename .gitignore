@@ -1,3 +1,7 @@
+# Call Attendant data files
+data/messages/*.wav
+data/*.db
+
 # vim Swap files
 *.swp
 *.swo

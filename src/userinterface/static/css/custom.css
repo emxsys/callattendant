@@ -1,0 +1,100 @@
+/* Offset the body from the nav-bar fixed to the top */
+body {
+  min-height: 75rem;
+  padding-top: 4.5rem;
+}
+
+
+.stats-card {
+    min-width: 215px;
+}
+
+/* Set a fixed width for the Call # column */
+.callno {
+   min-width: 60px;
+}
+
+/* Set a fixed width for the phone column */
+.phoneno {
+   min-width: 125px;
+}
+
+.name {
+   width: 200px;
+}
+
+.reason {
+   width: 600px;
+}
+
+/* Set a fixed width for the date column */
+.date {
+   width: 90px;
+}
+
+/* Set a fixed width for the time column */
+.time {
+   min-width: 95px;
+}
+
+/*
+Class that allows activation of the Manage Caller page
+*/
+.manage-caller {
+    cursor: pointer;
+}
+/*
+Class that allows activation of the Voice Message dialog
+*/.voice-message {
+    cursor: pointer;
+}
+
+/*
+Pagination links
+*/
+.pagination-fixed {
+    position: fixed;
+    top: 40px;
+    left: 0;
+    right: 0;
+    z-index: 1020;
+    border-color: #D5D5D5;
+    border-width: 0 0 1px;
+    -webkit-border-radius: 0;
+    -moz-border-radius: 0;
+    border-radius: 0;
+    -webkit-box-shadow: inset 0 1px 0 white, 0 1px 5px rgba(0, 0, 0, .1);
+    -moz-box-shadow: inset 0 1px 0 #fff, 0 1px 5px rgba(0,0,0,.1);
+    box-shadow: inset 0 1px 0 white, 0 1px 5px rgba(0, 0, 0, .1);
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
+}
+.pagination {
+    margin: 10px 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+/*
+Pagination info, e.g., displaying 1 - 25 calls in total 2,142
+*/
+.pagination-page-info {
+    padding: .6em;
+    padding-top: 5px;
+    padding-bottom: 0;
+    padding-left: 0;
+    width: 100%;
+    margin: .5em;
+    margin-left: 0;
+    font-size: 16px;
+}
+/*
+Pagination info numbers in above
+*/
+.pagination-page-info b {
+    color: black;
+/*
+    background: #6aa6ed;
+*/
+    padding-left: 2px;
+    padding: .1em .25em;
+    font-size: 125%;
+}
