@@ -35,7 +35,7 @@ from flask_paginate import Pagination, get_page_args
 from screening.blacklist import Blacklist
 from screening.whitelist import Whitelist
 from messaging.voicemail import Message
-from datetime import datetime
+from datetime import datetime, timedelta
 from pprint import pprint
 from glob import glob
 import os
@@ -182,7 +182,8 @@ def dashboard():
             name=row[2]))
 
     # Get num calls per day for graphing
-    num_days = 30
+    num_days = current_app.config.get("GRAPH_NUM_DAYS", 30)
+    # Query num blocked calls
     sql = """SELECT COUNT(DATE(SystemDateTime)) Count, DATE(SystemDateTime) CallDate
         FROM CallLog
         WHERE SystemDateTime > DATETIME('now','-{} day') AND Action = 'Blocked'
@@ -190,11 +191,33 @@ def dashboard():
         ORDER BY CallDate""".format(num_days)
     g.cur.execute(sql)
     result_set = g.cur.fetchall()
-    blocked_per_day = []
+    blocked_per_day = {}
     for row in result_set:
-        blocked_per_day.append(dict(
-            count=row[0],
-            call_date=row[1]))
+        # key value = date, count
+        blocked_per_day[row[1]] = row[0]
+    # Query number of allowed calls
+    sql = """SELECT COUNT(DATE(SystemDateTime)) Count, DATE(SystemDateTime) CallDate
+        FROM CallLog
+        WHERE SystemDateTime > DATETIME('now','-{} day') AND Action != 'Blocked'
+        GROUP BY CallDate
+        ORDER BY CallDate""".format(num_days)
+    g.cur.execute(sql)
+    result_set = g.cur.fetchall()
+    allowed_per_day = {}
+    for row in result_set:
+        # key value = date, count
+        allowed_per_day[row[1]] = row[0]
+    # Conflate the results
+    base_date = datetime.today()
+    date_list = [base_date - timedelta(days=x) for x in range(num_days)]
+    calls_per_day = []
+    for date in date_list:
+        date_key = date.strftime("%Y-%m-%d")
+        calls_per_day.append(dict(
+            date=date_key,
+            blocked=blocked_per_day.get(date_key, 0),
+            allowed=allowed_per_day.get(date_key, 0)))
+    pprint(calls_per_day)
 
     # Render the resullts
     return render_template(
@@ -203,12 +226,11 @@ def dashboard():
         recent_calls=recent_calls,
         top_permitted=top_permitted,
         top_blocked=top_blocked,
-        blocked_per_day=blocked_per_day,
+        calls_per_day=calls_per_day,
         new_messages=new_messages,
         total_calls='{:,}'.format(total_calls),
         blocked_calls='{:,}'.format(total_blocked),
-        percent_blocked='{0:.0f}%'.format(percent_blocked),
-    )
+        percent_blocked='{0:.0f}%'.format(percent_blocked))
 
 
 @app.route('/calls', methods=['GET'])
