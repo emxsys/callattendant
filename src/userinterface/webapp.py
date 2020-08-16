@@ -217,7 +217,6 @@ def dashboard():
             date=date_key,
             blocked=blocked_per_day.get(date_key, 0),
             allowed=allowed_per_day.get(date_key, 0)))
-    pprint(calls_per_day)
 
     # Render the resullts
     return render_template(

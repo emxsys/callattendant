@@ -193,11 +193,11 @@
         labels: dates,
         datasets: [{
             label: "Blocked",
-            backgroundColor: "00AA00",
+            backgroundColor: window.chartColors.red,
             data: blocked
         }, {
             label: "Allowed",
-            backgroundColor: "##28A745",
+            backgroundColor: window.chartColors.green,
             data: allowed
         }]
     }
@@ -207,23 +207,23 @@
       type: 'bar',
       data: barChartData,
       options: {
-        legend: { display: false },
+        legend: { display: true },
         title: {
-          display: false,
-          text: 'Calls per Day',
-          tooltips: {
-            mode: 'index',
-            intersect: false
-          },
-          responsive: true,
-          scales: {
-            xAxes: [{
-              stacked: true,
-            }],
-            yAxes: [{
-              stacked: true
-            }]
-          }
+          display: true,
+          text: 'Calls per Day'
+        },
+        tooltips: {
+          mode: 'index',
+          intersect: false
+        },
+        responsive: true,
+        scales: {
+          xAxes: [{
+            stacked: true,
+          }],
+          yAxes: [{
+            stacked: true
+          }]
         }
       }
     });
