@@ -35,9 +35,9 @@
             <span class="text-break">{{ item.date }}</span>
           </td>
           <td>
-            <a href="/calls/view/{{ item.call_no }}"><b>{{ item.phone_no }}</b></a> -
+            <a href="/calls/view/{{ item.call_no }}"><b>{{ item.phone_no }}</b></a>
             <span class="d-md-none"><br></span>
-            <i>{{ item.name }}</i>
+            <span class="pl-md-2 pl-lg-3"><i>{{ item.name }}</i></span>
           </td>
           <td class="callno">
             <span class="badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">

@@ -74,9 +74,9 @@
                 <td class="phoneno">
                   <a href="/calls/view/{{ item.call_no }}">
                     <b>{{ item.phone_no }}</b>
-                  </a> -
+                  </a>
                   <span class="d-md-none"><br></span>
-                  <span class="text-break"><i>{{ item.name }}</i></span>
+                  <span class="text-break pl-md-2 pl-lg-3"><i>{{ item.name }}</i></span>
                 </td>
                 <td>
                   <span class="badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
