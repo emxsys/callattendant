@@ -103,7 +103,7 @@
 
           {% if calls_per_day %}
           <div class="content">
-            <canvas id="bar-chart" width="800" height="300"></canvas>
+            <canvas id="bar-chart" width="800" height="400"></canvas>
           </div>
           {% endif %}
         </div>
@@ -213,7 +213,12 @@
       type: 'bar',
       data: barChartData,
       options: {
-        legend: { display: true },
+        legend: {
+          display: true,
+          labels: {
+            boxWidth: 20
+          }
+        },
         title: {
           display: false,
           text: 'Calls per Day'
