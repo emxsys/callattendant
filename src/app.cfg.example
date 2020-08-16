@@ -30,14 +30,6 @@ SCREENING_MODE = ("whitelist", "blacklist")
 # BLOCK_ENABLED: if True calls that fail screening will be blocked
 BLOCK_ENABLED = True
 
-# BLOCK_NAME_PATTERNS: A regex expression dict applied to the CID names
-# Example: {"V[0-9]{15}": "Telemarketer Caller ID", "O": "Unknown caller"}
-BLOCK_NAME_PATTERNS = {"V[0-9]{15}": "Telemarketer Caller ID", }
-
-# BLOCK_NUMBER_PATTERNS: A regx expression dict applied to the CID numbers
-# Example: {"P": "Private number",}
-BLOCK_NUMBER_PATTERNS = {}
-
 # BLOCKED_ACTIONS: A tuple containing a combination of the following actions:
 #   "greeting", "record_message", "voice_mail".
 #
@@ -65,12 +57,30 @@ BLOCK_NUMBER_PATTERNS = {}
 #   BLOCKED_ACTIONS = ("greeting", "voice_mail" )
 #
 BLOCKED_ACTIONS = ("greeting", "voice_mail")
+BLOCKED_RINGS_BEFORE_ANSWER = 0
+
+SCREENED_ACTIONS = ("greeting", "record_message")
+SCREENED_GREETING_FILE = "resources/general_greeting.wav"
+SCREENED_RINGS_BEFORE_ANSWER = 0
+
+PERMITTED_ACTIONS = ("greeting", "record_message")
+PERMITTED_GREETING_FILE = "resources/general_greeting.wav"
+PERMITTED_RINGS_BEFORE_ANSWER = 4
 
 # BLOCKED_GREETING_FILE: The wav file to be played to blocked callers.
 #   Example: "We're sorry, this call has been blocked by the Raspberry Pi
 #           call attendant. To be unblocked, leave a message with your
 #           justification to be unblocked."
 BLOCKED_GREETING_FILE = "resources/blocked_greeting.wav"
+
+# BLOCK_NAME_PATTERNS: A regex expression dict applied to the CID names
+# Example: {"V[0-9]{15}": "Telemarketer Caller ID", "O": "Unknown caller"}
+BLOCK_NAME_PATTERNS = {"V[0-9]{15}": "Telemarketer Caller ID", }
+
+# BLOCK_NUMBER_PATTERNS: A regx expression dict applied to the CID numbers
+# Example: {"P": "Private number",}
+BLOCK_NUMBER_PATTERNS = {}
+
 
 # VOICE_MAIL_GREETING_FILE: The wav file played after answering: a general greeting
 #   Example: "I'm sorry we missed your call..."
