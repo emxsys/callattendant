@@ -99,7 +99,7 @@
       <div class="row">
         <div class="m-2 col-lg border border-info">
 
-          <h4 class="pt-2">Blocked Calls Per Day</h4>
+          <h4 class="pt-2">Calls Per Day</h4>
 
           {% if calls_per_day %}
           <div class="content">
@@ -184,21 +184,27 @@
     var dates = []
     var blocked = []
     var allowed = []
+    var screened = []
     {% for item in calls_per_day %}
         allowed.push({{ item.allowed }})
         blocked.push({{ item.blocked }})
+        screened.push({{ item.screened }})
         dates.push("{{ item.date }}".substring(5))
     {% endfor %}
     var barChartData = {
         labels: dates,
         datasets: [{
             label: "Blocked",
-            backgroundColor: window.chartColors.red,
+            backgroundColor: "#DC3545",
             data: blocked
         }, {
-            label: "Allowed",
-            backgroundColor: window.chartColors.green,
+            label: "Permitted",
+            backgroundColor: "#007BFF",
             data: allowed
+        }, {
+            label: "Screened",
+            backgroundColor: "#17A2B8",
+            data: screened
         }]
     }
 
@@ -209,7 +215,7 @@
       options: {
         legend: { display: true },
         title: {
-          display: true,
+          display: false,
           text: 'Calls per Day'
         },
         tooltips: {

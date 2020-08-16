@@ -183,6 +183,7 @@ def dashboard():
 
     # Get num calls per day for graphing
     num_days = current_app.config.get("GRAPH_NUM_DAYS", 30)
+
     # Query num blocked calls
     sql = """SELECT COUNT(DATE(SystemDateTime)) Count, DATE(SystemDateTime) CallDate
         FROM CallLog
@@ -195,10 +196,11 @@ def dashboard():
     for row in result_set:
         # key value = date, count
         blocked_per_day[row[1]] = row[0]
+
     # Query number of allowed calls
     sql = """SELECT COUNT(DATE(SystemDateTime)) Count, DATE(SystemDateTime) CallDate
         FROM CallLog
-        WHERE SystemDateTime > DATETIME('now','-{} day') AND Action != 'Blocked'
+        WHERE SystemDateTime > DATETIME('now','-{} day') AND Action = 'Permitted'
         GROUP BY CallDate
         ORDER BY CallDate""".format(num_days)
     g.cur.execute(sql)
@@ -207,16 +209,32 @@ def dashboard():
     for row in result_set:
         # key value = date, count
         allowed_per_day[row[1]] = row[0]
+
+    # Query number of screened calls
+    sql = """SELECT COUNT(DATE(SystemDateTime)) Count, DATE(SystemDateTime) CallDate
+        FROM CallLog
+        WHERE SystemDateTime > DATETIME('now','-{} day') AND Action = 'Screened'
+        GROUP BY CallDate
+        ORDER BY CallDate""".format(num_days)
+    g.cur.execute(sql)
+    result_set = g.cur.fetchall()
+    screened_per_day = {}
+    for row in result_set:
+        # key value = date, count
+        screened_per_day[row[1]] = row[0]
+
     # Conflate the results
     base_date = datetime.today()
     date_list = [base_date - timedelta(days=x) for x in range(num_days)]
+    date_list.reverse()
     calls_per_day = []
     for date in date_list:
         date_key = date.strftime("%Y-%m-%d")
         calls_per_day.append(dict(
             date=date_key,
             blocked=blocked_per_day.get(date_key, 0),
-            allowed=allowed_per_day.get(date_key, 0)))
+            allowed=allowed_per_day.get(date_key, 0),
+            screened=screened_per_day.get(date_key, 0) ))
 
     # Render the resullts
     return render_template(
