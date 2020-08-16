@@ -27,15 +27,17 @@
          </div>
         </div>
       </div>
-      <div class="card rounded-pill bg-success text-white stats-card">
-        <img class="card-img-top" src="/static/bar-chart.svg" alt="Card image" height="100" style="opacity: 0.2;">
-        <div class="card-img-overlay">
-        <div class="card-body">
-          Percent blocked:
-          <h3 class="font-weight-bolder">{{ percent_blocked }}</h3>
-         </div>
+      <a href="#calls-per-day">
+        <div class="card rounded-pill bg-success text-white stats-card">
+          <img class="card-img-top" src="/static/bar-chart.svg" alt="Card image" height="100" style="opacity: 0.2;">
+          <div class="card-img-overlay">
+          <div class="card-body">
+            Percent blocked:
+            <h3 class="font-weight-bolder">{{ percent_blocked }}</h3>
+           </div>
+          </div>
         </div>
-      </div>
+      </a>
     </div>
   </div>
 
@@ -97,7 +99,7 @@
       </div>
 
       <div class="row">
-        <div class="m-2 col-lg border border-info">
+        <div id="calls-per-day" class="m-2 col-lg border border-info">
 
           <h4 class="pt-2">Calls Per Day</h4>
 
