@@ -114,7 +114,7 @@ $('#back-button').on('click', function (event) {
     if (document.referrer == window.location.href) {
         // Don't go back to self after a POST, instead, we unwind
         // the history sufficently to go back to the original referrer
-        history.go({{ post_count }} * -2)
+        history.go( -({{ post_count }} + 1))
     } else {
         history.back()
     }
