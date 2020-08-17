@@ -27,15 +27,17 @@
          </div>
         </div>
       </div>
-      <div class="card rounded-pill bg-success text-white stats-card">
-        <img class="card-img-top" src="/static/bar-chart.svg" alt="Card image" height="100" style="opacity: 0.2;">
-        <div class="card-img-overlay">
-        <div class="card-body">
-          Percent blocked:
-          <h3 class="font-weight-bolder">{{ percent_blocked }}</h3>
-         </div>
+      <a href="#calls-per-day">
+        <div class="card rounded-pill bg-success text-white stats-card">
+          <img class="card-img-top" src="/static/bar-chart.svg" alt="Card image" height="100" style="opacity: 0.2;">
+          <div class="card-img-overlay">
+          <div class="card-body">
+            Percent blocked:
+            <h3 class="font-weight-bolder">{{ percent_blocked }}</h3>
+           </div>
+          </div>
         </div>
-      </div>
+      </a>
     </div>
   </div>
 
@@ -97,13 +99,13 @@
       </div>
 
       <div class="row">
-        <div class="m-2 col-lg border border-info">
+        <div id="calls-per-day" class="m-2 col-lg border border-info">
 
-          <h4 class="pt-2">Blocked Calls Per Day</h4>
+          <h4 class="pt-2">Calls Per Day</h4>
 
-          {% if blocked_per_day %}
+          {% if calls_per_day %}
           <div class="content">
-            <canvas id="bar-chart" width="800" height="300"></canvas>
+            <canvas id="bar-chart" width="800" height="400"></canvas>
           </div>
           {% endif %}
         </div>
@@ -181,30 +183,60 @@
   $(function(){
     // Get the bar chart canvas
     var ctx = $("#bar-chart")
-    var call_counts = []
-    var call_dates = []
-    {% for item in blocked_per_day %}
-        call_counts.push({{ item.count }})
-        call_dates.push("{{ item.call_date }}".substring(5))
+    var dates = []
+    var blocked = []
+    var allowed = []
+    var screened = []
+    {% for item in calls_per_day %}
+        allowed.push({{ item.allowed }})
+        blocked.push({{ item.blocked }})
+        screened.push({{ item.screened }})
+        dates.push("{{ item.date }}".substring(5))
     {% endfor %}
+    var barChartData = {
+        labels: dates,
+        datasets: [{
+            label: "Blocked",
+            backgroundColor: "#DC3545",
+            data: blocked
+        }, {
+            label: "Permitted",
+            backgroundColor: "#007BFF",
+            data: allowed
+        }, {
+            label: "Screened",
+            backgroundColor: "#17A2B8",
+            data: screened
+        }]
+    }
+
     // Create the Bar chart
     var chart = new Chart(ctx, {
       type: 'bar',
-      data: {
-        labels: call_dates,
-        datasets: [
-          {
-            label: "Num Calls",
-            backgroundColor: "#28A745",
-            data: call_counts
-          }
-        ]
-      },
+      data: barChartData,
       options: {
-        legend: { display: false },
+        legend: {
+          display: true,
+          labels: {
+            boxWidth: 20
+          }
+        },
         title: {
           display: false,
           text: 'Calls per Day'
+        },
+        tooltips: {
+          mode: 'index',
+          intersect: false
+        },
+        responsive: true,
+        scales: {
+          xAxes: [{
+            stacked: true,
+          }],
+          yAxes: [{
+            stacked: true
+          }]
         }
       }
     });

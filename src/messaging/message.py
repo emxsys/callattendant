@@ -108,7 +108,7 @@ class Message:
             print("Deleting message: {}".format(filename))
             try:
                 os.remove(filename)
-            except OSError as error:
+            except Exception as error:
                 pprint(error)
                 print("{} cannot be removed".format(filename))
                 success = False

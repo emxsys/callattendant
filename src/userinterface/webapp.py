@@ -30,18 +30,20 @@
 # ==============================================================================
 from __future__ import division
 from flask import Flask, request, g, current_app, render_template, redirect, \
-    jsonify, url_for
+    jsonify, url_for, flash
 from flask_paginate import Pagination, get_page_args
 from screening.blacklist import Blacklist
 from screening.whitelist import Whitelist
 from messaging.voicemail import Message
-from datetime import datetime
+from datetime import datetime, timedelta
 from pprint import pprint
 from glob import glob
 import os
 import re
+import random
 import screening.utils
 import sqlite3
+import string
 import _thread
 
 # Create the Flask micro web-framework application
@@ -182,7 +184,9 @@ def dashboard():
             name=row[2]))
 
     # Get num calls per day for graphing
-    num_days = 30
+    num_days = current_app.config.get("GRAPH_NUM_DAYS", 30)
+
+    # Query num blocked calls
     sql = """SELECT COUNT(DATE(SystemDateTime)) Count, DATE(SystemDateTime) CallDate
         FROM CallLog
         WHERE SystemDateTime > DATETIME('now','-{} day') AND Action = 'Blocked'
@@ -190,11 +194,49 @@ def dashboard():
         ORDER BY CallDate""".format(num_days)
     g.cur.execute(sql)
     result_set = g.cur.fetchall()
-    blocked_per_day = []
+    blocked_per_day = {}
     for row in result_set:
-        blocked_per_day.append(dict(
-            count=row[0],
-            call_date=row[1]))
+        # key value = date, count
+        blocked_per_day[row[1]] = row[0]
+
+    # Query number of allowed calls
+    sql = """SELECT COUNT(DATE(SystemDateTime)) Count, DATE(SystemDateTime) CallDate
+        FROM CallLog
+        WHERE SystemDateTime > DATETIME('now','-{} day') AND Action = 'Permitted'
+        GROUP BY CallDate
+        ORDER BY CallDate""".format(num_days)
+    g.cur.execute(sql)
+    result_set = g.cur.fetchall()
+    allowed_per_day = {}
+    for row in result_set:
+        # key value = date, count
+        allowed_per_day[row[1]] = row[0]
+
+    # Query number of screened calls
+    sql = """SELECT COUNT(DATE(SystemDateTime)) Count, DATE(SystemDateTime) CallDate
+        FROM CallLog
+        WHERE SystemDateTime > DATETIME('now','-{} day') AND Action = 'Screened'
+        GROUP BY CallDate
+        ORDER BY CallDate""".format(num_days)
+    g.cur.execute(sql)
+    result_set = g.cur.fetchall()
+    screened_per_day = {}
+    for row in result_set:
+        # key value = date, count
+        screened_per_day[row[1]] = row[0]
+
+    # Conflate the results
+    base_date = datetime.today()
+    date_list = [base_date - timedelta(days=x) for x in range(num_days)]
+    date_list.reverse()
+    calls_per_day = []
+    for date in date_list:
+        date_key = date.strftime("%Y-%m-%d")
+        calls_per_day.append(dict(
+            date=date_key,
+            blocked=blocked_per_day.get(date_key, 0),
+            allowed=allowed_per_day.get(date_key, 0),
+            screened=screened_per_day.get(date_key, 0)))
 
     # Render the resullts
     return render_template(
@@ -203,12 +245,11 @@ def dashboard():
         recent_calls=recent_calls,
         top_permitted=top_permitted,
         top_blocked=top_blocked,
-        blocked_per_day=blocked_per_day,
+        calls_per_day=calls_per_day,
         new_messages=new_messages,
         total_calls='{:,}'.format(total_calls),
         blocked_calls='{:,}'.format(total_blocked),
-        percent_blocked='{0:.0f}%'.format(percent_blocked),
-    )
+        percent_blocked='{0:.0f}%'.format(percent_blocked))
 
 
 @app.route('/calls', methods=['GET'])
@@ -468,7 +509,8 @@ def callers_manage(call_no):
             blacklist_reason=''))
 
     # Re-render the same page to show the updated content
-    return render_template('callers_manage.html',
+    return render_template(
+        'callers_manage.html',
         caller=caller,
         original_referrer=original_referrer)
 
@@ -753,6 +795,7 @@ def messages_delete(msg_no):
     if success:
         return redirect(request.referrer, code=301)  # (re)moved permamently
     else:
+        flash('Delete message failed. Check the log.')
         return redirect(request.referrer, code=303)  # Other
 
 
@@ -815,6 +858,14 @@ def get_row_count(table_name):
     return total
 
 
+def get_random_string(length=10):
+    # Random string with the combination of lower and upper case
+    chars = string.ascii_letters + string.digits
+    result_str = ''.join(random.choice(chars) for i in range(length))
+    # print("Random string is:", result_str)
+    return result_str
+
+
 def get_css_framework():
     return current_app.config.get("CSS_FRAMEWORK", "bootstrap4")
 
@@ -847,6 +898,7 @@ def run_flask(config):
     Runs the Flask webapp.
         :param database: full path to the callattendant database file
     '''
+    app.secret_key = get_random_string()
     with app.app_context():
         # Override Flask settings with CallAttendant config settings
         app.config["DEBUG"] = config["DEBUG"]

@@ -28,9 +28,11 @@
 
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav bd-navbar mr-auto">
+<!--
           <li class="nav-item" id="dashboard">
             <a class="nav-link" href="/">Dashboard</a>
           </li>
+-->
           <li class="nav-item" id="calls">
             <a class="nav-link" href="/calls">Calls</a>
           </li>
@@ -57,6 +59,19 @@
       </div>
     </div>
   </nav>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
 
   {% block content %}{% endblock %}
 
