@@ -38,6 +38,7 @@
         {% endif %}
       </p>
       <a href="/callers/manage/{{ caller.call_no }}" class="btn btn-primary">Change</a>
+      <a href="/calls?search={{ caller.phone_no }}" type="button" class="btn btn-primary">Show History</a>
     </div>
   </div>
   {% if caller.msg_no is not none %}
