@@ -434,7 +434,7 @@ def callers_manage(call_no):
     Display the Manage Caller form
     """
 
-    original_referrer = None
+    post_count = None
 
     # Post changes to the blacklist or whitelist table before rendering
     if request.method == 'POST':
@@ -464,11 +464,12 @@ def callers_manage(call_no):
             print(" >> Removing " + number + " from blacklist")
             blacklist = Blacklist(get_db(), current_app.config)
             blacklist.remove_number(number)
-        # We want the form's Back button 'href' set to the original page
-        # that invoked the form, not set to this form.
-        original_referrer = request.form['original_referrer']
+        # Keep track of the number of posts so we can to unwind the history
+        # to bo "back" the original referrer
+        post_count = int(request.form['post_count'])
+        post_count += 1
     else:
-        original_referrer = request.referrer
+        post_count = 0
 
     # Retrieve the caller information for the given call log entry
     query = """SELECT
@@ -512,7 +513,7 @@ def callers_manage(call_no):
     return render_template(
         'callers_manage.html',
         caller=caller,
-        original_referrer=original_referrer)
+        post_count=post_count)
 
 
 @app.route('/callers/blocked')

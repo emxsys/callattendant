@@ -23,7 +23,7 @@
   {% if caller.whitelisted == 'N' %}
   <div class="alert alert-success" role="alert">
      <form name="permit" action="/callers/manage/{{ caller.call_no }}" method="post">
-        <input name="original_referrer" type="hidden" value="{{ original_referrer }}">
+        <input name="post_count" type="hidden" value="{{ post_count }}">
         <input name="action" type="hidden" value="add-permit">
         <h5>Add to Permitted List</h5>
         <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
@@ -43,7 +43,7 @@
   {% else %}
   <div class="alert alert-warning" role="alert">
      <form name="remove-permit" action="/callers/manage/{{ caller.call_no }}" method="post">
-        <input name="original_referrer" type="hidden" value="{{ original_referrer }}">
+        <input name="post_count" type="hidden" value="{{ post_count }}">
         <input name="action" type="hidden" value="remove-permit">
         <h5>Remove from Permitted List</h5>
         <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
@@ -64,7 +64,7 @@
   {% if caller.blacklisted == 'N' %}
   <div class="alert alert-danger" role="alert">
      <form name="block" action="/callers/manage/{{ caller.call_no }}" method="post">
-        <input name="original_referrer" type="hidden" value="{{ original_referrer }}">
+        <input name="post_count" type="hidden" value="{{ post_count }}">
         <input name="action" type="hidden" value="add-block">
         <h5>Add to Blocked List</h5>
         <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
@@ -84,7 +84,7 @@
   {% else %}
   <div class="alert alert-warning" role="alert">
      <form name="block" action="/callers/manage/{{ caller.call_no }}" method="post">
-        <input name="original_referrer" type="hidden" value="{{ original_referrer }}">
+        <input name="post_count" type="hidden" value="{{ post_count }}">
         <input name="action" type="hidden" value="remove-block">
         <h5>Remove from Blocked List</h5>
         <input name="phone_no" type="hidden" value="{{ caller.phone_no }}">
@@ -102,7 +102,22 @@
      </form>
   </div>
   {% endif %}
-  <a href="{{ original_referrer }}" class="btn btn-secondary">Back</a>
+  <button id="back-button" type="button" class="btn btn-secondary">Back</button>
  </div>
 {% endblock %}
 
+
+{% block js %}
+<script>
+// Go back to the original referrer
+$('#back-button').on('click', function (event) {
+    if (document.referrer == window.location.href) {
+        // Don't go back to self after a POST, instead, we unwind
+        // the history sufficently to go back to the original referrer
+        history.go( -({{ post_count }} + 1))
+    } else {
+        history.back()
+    }
+});
+</script>
+{% endblock %}

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sudo journalctl --follow -u callattendant.service
+sudo journalctl --follow --no-hostname -u callattendant.service
