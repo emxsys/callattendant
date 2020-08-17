@@ -83,7 +83,6 @@ class CallAttendant(object):
         #  Hardware subsystem
         #  Create (and starts) the modem with callback functions
         self.modem = Modem(self.config, self.phone_ringing, self.handle_caller)
-        self.ring_count = 0
 
         # Messaging subsystem
         self.voice_mail = VoiceMail(self.db, self.config, self.modem, self.message_indicator)
@@ -115,11 +114,8 @@ class CallAttendant(object):
         """
         if enabled:
             self.ring_indicator.blink()
-            self.ring_count += 1
         else:
             self.ring_indicator.turn_off()
-            self.ring_count = 0
-        print("> > > Phone ring count: {}".format(self.ring_count))
 
     def run(self):
         """
@@ -131,7 +127,11 @@ class CallAttendant(object):
         screening_mode = self.config['SCREENING_MODE']
         block = self.config.get_namespace("BLOCK_")
         blocked = self.config.get_namespace("BLOCKED_")
+        screened = self.config.get_namespace("SCREENED_")
+        permitted = self.config.get_namespace("PERMITTED_")
         blocked_greeting_file = os.path.join(root_path, blocked['greeting_file'])
+        screened_greeting_file = os.path.join(root_path, screened['greeting_file'])
+        permitted_greeting_file = os.path.join(root_path, permitted['greeting_file'])
 
         # Instruct the modem to start feeding calls into the caller queue
         self.modem.handle_calls()
@@ -149,6 +149,7 @@ class CallAttendant(object):
 
                 # Perform the call screening
                 caller_permitted = False
+                caller_screened = False
                 caller_blocked = False
                 action = ""
                 reason = ""
@@ -172,29 +173,59 @@ class CallAttendant(object):
                         self.blocked_indicator.blink()
 
                 if not caller_permitted and not caller_blocked:
+                    caller_screened = True
                     action = "Screened"
+                    self.approved_indicator.blink()
 
                 # Log every call to the database (and console)
                 call_no = self.logger.log_caller(caller, action, reason)
                 print("--> {} {}: {}".format(phone_no, action, reason))
 
+                if caller_permitted:
+                    actions = permitted["actions"]
+                    greeting = permitted_greeting_file
+                    rings_before_answer = permitted["rings_before_answer"]
+                elif caller_screened:
+                    actions = screened["actions"]
+                    greeting = screened_greeting_file
+                    rings_before_answer = screened["rings_before_answer"]
+                elif caller_blocked:
+                    actions = blocked["actions"]
+                    greeting = blocked_greeting_file
+                    rings_before_answer = blocked["rings_before_answer"]
+
+                # In North America, the standard ring cadence is "2-4", or two seconds
+                # of ringing followed by four seconds of silence (33% Duty Cycle).
+                if rings_before_answer > 0:
+                    wait_secs = rings_before_answer * 6
+                    print("> > > Waiting {} secs for pickup").format(wait_secs)
+                    time.sleep(wait_secs)
+                    # Problem: What if the caller hangs up and another call
+                    # comes in while sleeping?
+                    # -> Issue: How to detect caller hang up?
+                    # -} Idea: loop with 1 sec sleep interval; check for off-hook or hang-up
+
+                # TODO here: must check for local phone off hook.
+                # Apply followintg actions if not off-hook.
+
                 # Apply the configured actions to blocked callers
-                if caller_blocked:
+                if len(actions) > 0:
 
                     # Go "off-hook" - Acquires a lock on the modem - MUST follow with hang_up()
                     if self.modem.pick_up():
                         try:
                             # Play greeting
-                            if "greeting" in blocked["actions"]:
+                            if "greeting" in actions:
                                 print(">> Playing greeting...")
-                                self.modem.play_audio(blocked_greeting_file)
+                                self.modem.play_audio(greeting)
 
                             # Record message
-                            if "record_message" in blocked["actions"]:
+                            if "record_message" in actions:
                                 print(">> Recording message...")
                                 self.voice_mail.record_message(call_no, caller)
 
-                            elif "voice_mail" in blocked["actions"]:
+                            # Enter voice mail menu
+                            elif "voice_mail" in actions:
                                 print(">> Starting voice mail...")
                                 self.voice_mail.voice_messaging_menu(call_no, caller)
 
@@ -204,7 +235,9 @@ class CallAttendant(object):
                         finally:
                             # Go "on-hook"
                             self.modem.hang_up()
+
                 self.phone_ringing(False)
+
             except Exception as e:
                 pprint(e)
                 print("** Error running callattendant. Exiting.")

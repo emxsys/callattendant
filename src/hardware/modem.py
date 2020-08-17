@@ -118,7 +118,16 @@ class Modem(object):
         # Setup and open the serial port
         self._serial = serial.Serial()
 
+    def get_off_hook():
+        pass
+
+    def get_is_ringing():
+        pass
+
     def handle_calls(self):
+        """
+        Starts the thread that processes incoming data.
+        """
         self._init_modem()
         self.event_thread = threading.Thread(target=self._call_handler)
         self.event_thread.name = "modem_call_handler"
@@ -165,7 +174,7 @@ class Modem(object):
                         modem_data = TEST_DATA[test_index]
                         test_index += 1
                     else:
-                        # Read a line of data from the serial port
+                        # Wait/read a line of data from the serial port
                         modem_data = self._serial.readline()
 
                 # Process the modem data
@@ -178,6 +187,8 @@ class Modem(object):
                         logfile.flush()
 
                     # Extract caller info
+                    if DCE_RING in modem_data:
+                        self.phone_ringing(True)
                     if RING in modem_data:
                         self.phone_ringing(True)
                     if DATE in modem_data:
