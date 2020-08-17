@@ -83,6 +83,7 @@ class CallAttendant(object):
         #  Hardware subsystem
         #  Create (and starts) the modem with callback functions
         self.modem = Modem(self.config, self.phone_ringing, self.handle_caller)
+        self.ring_count = 0
 
         # Messaging subsystem
         self.voice_mail = VoiceMail(self.db, self.config, self.modem, self.message_indicator)
@@ -114,9 +115,11 @@ class CallAttendant(object):
         """
         if enabled:
             self.ring_indicator.blink()
+            self.ring_count += 1
         else:
             self.ring_indicator.turn_off()
-
+            self.ring_count = 0
+        print("> > > Phone ring count: {}".format(self.ring_count))
 
     def run(self):
         """
@@ -201,7 +204,7 @@ class CallAttendant(object):
                         finally:
                             # Go "on-hook"
                             self.modem.hang_up()
-
+                self.phone_ringing(False)
             except Exception as e:
                 pprint(e)
                 print("** Error running callattendant. Exiting.")

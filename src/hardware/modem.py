@@ -222,6 +222,7 @@ class Modem(object):
             # Flush any existing input outout data from the buffers
             # self._serial.flushInput()
             # self._serial.flushOutput()
+            self.phone_ringing(False)
 
         except Exception as e:
             pprint(e)
