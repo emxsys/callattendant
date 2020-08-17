@@ -30,7 +30,7 @@
 # ==============================================================================
 from __future__ import division
 from flask import Flask, request, g, current_app, render_template, redirect, \
-    jsonify, url_for
+    jsonify, url_for, flash
 from flask_paginate import Pagination, get_page_args
 from screening.blacklist import Blacklist
 from screening.whitelist import Whitelist
@@ -40,8 +40,10 @@ from pprint import pprint
 from glob import glob
 import os
 import re
+import random
 import screening.utils
 import sqlite3
+import string
 import _thread
 
 # Create the Flask micro web-framework application
@@ -234,7 +236,7 @@ def dashboard():
             date=date_key,
             blocked=blocked_per_day.get(date_key, 0),
             allowed=allowed_per_day.get(date_key, 0),
-            screened=screened_per_day.get(date_key, 0) ))
+            screened=screened_per_day.get(date_key, 0)))
 
     # Render the resullts
     return render_template(
@@ -507,7 +509,8 @@ def callers_manage(call_no):
             blacklist_reason=''))
 
     # Re-render the same page to show the updated content
-    return render_template('callers_manage.html',
+    return render_template(
+        'callers_manage.html',
         caller=caller,
         original_referrer=original_referrer)
 
@@ -792,6 +795,7 @@ def messages_delete(msg_no):
     if success:
         return redirect(request.referrer, code=301)  # (re)moved permamently
     else:
+        flash('Delete message failed. Check the log.')
         return redirect(request.referrer, code=303)  # Other
 
 
@@ -854,6 +858,14 @@ def get_row_count(table_name):
     return total
 
 
+def get_random_string(length=10):
+    # Random string with the combination of lower and upper case
+    chars = string.ascii_letters + string.digits
+    result_str = ''.join(random.choice(chars) for i in range(length))
+    # print("Random string is:", result_str)
+    return result_str
+
+
 def get_css_framework():
     return current_app.config.get("CSS_FRAMEWORK", "bootstrap4")
 
@@ -886,6 +898,7 @@ def run_flask(config):
     Runs the Flask webapp.
         :param database: full path to the callattendant database file
     '''
+    app.secret_key = get_random_string()
     with app.app_context():
         # Override Flask settings with CallAttendant config settings
         app.config["DEBUG"] = config["DEBUG"]
