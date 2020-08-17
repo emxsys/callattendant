@@ -56,6 +56,8 @@
       </div>
     </div>
   {% endif %}
+  <button id="back-button" type="button" class="btn btn-secondary">Back</button>
+
 </div>
 
 <!--
@@ -86,11 +88,17 @@
 
 {% block js %}
 <script>
+// Go back to the original referrer
+$('#back-button').on('click', function (event) {
+    history.back()
+});
+
 // Open the Messages page
 $('#delete-message').on('click', function (event) {
   window.location.href = "/messages/delete/{{ caller.msg_no }}"
 });
 
+// Change message played status when the audio is played
 $("audio").on('play', function(e) {
   var $audio = $(e.currentTarget)
   var message_no = $audio.data('msg-no')
