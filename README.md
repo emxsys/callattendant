@@ -1,27 +1,44 @@
 # Call Attendant
 Automated call attendant with call blocking and voice messaging running on a Raspberry Pi. Stop annoying robocalls and spammers
-from interrupting your life.
+from interrupting your life. It intercepts robocallers and telemarketers before the first ring on your landline. It provides
+voice messaging options to capture messages from humans
 
-_If you're at all interested in this project, please provide some feedback by giving it a [star](https://github.com/emxsys/callattendant/stargazers), 
-or even better, get involved by filing [issues](https://github.com/emxsys/callattendant/issues) or [pull requests](https://github.com/emxsys/callattendant/pulls)._
+_If you're at all interested in this project, please provide some feedback by giving it a 
+__[star](https://github.com/emxsys/callattendant/stargazers)__, or even better, get involved by filing 
+[issues](https://github.com/emxsys/callattendant/issues) and/or [pull requests](https://github.com/emxsys/callattendant/pulls).
+Thanks!_
 
 #### Table of Contents
 - [Overview](#overview)
 - [Quick Start](#quick-start)
 - [More Information](#more-information)
 
-
 ## Overview
 The Call Attendant (__callattendant__) is a python-based, automated call attendant that runs on a lightweight Raspberry Pi
 or other Linux-based system. Coupled with a modem, it provides a call blocker and voice messaging system that can screen
 callers and block robocall and scams from your landline.
 
-Features include:
+#### How it works
+The Raspberry Pi and modem are connected to your home phone system in parallel with you phone handset(s). When an incoming
+call is received, the call goes to both your phone and the Call Attendant software on the Pi. During the period of the first ring
+the Call Attendant analyzes the caller ID, and based on your configuration, determines if the call should be blocked or allowed.
+Blocked calls can be simply hung up on, or routed to the voice message system. Calls that are allowed simply ring your home
+phone, if configured to do so. The Call Attendant's filtering mechanisms include an online lookup service, a blocked number list
+and pattern matching on the number and/or name.
+
+#### Features include:
 - [x] A call blocker that intercepts robocallers and blocked numbers at or before the first ring
 - [x] Permitted numbers pass straight through to the local phone system for normal call ringing and answering
 - [x] Visual indicators to show whether the incoming call is from a permitted, blocked, or unknown number
 - [x] Call details, permitted numbers, and blocked numbers are available in a web-based user interface
-- [x] Blocked callers are handled by a voice messaging system that requires human interaction, e.g, "Press 1 to leave a message"
+- [x] Blocked callers are handled by a voice messaging system that optioanlly requires human interaction, e.g, "Press 1 to leave a message"
+
+Call history, voice messaging, permitted numbers, blocked numbers and caller management is performed through the 
+Call Attendant's web interface. Following is an example of the main screen, the Dashboard, including metrics and 
+a list of recent calls. For a complete description see the [User Guide](https://github.com/emxsys/callattendant/wiki/User-Guide).
+
+##### _Dashboard/home page as seen on an IPad Pro and a Pixel 2 phone_
+![Dashboard - Responsive](https://github.com/emxsys/callattendant/blob/master/docs/dashboard-responsive.png)
 
 ### Hardware
 The __callattendant__ uses the following hardware:
@@ -33,14 +50,6 @@ section of the [Wiki](https://github.com/emxsys/callattendant/wiki/Home).
 
 ##### _The required hardware components: a Raspberry Pi 3B+ and USR5637 modem_
 ![Raspberry Pi and USR5637 Modem](https://github.com/emxsys/callattendant/raw/master/docs/raspberry_pi-modem.jpg)
-
-### Web Interface
-Call history, playing voice messages, permitted numbers, blocked numbers and caller management is performed through the Call Attendant's web interface.
-Following is an example of the main screen, the Dashboard, including metrics and a list of recent calls.  
-For a complete description see the [User Guide](https://github.com/emxsys/callattendant/wiki/User-Guide).
-
-##### _Dashboard/home page as seen on an IPad Pro and a Pixel 2 phone_
-![Dashboard - Responsive](https://github.com/emxsys/callattendant/blob/master/docs/dashboard-responsive.png)
 
 ### Setup
 See the [Call Attendant Wiki](https://github.com/emxsys/callattendant/wiki/Home) for complete installation, configuration, and operation instructions.   
