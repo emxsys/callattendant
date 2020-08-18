@@ -195,50 +195,23 @@ class CallAttendant(object):
                     greeting = blocked_greeting_file
                     rings_before_answer = blocked["rings_before_answer"]
 
-                # In North America, the standard ring cadence is "2-4", or two seconds
-                # of ringing followed by four seconds of silence (33% Duty Cycle).
-                if rings_before_answer > 0:
-                    wait_secs = rings_before_answer * 6
-                    print("> > > Waiting {} secs for pickup".format(wait_secs))
-                    if self.modem.off_hook_event.wait(wait_secs):
-                        print("> > > Local phone OFF HOOK")
-                        local_phone_off_hook = True
+                ok_to_answer = True
+                ring_count = 1  # Already had at least 1 ring to get here
+                while ring_count < rings_before_answer:
+                    # In North America, the standard ring cadence is "2-4", or two seconds
+                    # of ringing followed by four seconds of silence (33% Duty Cycle).
+                    if self.modem.ring_event.wait(8):
+                        ring_count = ring_count + 1
+                        print(" > > > Ring count: {}".format(ring_count))
+                    else:
+                        # wait timeout; assume ringing has stopped before the ring count
+                        # was reached because either the callee answered or caller hung up.
+                        ok_to_answer = False
+                        print(" > > > Ringing stopped: Caller hung up or callee answered")
+                        break
 
-                    # Problem: What if the caller hangs up and another call
-                    # comes in while sleeping?
-                    # -> Issue: How to detect caller hang up?
-                    # -} Idea: loop with 1 sec sleep interval; check for off-hook or hang-up
-
-                # TODO here: must check for local phone off hook.
-                # Apply followintg actions if not off-hook.
-
-                # Apply the configured actions to blocked callers
-                if not local_phone_off_hook and len(actions) > 0:
-
-                    # Go "off-hook" - Acquires a lock on the modem - MUST follow with hang_up()
-                    if self.modem.pick_up():
-                        try:
-                            # Play greeting
-                            if "greeting" in actions:
-                                print(">> Playing greeting...")
-                                self.modem.play_audio(greeting)
-
-                            # Record message
-                            if "record_message" in actions:
-                                print(">> Recording message...")
-                                self.voice_mail.record_message(call_no, caller)
-
-                            # Enter voice mail menu
-                            elif "voice_mail" in actions:
-                                print(">> Starting voice mail...")
-                                self.voice_mail.voice_messaging_menu(call_no, caller)
-
-                        except RuntimeError as e:
-                            print("** Error handling a blocked caller: {}".format(e))
-
-                        finally:
-                            # Go "on-hook"
-                            self.modem.hang_up()
+                if ok_to_answer and len(actions) > 0:
+                    self.answer_call(actions, greeting, call_no, caller)
 
                 self.phone_ringing(False)
 
@@ -246,6 +219,32 @@ class CallAttendant(object):
                 pprint(e)
                 print("** Error running callattendant. Exiting.")
                 return 1
+
+    def answer_call(self, actions, greeting, call_no, caller):
+        # Go "off-hook" - Acquires a lock on the modem - MUST follow with hang_up()
+        if self.modem.pick_up():
+            try:
+                # Play greeting
+                if "greeting" in actions:
+                    print(">> Playing greeting...")
+                    self.modem.play_audio(greeting)
+
+                # Record message
+                if "record_message" in actions:
+                    print(">> Recording message...")
+                    self.voice_mail.record_message(call_no, caller)
+
+                # Enter voice mail menu
+                elif "voice_mail" in actions:
+                    print(">> Starting voice mail...")
+                    self.voice_mail.voice_messaging_menu(call_no, caller)
+
+            except RuntimeError as e:
+                print("** Error handling a blocked caller: {}".format(e))
+
+            finally:
+                # Go "on-hook"
+                self.modem.hang_up()
 
 
 def make_config(filename=None):
