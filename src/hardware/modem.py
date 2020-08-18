@@ -45,6 +45,8 @@ import wave
 # ACSII codes
 DLE_CODE = chr(16)      # Data Link Escape (DLE) code
 ETX_CODE = chr(3)       # End Transmission (ETX) code
+CR_CODE = chr(13)       # Carraige return
+LF_CODE = chr(10)       # Line feed
 
 #  Modem AT commands:
 #  See http://support.usr.com/support/5637/5637-ug/ref_data.html
@@ -85,6 +87,9 @@ DTE_RAISE_VOLUME = (chr(16) + chr(117))                 # <DLE>-u
 DTE_LOWER_VOLUME = (chr(16) + chr(100))                 # <DLE>-d
 DTE_END_VOICE_DATA_TX = (chr(16) + chr(3))              # <DLE><ETX>
 DTE_END_RECIEVE_DATA_STATE = (chr(16) + chr(33))        # <DLE>-!
+
+# Return codes
+CRLF = (chr(13) + chr(10)).encode()
 
 # Record Voice Mail variables
 REC_VM_MAX_DURATION = 120  # Time in Seconds
@@ -183,17 +188,20 @@ class Modem(object):
                         modem_data = TEST_DATA[test_index]
                         test_index += 1
                     else:
-                        # Wait/read a line of data from the serial port
+                        # Wait/read a line of data from the serial port.
+                        # The verbose-form code is preceded and terminated by the
+                        # sequence <CR><LF>. The numeric-form is also terminated
+                        # by <CR>, but it has no preceding sequence.
                         modem_data = self._serial.readline()
 
-                # Process the modem data
-                if modem_data != b'':
+                if debugging:
+                    print(modem_data)
+                if dev_mode:
+                    logfile.write(modem_data)
+                    logfile.flush()
 
-                    if debugging:
-                        print(modem_data)
-                    if dev_mode:
-                        logfile.write(modem_data)
-                        logfile.flush()
+                # Process the modem data
+                if modem_data != b'' and modem_data != CRLF:
 
                     if DCE_PHONE_OFF_HOOK in modem_data:
                         print(" . . . OFF HOOK detected")
@@ -225,9 +233,10 @@ class Modem(object):
                         # Screen caller
                         self.handle_caller(call_record)
                         call_record = {}
-                        # Sleep for a short duration ( secs) to allow the
+                        # Sleep for a short duration (secs) to allow the
                         # call attendant to screen the call before resuming
                         #~ time.sleep(2)
+                        # TODO: Should wait on an Event
         finally:
             if dev_mode:
                 print("Closing modem log file")
