@@ -115,13 +115,20 @@ class Modem(object):
         self.handle_caller = handle_caller
         # Thread synchronization object
         self._lock = threading.RLock()
+
         # Setup and open the serial port
         self._serial = serial.Serial()
 
-    def get_off_hook():
+        self.off_hook_event = threading.Event()
+        self.on_hook_event = threading.Event()
+        self.hang_up_event = threading.Event()
+        self.ring_event = threading.Event()
+
+
+    def get_off_hook(self):
         pass
 
-    def get_is_ringing():
+    def get_is_ringing(self):
         pass
 
     def handle_calls(self):
@@ -162,6 +169,8 @@ class Modem(object):
             # This loop reads incoming data from the serial port and
             # posts the caller data to the handle_caller function
             call_record = {}
+            self.off_hook_event.clear()
+            self.on_hook_event.set()
             while 1:
                 modem_data = b''
 
@@ -186,9 +195,20 @@ class Modem(object):
                         logfile.write(modem_data)
                         logfile.flush()
 
-                    # Extract caller info
+                    if DCE_PHONE_OFF_HOOK in modem_data:
+                        print(" . . . OFF HOOK detected")
+                        self.off_hook_event.set()
+                        self.on_hook_event.clear()
+                    if DCE_PHONE_ON_HOOK in modem_data:
+                        print(" . . . ON HOOK detected")
+                        self.off_hook_event.clear()
+                        self.on_hook_event.set()
                     if DCE_RING in modem_data:
+                        print(" . . . DCE RING detected")
                         self.phone_ringing(True)
+                    if DCE_SILENCE_DETECTED in modem_data:
+                        print(" . . . DCE SILENCE detected")
+                    # Extract caller info
                     if RING in modem_data:
                         self.phone_ringing(True)
                     if DATE in modem_data:
@@ -207,7 +227,7 @@ class Modem(object):
                         call_record = {}
                         # Sleep for a short duration ( secs) to allow the
                         # call attendant to screen the call before resuming
-                        time.sleep(2)
+                        #~ time.sleep(2)
         finally:
             if dev_mode:
                 print("Closing modem log file")

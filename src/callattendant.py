@@ -148,6 +148,7 @@ class CallAttendant(object):
                 print("Incoming call from {}".format(phone_no))
 
                 # Perform the call screening
+                local_phone_off_hook = False
                 caller_permitted = False
                 caller_screened = False
                 caller_blocked = False
@@ -198,8 +199,11 @@ class CallAttendant(object):
                 # of ringing followed by four seconds of silence (33% Duty Cycle).
                 if rings_before_answer > 0:
                     wait_secs = rings_before_answer * 6
-                    print("> > > Waiting {} secs for pickup").format(wait_secs)
-                    time.sleep(wait_secs)
+                    print("> > > Waiting {} secs for pickup".format(wait_secs))
+                    if self.modem.off_hook_event.wait(wait_secs):
+                        print("> > > Local phone OFF HOOK")
+                        local_phone_off_hook = True
+
                     # Problem: What if the caller hangs up and another call
                     # comes in while sleeping?
                     # -> Issue: How to detect caller hang up?
@@ -209,7 +213,7 @@ class CallAttendant(object):
                 # Apply followintg actions if not off-hook.
 
                 # Apply the configured actions to blocked callers
-                if len(actions) > 0:
+                if not local_phone_off_hook and len(actions) > 0:
 
                     # Go "off-hook" - Acquires a lock on the modem - MUST follow with hang_up()
                     if self.modem.pick_up():
