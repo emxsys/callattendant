@@ -39,7 +39,7 @@
             Your browser does not support the audio element.
           </audio>
           <br>
-          from <a href="/callers/manage/{{ item.call_no }}"><b>{{ item.phone_no }}</b></a><small class="text-muted"> - {{ item.name }}</small>
+          from <a href="/calls/view/{{ item.call_no }}"><b>{{ item.phone_no }}</b></a><small class="text-muted"> - {{ item.name }}</small>
         </td>
         <td class="px-1 align-middle">
           <button type="button" class="btn btn-outline-light text-dark" onClick="location.href='/messages/delete/{{ item.msg_no }}'">
