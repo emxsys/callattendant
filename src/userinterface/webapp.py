@@ -38,6 +38,7 @@ from messaging.voicemail import Message
 from datetime import datetime, timedelta
 from pprint import pprint
 from glob import glob
+import logging
 import os
 import re
 import random
@@ -51,6 +52,9 @@ app = Flask(__name__)
 app.config.from_pyfile('webapp.cfg')
 app.debug = False  # debug mode prevents app from running in separate thread
 
+# Turn off the HTML GET/POST logging
+log = logging.getLogger('werkzeug')
+log.disabled = True
 
 @app.before_request
 def before_request():
