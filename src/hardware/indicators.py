@@ -47,6 +47,9 @@ class LEDIndicator(object):
     def turn_off(self):
         self.led.off()
 
+    def close(self):
+        self.led.close()
+
     def __init__(self, gpio_pin):
         self.led = LED(gpio_pin)
 

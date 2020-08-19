@@ -56,7 +56,9 @@ def modem():
     # modem.open_serial_port()
     modem._init_modem()
 
-    return modem
+    yield modem
+
+    modem.ring_indicator.close()
 
 
 def test_factory_reset(modem):
