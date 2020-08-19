@@ -108,10 +108,17 @@ class Whitelist(object):
         arguments = {'phone_no': phone_no}
         self.db.execute(query, arguments)
         self.db.commit()
-
+        try:
+            self.db.execute(query, arguments)
+            self.db.commit()
+        except Exception as e:
+            print("** Failed to delete caller from whitelist:")
+            pprint(e)
+            return False
         if self.config["DEBUG"]:
-            print("** whitelist entry removed")
+            print("Whitelist entry removed")
             pprint(arguments)
+        return True
 
     def update_number(self, phone_no, name, reason):
         """
@@ -129,12 +136,17 @@ class Whitelist(object):
             "reason": reason,
             "time": (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:19])
             }
-        self.db.execute(sql, arguments)
-        self.db.commit()
-
+        try:
+            self.db.execute(sql, arguments)
+            self.db.commit()
+        except Exception as e:
+            print("** Failed to update caller in whitelist:")
+            pprint(e)
+            return False
         if self.config["DEBUG"]:
-            print("whitelist entry updated")
+            print("Whitelist entry updated")
             pprint(arguments)
+        return True
 
     def check_number(self, number):
         query = "SELECT Reason FROM Whitelist WHERE PhoneNo=:number"
@@ -150,91 +162,3 @@ class Whitelist(object):
         args = (number,)
         results = query_db(self.db, query, args, False)
         return results
-
-
-def test(db, config):
-    """ Unit Tests """
-
-    print("*** Running Whitelist Unit Tests ***")
-
-    # Create the whitelist to be tested
-    whitelist = Whitelist(db, config)
-
-    # Add a record
-    call_record = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
-    whitelist.add_caller(call_record, "Test")
-
-    # List the records
-    query = 'SELECT * from Whitelist'
-    results = query_db(db, query)
-    print(query + " results:")
-    pprint(results)
-
-    try:
-        number = "1234567890"
-        print("Assert is whitelisted: " + number)
-        is_whitelisted, reason = whitelist.check_number(number)
-        assert is_whitelisted, number + " should be whitelisted"
-        print(reason)
-
-        number = "1111111111"
-        print("Assert not whitelisted: " + number)
-        is_whitelisted, reason = whitelist.check_number(number)
-        assert not is_whitelisted, number + " should not be whitelisted"
-
-        new_caller = {"NAME": "New Caller", "NMBR": "12312351234", "DATE": "1012", "TIME": "0600"}
-        number = new_caller["NMBR"]
-        name = new_caller["NAME"]
-        reason = "Test"
-        print("Assert add caller:")
-        pprint(new_caller)
-        whitelist.add_caller(new_caller, reason)
-        caller = whitelist.get_number(number)
-        pprint(caller)
-        assert caller[0][0] == number, number + " != "+ caller[0][0]
-        assert caller[0][1] == name, name + " !=  "+ caller[0][1]
-        assert caller[0][2] == reason, reason + " != "+ caller[0][2]
-
-        name = "Joe"
-        reason = "Confirm"
-        print("Assert update number: " + number)
-        whitelist.update_number(number, name, reason)
-        caller = whitelist.get_number(number)
-        pprint(caller)
-        assert caller[0][0] == number, number + " != "+ caller[0][0]
-        assert caller[0][1] == name, name + " !=  "+ caller[0][1]
-        assert caller[0][2] == reason, reason + " != "+ caller[0][2]
-
-    except AssertionError as e:
-        print("*** Unit Test FAILED ***")
-        pprint(e)
-        return 1
-
-    print("*** Unit Tests PASSED ***")
-    return 0
-
-
-if __name__ == '__main__':
-    """  Run the unit tests """
-
-    # Create the test db in RAM
-    import sqlite3
-    db = sqlite3.connect(":memory:")
-
-    # Add the parent directory to the path so callattendant can be found
-    import os
-    import sys
-    currentdir = os.path.dirname(os.path.realpath(__file__))
-    parentdir = os.path.dirname(currentdir)
-    sys.path.append(parentdir)
-
-    # Create and tweak a default config suitable for unit testing
-    from callattendant import make_config, print_config
-    config = make_config()
-    config['DEBUG'] = True
-    print_config(config)
-
-    # Run the tests
-    sys.exit(test(db, config))
-
-    print("Tests complete")
