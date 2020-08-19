@@ -29,9 +29,9 @@
 # https://iotbytes.wordpress.com/incoming-call-details-logger-with-raspberry-pi/
 # ==============================================================================
 
-import utils
 from datetime import datetime
 from pprint import pprint
+from screening.query_db import query_db
 
 
 class Blacklist(object):
@@ -109,7 +109,7 @@ class Blacklist(object):
         """
         query = "SELECT Reason FROM Blacklist WHERE PhoneNo=:number"
         args = {"number": number}
-        results = utils.query_db(self.db, query, args, False)
+        results = query_db(self.db, query, args, False)
         if len(results) > 0:
             return True, results[0][0]
         else:
@@ -118,7 +118,7 @@ class Blacklist(object):
     def get_number(self, number):
         query = "SELECT * FROM Blacklist WHERE PhoneNo = ?"
         args = (number,)
-        results = utils.query_db(self.db, query, args, False)
+        results = query_db(self.db, query, args, False)
         return results
 
     def __init__(self, db, config):
@@ -170,7 +170,7 @@ def test(db, config):
 
     # List the records
     query = 'select * from Blacklist'
-    results = utils.query_db(db, query)
+    results = query_db(db, query)
     print(query + " results:")
     pprint(results)
 
