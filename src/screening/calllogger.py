@@ -4,9 +4,9 @@
 # https://github.com/pradeesi/Incoming_Call_Detail_Logger
 # ==============================================================================
 
-import utils
 from datetime import datetime
 from pprint import pprint
+from screening.query_db import query_db
 
 
 class CallLogger(object):
@@ -40,7 +40,7 @@ class CallLogger(object):
 
         # Return the CallLogID
         query = "select last_insert_rowid()"
-        result = utils.query_db(self.db, query, (), True)
+        result = query_db(self.db, query, (), True)
         call_no = result[0]
 
         if self.config["DEBUG"]:
@@ -138,7 +138,7 @@ def test(db, config):
     ''' Unit Tests '''
     print("*** Running CallLogger Unit Tests ***")
 
-    import utils
+    from screening.query_db import query_db
     # Create the logger to be tested
     logger = CallLogger(db, config)
 
@@ -162,7 +162,7 @@ def test(db, config):
 
         # List the records
         query = "SELECT * FROM CallLog"
-        results = utils.query_db(db, query)
+        results = query_db(db, query)
         print(query + " results:")
         pprint(results)
 

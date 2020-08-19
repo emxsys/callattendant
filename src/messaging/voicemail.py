@@ -26,11 +26,12 @@
 import os
 from pprint import pprint
 from datetime import datetime
-from message import Message
+from messaging.message import Message
+from hardware.indicators import MessageIndicator
 
 class VoiceMail:
 
-    def __init__(self, db, config, modem, message_indicator):
+    def __init__(self, db, config, modem):
         """
         Initialize the database tables for voice messages.
         """
@@ -40,8 +41,8 @@ class VoiceMail:
         self.db = db
         self.config = config
         self.modem = modem
-        self.message_indicator = message_indicator
-        self.messages = Message(db, config, message_indicator)
+        self.message_indicator = MessageIndicator()
+        self.messages = Message(db, config, self.message_indicator)
 
         # Pulse the indicator if an unplayed msg is waiting
         self.reset_message_indicator()
@@ -64,10 +65,11 @@ class VoiceMail:
         self.message_indicator.blink()
 
         tries = 0
+        wait_secs = 8   # Candidate for configuration
         rec_msg = False
         while tries < 3:
             self.modem.play_audio(voice_mail_menu_file)
-            success, digit = self.modem.wait_for_keypress(5)
+            success, digit = self.modem.wait_for_keypress(wait_secs)
             if not success:
                 break
             if digit == '1':

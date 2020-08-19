@@ -24,13 +24,14 @@
 #  SOFTWARE.
 
 
-from blacklist import Blacklist
-from whitelist import Whitelist
-from nomorobo import NomoroboService
-from pprint import pprint
 import re
-import sys
 import os
+from pprint import pprint
+import sys
+
+from screening.blacklist import Blacklist
+from screening.whitelist import Whitelist
+from screening.nomorobo import NomoroboService
 
 
 class CallScreener(object):
