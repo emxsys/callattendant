@@ -14,9 +14,9 @@ lxml==4.5.2
 MarkupSafe==1.1.1
 pigpio==1.46
 pyserial==3.4
+pytest=6.0.1
 PyYAML==5.3.1
 RPi.GPIO==0.7.0
 RPIO==0.10.0
 soupsieve==1.9.6
 Werkzeug==1.0.1
-

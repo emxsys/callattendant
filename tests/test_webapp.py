@@ -23,45 +23,59 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-
-
 import os
 import sys
-import unittest
+import tempfile
 
-currentdir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(currentdir, "../src"))
-sys.path.append(os.path.join(currentdir, "../src/hardware"))
-sys.path.append(os.path.join(currentdir, "../src/messaging"))
-sys.path.append(os.path.join(currentdir, "../src/screening"))
+import pytest
 
-from userinterface.webapp import app
-from hardware.indicators import MessageIndicator
+# ~ from hardware.indicators import MessageIndicator
+from src.userinterface.webapp import app, get_random_string, get_db
 
-class TestFlask(unittest.TestCase):
 
-    def setUp(self):
-        app.testing = True
+# Read in SQL for populating test data
+with open(os.path.join(os.path.dirname(__file__), "callattendant.db.sql"), "rb") as f:
+    _data_sql = f.read().decode("utf8")
+
+
+@pytest.fixture
+def myapp():
+    """Create and configure a new app instance for each test."""
+
+    # create a temporary file to isolate the database for each test
+    db_fd, db_path = tempfile.mkstemp()
+
+    app.secret_key = get_random_string()
+    with app.app_context():
+
         app.config["TESTING"] = True
         app.config["DEBUG"] = True
-        # Add addtional settings from callattendant config
-        app.config["ROOT_PATH"] = os.path.dirname(os.path.realpath(__file__))
-        app.config["DATABASE"] = "../data/callattendant.db"
-        app.config["VOICE_MAIL_MESSAGE_FOLDER"] = "../data/messages"
-        #app.config["MESSAGE_INDICATOR_LED"] = MessageIndicator(10)
-        app.config["DB_PATH"] = os.path.join(app.config["ROOT_PATH"], app.config["DATABASE"])
+        app.config['DATABASE'] = db_path
+        app.config["DB_PATH"] = db_path
+        # ~ app.config["VOICE_MAIL_MESSAGE_FOLDER"] = "../data/messages"
+        # ~ app.config["MESSAGE_INDICATOR_LED"] = MessageIndicator(10)
 
-        self.app = app.test_client()
+        get_db().executescript(_data_sql)
 
-        self.assertEqual(app.debug, True)
+    yield app
 
-    def test_dashboard(self):
-        response = self.app.get('/', follow_redirects = True)
-        self.assertEqual(response.status_code, 200)
+    # close and remove the temporary database
+    os.close(db_fd)
+    os.unlink(db_path)
 
-    def test_calls(self):
-        response = self.app.get('/calls', follow_redirects = True)
-        self.assertEqual(response.status_code, 200)
 
-if __name__ == '__main__':
-    unittest.main()
+@pytest.fixture
+def client(myapp):
+    """A test client for the app."""
+    return app.test_client()
+
+
+def test_dashboard(client):
+    response = client.get('/', follow_redirects = True)
+    assert response.status_code == 200
+    assert b"Dashboard" in response.data
+    assert b"Statistics" in response.data
+    assert b"Recent Calls" in response.data
+    assert b"Calls per Day" in response.data
+
+
