@@ -257,8 +257,19 @@ def make_config(filename=None):
         "BLOCK_ENABLED": True,
         "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID", },
         "BLOCK_NUMBER_PATTERNS": {},
+
         "BLOCKED_ACTIONS": ("greeting", ),
+        "BLOCKED_RINGS_BEFORE_ANSWER": 0,
         "BLOCKED_GREETING_FILE": "resources/blocked_greeting.wav",
+
+        "SCREENED_ACTIONS": ("greeting", "record_message"),
+        "SCREENED_GREETING_FILE": "resources/general_greeting.wav",
+        "SCREENED_RINGS_BEFORE_ANSWER": 0,
+
+        "PERMITTED_ACTIONS": (),
+        "PERMITTED_GREETING_FILE": "resources/general_greeting.wav",
+        "PERMITTED_RINGS_BEFORE_ANSWER": 4,
+
         "VOICE_MAIL_GREETING_FILE": "resources/general_greeting.wav",
         "VOICE_MAIL_GOODBYE_FILE": "resources/goodbye.wav",
         "VOICE_MAIL_INVALID_RESPONSE_FILE": "resources/invalid_response.wav",
@@ -298,10 +309,29 @@ def validate_config(config):
         if mode not in ("whitelist", "blacklist"):
             print("* SCREENING_MODE option is invalid: {}".format(mode))
             success = False
+
     for mode in config["BLOCKED_ACTIONS"]:
         if mode not in ("greeting", "record_message", "voice_mail"):
             print("* BLOCKED_ACTIONS option is invalid: {}".format(mode))
             success = False
+    for mode in config["SCREENED_ACTIONS"]:
+        if mode not in ("greeting", "record_message", "voice_mail"):
+            print("* SCREENED_ACTIONS option is invalid: {}".format(mode))
+            success = False
+    for mode in config["PERMITTED_ACTIONS"]:
+        if mode not in ("greeting", "record_message", "voice_mail"):
+            print("* PERMITTED_ACTIONS option is invalid: {}".format(mode))
+            success = False
+
+    if not isinstance(config["BLOCKED_RINGS_BEFORE_ANSWER"], int):
+        print("* BLOCKED_RINGS_BEFORE_ANSWER should be an integer: {}".format(type(config["BLOCKED_RINGS_BEFORE_ANSWER"])))
+        success = False
+    if not isinstance(config["SCREENED_RINGS_BEFORE_ANSWER"], int):
+        print("* SCREENED_RINGS_BEFORE_ANSWER should be an integer: {}".format(type(config["SCREENED_RINGS_BEFORE_ANSWER"])))
+        success = False
+    if not isinstance(config["PERMITTED_RINGS_BEFORE_ANSWER"], int):
+        print("* PERMITTED_RINGS_BEFORE_ANSWER should be an integer: {}".format(type(config["PERMITTED_RINGS_BEFORE_ANSWER"])))
+        success = False
 
     if not config["DATABASE"] == "../data/callattendant.db":
         print("* DATABASE is not '../data/callattendant.db', are you sure this is right?")
@@ -319,6 +349,15 @@ def validate_config(config):
     if not os.path.exists(filepath):
         print("* BLOCKED_GREETING_FILE not found: {}".format(filepath))
         success = False
+    filepath = os.path.join(rootpath, config["SCREENED_GREETING_FILE"])
+    if not os.path.exists(filepath):
+        print("* SCREENED_GREETING_FILE not found: {}".format(filepath))
+        success = False
+    filepath = os.path.join(rootpath, config["PERMITTED_GREETING_FILE"])
+    if not os.path.exists(filepath):
+        print("* PERMITTED_GREETING_FILE not found: {}".format(filepath))
+        success = False
+
     filepath = os.path.join(rootpath, config["VOICE_MAIL_GREETING_FILE"])
     if not os.path.exists(filepath):
         print("* VOICE_MAIL_GREETING_FILE not found: {}".format(filepath))
