@@ -134,8 +134,7 @@ class CallAttendant(object):
                 phone_no = "{}-{}-{}".format(number[0:3], number[3:6], number[6:])
                 print("Incoming call from {}".format(phone_no))
 
-                # Perform the call screening
-                local_phone_off_hook = False
+                # Vars used in the call screening
                 caller_permitted = False
                 caller_screened = False
                 caller_blocked = False
@@ -169,6 +168,7 @@ class CallAttendant(object):
                 call_no = self.logger.log_caller(caller, action, reason)
                 print("--> {} {}: {}".format(phone_no, action, reason))
 
+                # Gather the data used to answer the call
                 if caller_permitted:
                     actions = permitted["actions"]
                     greeting = permitted_greeting_file
@@ -182,12 +182,13 @@ class CallAttendant(object):
                     greeting = blocked_greeting_file
                     rings_before_answer = blocked["rings_before_answer"]
 
+                # Wait for the callee to answer the phone, if configured to do so
                 ok_to_answer = True
                 ring_count = 1  # Already had at least 1 ring to get here
                 while ring_count < rings_before_answer:
                     # In North America, the standard ring cadence is "2-4", or two seconds
                     # of ringing followed by four seconds of silence (33% Duty Cycle).
-                    if self.modem.ring_event.wait(8):
+                    if self.modem.ring_event.wait(7):
                         ring_count = ring_count + 1
                         print(" > > > Ring count: {}".format(ring_count))
                     else:
@@ -197,6 +198,7 @@ class CallAttendant(object):
                         print(" > > > Ringing stopped: Caller hung up or callee answered")
                         break
 
+                # Answer the call!
                 if ok_to_answer and len(actions) > 0:
                     self.answer_call(actions, greeting, call_no, caller)
 
@@ -206,10 +208,10 @@ class CallAttendant(object):
                 return 1
 
     def answer_call(self, actions, greeting, call_no, caller):
-        pprint(actions)
-        print(greeting)
-        print(call_no)
-        pprint(caller)
+        """
+        Answer the call with the supplied actions, e.g, voice mail,
+        record message, or simply pickup and hang up.
+        """
         # Go "off-hook" - Acquires a lock on the modem - MUST follow with hang_up()
         if self.modem.pick_up():
             try:
