@@ -74,6 +74,13 @@ class RingIndicator(LEDIndicator):
 
     def __init__(self, gpio_pin=GPIO_RING):
         LEDIndicator.__init__(self, gpio_pin)
+        #~ if ring_event:
+            #~ while ring_event.wait():
+                #~ self.led.blink(0.1, 0.1, 20)
+
+    def ring(self):
+        self.led.blink(0.1, 0.1, 10)
+
 
 class ApprovedIndicator(LEDIndicator):
 

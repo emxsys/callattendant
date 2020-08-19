@@ -182,14 +182,14 @@ class Modem(object):
                         # by <CR>, but it has no preceding sequence.
                         modem_data = self._serial.readline()
 
-                if debugging:
-                    print(modem_data)
-                if dev_mode:
-                    logfile.write(modem_data)
-                    logfile.flush()
 
                 # Process the modem data
                 if modem_data != b'' and modem_data != CRLF:
+                    if debugging:
+                        print(modem_data)
+                    if dev_mode:
+                        logfile.write(modem_data)
+                        logfile.flush()
 
                     if RING in modem_data:
                         # Reset the ring event

@@ -112,10 +112,11 @@ class CallAttendant(object):
         is ringing. It controls the phone ringing status indicator.
             :param enabled: If True, signals the phone is ringing
         """
-        if enabled:
-            self.ring_indicator.blink()
-        else:
-            self.ring_indicator.turn_off()
+        self.ring_indicator.ring()
+        #~ if enabled:
+            #~ self.ring_indicator.blink()
+        #~ else:
+            #~ self.ring_indicator.turn_off()
 
     def run(self):
         """
@@ -221,6 +222,10 @@ class CallAttendant(object):
                 return 1
 
     def answer_call(self, actions, greeting, call_no, caller):
+        pprint(actions)
+        print(greeting)
+        print(call_no)
+        pprint(caller)
         # Go "off-hook" - Acquires a lock on the modem - MUST follow with hang_up()
         if self.modem.pick_up():
             try:
