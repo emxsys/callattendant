@@ -29,8 +29,6 @@
 # https://github.com/pradeesi/Incoming_Call_Detail_Logger
 # ==============================================================================
 
-from datetime import datetime
-from pprint import pprint
 import atexit
 import os
 import re
@@ -40,6 +38,10 @@ import sys
 import threading
 import time
 import wave
+
+from datetime import datetime
+from pprint import pprint
+
 from hardware.indicators import RingIndicator
 
 # ACSII codes
@@ -664,101 +666,3 @@ def decode(bytestr):
     string = bytestr.decode("utf-8").strip(' \t\n\r' + DLE_CODE)
     return string
 
-
-def test(config, handle_caller):
-    """ Unit Tests """
-    import os
-
-    print("*** Running Modem Unit Tests ***")
-
-    modem = Modem(config, handle_caller)
-
-    try:
-        # modem.open_serial_port()
-        modem._init_modem()
-    except Exception as e:
-        print(e)
-        print("Error: Unable to open the Serial Port.")
-        return 1
-
-    try:
-        print("Assert factory reset")
-        assert modem._send(FACTORY_RESET), "FACTORY_RESET"
-
-        print("Assert profile reset")
-        assert modem._send(RESET), "RESET"
-
-        print("Assert display modem settings")
-        assert modem._send(DISPLAY_MODEM_SETTINGS), "DISPLAY_MODEM_SETTINGS"
-
-        print("Assert put modem into voice mode.")
-        assert modem._send(ENTER_VOICE_MODE), "ENTER_VOICE_MODE"
-
-        print("Assert set compression method and sampling rate specifications.")
-        assert modem._send(SET_VOICE_COMPRESSION_8BIT_SAMPLING_8K), "SET_VOICE_COMPRESSION_8BIT_SAMPLING_8K"
-
-        print("Assert put modem into TAD mode.")
-        assert modem._send(ENTER_TELEPHONE_ANSWERING_DEVICE_OFF_HOOK), "ENTER_TELEPHONE_ANSWERING_DEVICE_OFF_HOOK"
-
-        print("Assert put modem into voice transmit data state.")
-        assert modem._send(ENTER_VOICE_TRANSMIT_DATA_STATE, "CONNECT"), "ENTER_VOICE_TRANSMIT_DATA_STATE"
-
-        print("Assert cancel voice data transmit state.")
-        assert modem._send(DTE_END_VOICE_DATA_TX), "DTE_END_VOICE_DATA_TX"
-
-        print("Assert put modem into voice recieve data state.")
-        assert modem._send(ENTER_VOICE_RECIEVE_DATA_STATE, "CONNECT"), "ENTER_VOICE_RECIEVE_DATA_STATE"
-
-        print("Assert cancel data transmit state.")
-        assert modem._send(DTE_END_RECIEVE_DATA_STATE, ETX_CODE), "DTE_END_RECIEVE_DATA_STATE"
-
-        print("Assert terminate call.")
-        assert modem._send(TERMINATE_CALL), "TERMINATE_CALL"
-
-        print("Assert pick_up")
-        assert modem.pick_up(), "pick_up"
-
-        print("Assert hang_up")
-        assert modem.hang_up(), "hang_up"
-
-        # Test audio play/recording when functional testing is enabled
-        if config["TESTING"]:
-
-            print("Assert playing audio")
-            currentdir = os.path.dirname(os.path.realpath(__file__))
-            assert modem.play_audio(os.path.join(currentdir, "../resources/sample.wav")), "Play audio"
-
-            print("Assert recording audio")
-            modem.record_audio("message.wav")
-
-    except Exception as e:
-        print("*** Unit test FAILED ***")
-        pprint(e)
-        return 1
-
-    print("*** Unit tests PASSED ***")
-    return 0
-
-
-if __name__ == '__main__':
-    """ Run the Unit Tests """
-
-    # Add the parent directory to the path so callattendant can be found
-    currentdir = os.path.dirname(os.path.realpath(__file__))
-    parentdir = os.path.dirname(currentdir)
-    sys.path.append(parentdir)
-    sys.path.append(os.path.join(parentdir, "screening"))
-
-    # Load and tweak the default config
-    from callattendant import make_config, print_config
-    config = make_config()
-    config['DEBUG'] = True
-    config['TESTING'] = True
-    print_config(config)
-
-    # Dummy callback functions
-    def dummy_handle_caller(caller):
-        pprint(caller)
-
-    # Run the tests
-    sys.exit(test(config, dummy_handle_caller))
