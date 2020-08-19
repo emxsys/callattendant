@@ -47,6 +47,9 @@ class LEDIndicator(object):
     def turn_off(self):
         self.led.off()
 
+    def close(self):
+        self.led.close()
+
     def __init__(self, gpio_pin):
         self.led = LED(gpio_pin)
 
@@ -283,56 +286,3 @@ class SevenSegmentDisplay(LEDBoard):
         self._layouts[char] = layout
 
 
-def test():
-    """ Unit Tests """
-    import os
-
-    print("*** Running Indicator Unit Tests ***")
-
-    try:
-        print("[Constructing Indicators]")
-        ring = RingIndicator()
-        approved = ApprovedIndicator()
-        blocked = BlockedIndicator()
-        message = MessageIndicator()
-
-        print("[Visual Tests]")
-
-        print("Turning on all LEDs for 5 seconds...")
-        ring.turn_on()
-        approved.turn_on()
-        blocked.turn_on()
-        message.turn_on()
-        time.sleep(5)
-
-        print("Blinking on all LEDs for 5 seconds...")
-        ring.blink()
-        time.sleep(.1)
-        approved.blink()
-        time.sleep(.1)
-        blocked.blink()
-        time.sleep(.1)
-        message.blink()
-        time.sleep(5)
-
-        print("Turning off all LEDs...")
-        ring.turn_off()
-        approved.turn_off()
-        blocked.turn_off()
-        message.turn_off()
-        time.sleep(5)
-
-    except Exception as e:
-        print("*** Unit test FAILED ***")
-        pprint(e)
-        return 1
-
-    print("*** Unit tests PASSED ***")
-    return 0
-
-
-if __name__ == '__main__':
-    """ Run the Unit Tests """
-    import sys
-    # Run the tests
-    sys.exit(test())

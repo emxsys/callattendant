@@ -88,14 +88,3 @@ class NomoroboService(object):
         self.spam_threshold = spam_threshold
 
 
-def test(args):
-    nomorobo = NomoroboService()
-    result = nomorobo.lookup_number("5622862616")
-    print(result)
-    return 0
-
-
-if __name__ == '__main__':
-    import sys
-    sys.exit(test(sys.argv))
-    print("Done")

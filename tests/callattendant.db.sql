@@ -1,0 +1,243 @@
+BEGIN TRANSACTION;
+DROP TABLE IF EXISTS `Whitelist`;
+CREATE TABLE IF NOT EXISTS `Whitelist` (
+    `PhoneNo`   TEXT,
+    `Name`  TEXT,
+    `Reason`    TEXT,
+    `SystemDateTime`    TEXT,
+    PRIMARY KEY(`PhoneNo`)
+);
+INSERT INTO `Whitelist` VALUES ('8055551081','Debbie','Wife','2020-07-28 18:57:10.570');
+INSERT INTO `Whitelist` VALUES ('8055557026','Doug','Friend','2020-07-28 18:57:10.570');
+INSERT INTO `Whitelist` VALUES ('3605556714','Bryce','Son','2020-07-28 18:57:10.570');
+
+DROP TABLE IF EXISTS `Message`;
+CREATE TABLE IF NOT EXISTS `Message` (
+    `MessageID` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `CallLogID` INTEGER,
+    `Played`    BOOLEAN NOT NULL DEFAULT 0 CHECK(Played IN ( 0 , 1 )),
+    `Filename`  TEXT,
+    `DateTime`  TEXT,
+    FOREIGN KEY(`CallLogID`) REFERENCES `CallLog`(`CallLogID`)
+);
+DROP TABLE IF EXISTS `CallLog`;
+CREATE TABLE IF NOT EXISTS `CallLog` (
+    `CallLogID` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `Name`  TEXT,
+    `Number`    TEXT,
+    `Date`  TEXT,
+    `Time`  TEXT,
+    `SystemDateTime`    TEXT,
+    `Action`    TEXT DEFAULT null,
+    `Reason`    TEXT DEFAULT null
+);
+INSERT INTO `CallLog` VALUES (1,'Bruce','8055551080','13-Oct','12:13 PM','2018-10-13 12:13:11.175','Permitted','');
+INSERT INTO `CallLog` VALUES (2,'Bruce','8055551080','13-Oct','12:19 PM','2018-10-13 12:19:14.391','Permitted','');
+INSERT INTO `CallLog` VALUES (3,'Bruce','8055551080','13-Oct','12:20 PM','2018-10-13 12:20:28.500','Permitted','');
+INSERT INTO `CallLog` VALUES (4,'Bruce','8055551080','13-Oct','12:27 PM','2018-10-13 12:27:17.302','Permitted','');
+INSERT INTO `CallLog` VALUES (5,'Bruce','8055551080','13-Oct','12:27 PM','2018-10-13 12:27:39.189','Permitted','');
+INSERT INTO `CallLog` VALUES (6,'Bruce','8055551080','13-Oct','12:31 PM','2018-10-13 12:31:29.541','Permitted','');
+INSERT INTO `CallLog` VALUES (7,'Bruce','8055551080','13-Oct','01:51 PM','2018-10-13 13:51:05.347','Permitted','');
+INSERT INTO `CallLog` VALUES (8,'Bruce','8055551080','13-Oct','01:52 PM','2018-10-13 13:52:39.293','Permitted','');
+INSERT INTO `CallLog` VALUES (9,'Bruce','8055551080','13-Oct','01:55 PM','2018-10-13 13:55:15.903','Permitted','');
+INSERT INTO `CallLog` VALUES (10,'Bruce','8055551080','13-Oct','01:58 PM','2018-10-13 13:58:51.477','Permitted','');
+INSERT INTO `CallLog` VALUES (11,'Bruce','8055551080','13-Oct','02:00 PM','2018-10-13 14:00:06.322','Permitted','');
+INSERT INTO `CallLog` VALUES (12,'Bruce','8055551080','13-Oct','02:27 PM','2018-10-13 14:27:24.270','Permitted','');
+INSERT INTO `CallLog` VALUES (13,'Bruce','8055551080','14-Oct','09:26 AM','2018-10-14 09:26:31.860','Permitted','');
+INSERT INTO `CallLog` VALUES (14,'5552862616','5552862616','14-Oct','03:38 PM','2018-10-14 15:45:18.363','Screened',NULL);
+INSERT INTO `CallLog` VALUES (15,'Bruce','8055551080','14-Oct','03:58 PM','2018-10-14 15:58:25.977','Permitted','');
+INSERT INTO `CallLog` VALUES (16,'WIRELESS CALLER','7068810048','14-Oct','04:02 PM','2018-10-14 16:02:24.808','Screened',NULL);
+INSERT INTO `CallLog` VALUES (17,'5552862616','5552862616','14-Oct','04:06 PM','2018-10-14 16:06:16.496','Screened',NULL);
+INSERT INTO `CallLog` VALUES (18,'5552862616','5552862616','14-Oct','04:37 PM','2018-10-14 16:37:54.308','Screened',NULL);
+INSERT INTO `CallLog` VALUES (19,'5622862447','5622862447','14-Oct','06:11 PM','2018-10-14 18:11:14.565','Blocked','Nomorobo');
+INSERT INTO `CallLog` VALUES (20,'8268424:4805715','8187971765','14-Oct','08:01 PM','2018-10-14 20:01:14.641','Blocked','Nomorobo');
+INSERT INTO `CallLog` VALUES (21,'Unavailable','O','15-Oct','10:32 AM','2018-10-15 10:32:39.182','Screened',NULL);
+INSERT INTO `CallLog` VALUES (22,'O','P','15-Oct','10:33 AM','2018-10-15 10:33:23.687','Screened',NULL);
+INSERT INTO `CallLog` VALUES (23,'SEAL BEACH   CA','5622862459','15-Oct','10:58 AM','2018-10-15 10:58:34.401','Blocked','Nomorobo');
+INSERT INTO `CallLog` VALUES (24,'6264002825','6264002825','15-Oct','11:53 AM','2018-10-15 11:53:53.711','Blocked','Nomorobo');
+INSERT INTO `CallLog` VALUES (25,'8052293163','8052293163','15-Oct','04:41 PM','2018-10-15 16:41:15.533','Blocked','Nomorobo');
+INSERT INTO `CallLog` VALUES (26,'V01519512800052','8055552412','15-Oct','04:51 PM','2018-10-15 16:51:33.253','Screened',NULL);
+INSERT INTO `CallLog` VALUES (27,'5622862744','5622862744','15-Oct','06:35 PM','2018-10-15 18:35:21.886','Blocked','Nomorobo');
+INSERT INTO `CallLog` VALUES (28,'V01610363500420','2139639811','16-Oct','10:36 AM','2018-10-16 10:36:42.426','Blocked','Nomorobo');
+INSERT INTO `CallLog` VALUES (29,'WIRELESS CALLER','8055554396','16-Oct','10:50 AM','2018-10-16 10:50:51.588','Screened',NULL);
+INSERT INTO `CallLog` VALUES (30,'SEAL BEACH   CA','5622862744','16-Oct','02:00 PM','2018-10-16 14:00:48.227','Blocked','Nomorobo');
+INSERT INTO `CallLog` VALUES (31,'SEAL BEACH   CA','5622862744','16-Oct','02:11 PM','2018-10-16 14:11:29.995','Blocked','Nomorobo');
+INSERT INTO `CallLog` VALUES (32,'SEAL BEACH   CA','5622862873','16-Oct','03:07 PM','2018-10-16 15:07:59.796','Blocked','Nomorobo');
+INSERT INTO `CallLog` VALUES (33,'VENTURA      CA','8055554032','16-Oct','03:41 PM','2018-10-16 15:41:30.531','Screened',NULL);
+INSERT INTO `CallLog` VALUES (34,'8052293163','8052293163','16-Oct','04:42 PM','2018-10-16 16:42:33.443','Blocked','Nomorobo');
+INSERT INTO `CallLog` VALUES (35,'AMERICAN EXPRES','4803089680','17-Oct','09:40 AM','2018-10-17 09:40:33.323','Blocked','Nomorobo');
+INSERT INTO `CallLog` VALUES (36,'V01710421201047','8189897202','17-Oct','10:42 AM','2018-10-17 10:42:18.696','Blocked','Nomorobo');
+INSERT INTO `CallLog` VALUES (37,'BUENA ANIMAL HO','8055552217','17-Oct','11:42 AM','2018-10-17 11:43:02.465','Permitted','Vet');
+INSERT INTO `CallLog` VALUES (38,'V01712585300104','8054724004','17-Oct','12:58 PM','2018-10-17 12:58:59.489','Blocked','Nomorobo');
+INSERT INTO `CallLog` VALUES (39,'Bruce','8055551080','18-Oct','10:54 AM','2018-10-18 10:54:29.036','Permitted','');
+INSERT INTO `CallLog` VALUES (40,'Bruce','8055551080','18-Oct','04:12 PM','2018-10-18 16:12:49.611','Permitted','');
+INSERT INTO `CallLog` VALUES (41,'Bruce','8055551080','21-Oct','06:30 PM','2018-10-21 18:30:24.363','Permitted','');
+INSERT INTO `CallLog` VALUES (42,'Bruce','8055551080','21-Oct','06:40 PM','2018-10-21 18:40:55.961','Permitted','');
+INSERT INTO `CallLog` VALUES (43,'Bruce','8055551080','21-Oct','06:43 PM','2018-10-21 18:43:55.386','Permitted','');
+INSERT INTO `CallLog` VALUES (44,'Bruce','8055551080','21-Oct','06:44 PM','2018-10-21 18:44:35.783','Permitted','');
+INSERT INTO `CallLog` VALUES (45,'Debbie','8055551081','21-Oct','06:45 PM','2018-10-21 18:45:49.537','Permitted','Wife');
+INSERT INTO `CallLog` VALUES (46,'Bruce','8055551080','22-Oct','08:31 AM','2018-10-22 08:31:54.578','Permitted','');
+INSERT INTO `CallLog` VALUES (47,'Debbie','8055551081','22-Oct','09:05 AM','2018-10-22 09:05:20.522','Permitted','Wife');
+INSERT INTO `CallLog` VALUES (48,'Bruce','8055551080','22-Oct','09:27 AM','2018-10-22 09:27:15.297','Permitted','');
+INSERT INTO `CallLog` VALUES (49,'V02210131301060','8187463231','22-Oct','10:13 AM','2018-10-22 10:13:27.237','Blocked','(818) 746-3231 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (50,'8052293163','8052293163','22-Oct','03:46 PM','2018-10-22 15:47:04.902','Blocked','Nomorobo');
+INSERT INTO `CallLog` VALUES (51,'V02216032800307','8059484946','22-Oct','04:03 PM','2018-10-22 16:03:48.433','Blocked','(805) 948-4946 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (52,'V02216192900306','8059484946','22-Oct','04:19 PM','2018-10-22 16:19:43.336','Blocked','(805) 948-4946 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (53,'PATRICK','6505559993','23-Oct','12:58 PM','2018-10-23 12:59:07.425','Screened',NULL);
+INSERT INTO `CallLog` VALUES (54,'PATRICK','6505559993','23-Oct','01:00 PM','2018-10-23 13:00:22.873','Screened',NULL);
+INSERT INTO `CallLog` VALUES (55,'V02315303400104','8054724004','23-Oct','03:30 PM','2018-10-23 15:30:57.348','Blocked','Nomorobo');
+INSERT INTO `CallLog` VALUES (56,'8052293163','8052293163','23-Oct','05:30 PM','2018-10-23 17:31:09.451','Blocked','Nomorobo');
+INSERT INTO `CallLog` VALUES (57,'Bruce','8055551080','24-Oct','07:50 AM','2018-10-24 07:50:26.177','Permitted','');
+INSERT INTO `CallLog` VALUES (58,'Bruce','8055551080','24-Oct','08:06 AM','2018-10-24 08:06:59.337','Permitted','');
+INSERT INTO `CallLog` VALUES (59,'Bruce','8055551080','24-Oct','08:08 AM','2018-10-24 08:08:09.495','Permitted','');
+INSERT INTO `CallLog` VALUES (60,'Bruce','8055551080','24-Oct','08:08 AM','2018-10-24 08:08:34.396','Permitted','');
+INSERT INTO `CallLog` VALUES (61,'Bruce','8055551080','24-Oct','08:09 AM','2018-10-24 08:09:14.713','Permitted','');
+INSERT INTO `CallLog` VALUES (62,'Bruce','8055551080','24-Oct','08:09 AM','2018-10-24 08:09:46.955','Permitted','');
+INSERT INTO `CallLog` VALUES (63,'Bruce','8055551080','24-Oct','09:11 AM','2018-10-24 09:12:02.381','Permitted','');
+INSERT INTO `CallLog` VALUES (64,'Bruce','8055551080','24-Oct','09:14 AM','2018-10-24 09:14:24.524','Permitted','');
+INSERT INTO `CallLog` VALUES (65,'N HOLLYWOOD  CA','8187549685','24-Oct','09:20 AM','2018-10-24 09:20:14.343','Blocked','(818) 754-9685 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (66,'Name Unavailabl','2133062584','24-Oct','01:26 PM','2018-10-24 13:26:48.209','Blocked','(213) 306-2584 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (67,'5623544258','5623544258','24-Oct','04:34 PM','2018-10-24 16:35:03.037','Blocked','(562) 354-4258 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (68,'Primary Medical','8055551430','25-Oct','08:47 AM','2018-10-25 08:47:57.640','Screened',NULL);
+INSERT INTO `CallLog` VALUES (69,'Andrew','5595552870','25-Oct','09:06 AM','2018-10-25 09:06:12.486','Screened',NULL);
+INSERT INTO `CallLog` VALUES (70,'Andrew','5595552870','25-Oct','09:37 AM','2018-10-25 09:38:01.734','Screened',NULL);
+INSERT INTO `CallLog` VALUES (71,'MURRIETA     CA','9514478040','25-Oct','11:20 AM','2018-10-25 11:20:28.664','Blocked','(951) 447-8040 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (72,'8055557154','8055557154','25-Oct','12:32 PM','2018-10-25 12:32:46.255','Screened',NULL);
+INSERT INTO `CallLog` VALUES (73,'8052442452','8052442452','25-Oct','12:53 PM','2018-10-25 12:53:46.584','Blocked','(805) 244-2452 is a robocaller with score 2');
+INSERT INTO `CallLog` VALUES (74,'V02513073000062','8056410410','25-Oct','01:07 PM','2018-10-25 13:07:51.624','Blocked','(805) 641-0410 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (75,'Bruce','8055551080','26-Oct','08:17 AM','2018-10-26 08:18:09.817','Permitted','');
+INSERT INTO `CallLog` VALUES (76,'Bruce','8055551080','26-Oct','08:30 AM','2018-10-26 08:30:53.987','Permitted','');
+INSERT INTO `CallLog` VALUES (77,'Bruce','8055551080','26-Oct','08:51 AM','2018-10-26 08:51:24.474','Permitted','');
+INSERT INTO `CallLog` VALUES (78,'Bruce','8055551080','26-Oct','08:52 AM','2018-10-26 08:53:25.526','Permitted','');
+INSERT INTO `CallLog` VALUES (79,'V02609411501060','8187549685','26-Oct','09:41 AM','2018-10-26 09:41:29.009','Blocked','(818) 754-9685 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (80,'AMERICAN','8055551349','26-Oct','01:48 PM','2018-10-26 13:48:27.406','Screened',NULL);
+INSERT INTO `CallLog` VALUES (81,'V02910033300509','7146568821','29-Oct','10:03 AM','2018-10-29 10:03:43.735','Blocked','(714) 656-8821 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (82,'8589433520','8589433520','29-Oct','10:19 AM','2018-10-29 10:19:33.037','Blocked','(858) 943-3520 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (83,'V02911052300420','7146568821','29-Oct','11:05 AM','2018-10-29 11:05:41.610','Blocked','(714) 656-8821 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (84,'V02912525000510','7146568821','29-Oct','12:52 PM','2018-10-29 12:53:01.943','Blocked','(714) 656-8821 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (85,'WIRELESS CALLER','7146568821','29-Oct','04:15 PM','2018-10-29 16:15:28.117','Blocked','(714) 656-8821 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (86,'CALLER ID','7042435004','30-Oct','09:23 AM','2018-10-30 09:23:57.066','Blocked','(704) 243-5004 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (87,'WIRELESS CALLER','7146568821','30-Oct','10:37 AM','2018-10-30 10:37:31.162','Blocked','(714) 656-8821 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (88,'8052442519','8052442519','30-Oct','11:45 AM','2018-10-30 11:45:27.722','Blocked','(805) 244-2519 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (89,'BENNY','4085552584','30-Oct','12:18 PM','2018-10-30 12:18:19.080','Screened',NULL);
+INSERT INTO `CallLog` VALUES (90,'Bruce','8055551080','31-Oct','08:27 AM','2018-10-31 08:27:24.899','Permitted','');
+INSERT INTO `CallLog` VALUES (91,'Bruce','8055551080','31-Oct','08:31 AM','2018-10-31 08:32:09.809','Permitted','');
+INSERT INTO `CallLog` VALUES (92,'Bruce','8055551080','31-Oct','08:35 AM','2018-10-31 08:35:51.737','Permitted','');
+INSERT INTO `CallLog` VALUES (93,'Bruce','8055551080','31-Oct','08:39 AM','2018-10-31 08:39:42.939','Permitted','');
+INSERT INTO `CallLog` VALUES (94,'PACIFIC BELL','7145669939','31-Oct','08:48 AM','2018-10-31 08:48:41.862','Blocked','(714) 566-9939 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (95,'V03110405100676','7149696698','31-Oct','10:41 AM','2018-10-31 10:41:11.643','Blocked','(714) 969-6698 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (96,'SACRAMENTO   CA','9165963618','31-Oct','11:25 AM','2018-10-31 11:26:05.422','Blocked','(916) 596-3618 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (97,'Name Unavailabl','8722315437','31-Oct','12:12 PM','2018-10-31 12:12:19.430','Blocked','(872) 231-5437 is a robocaller with score 2');
+INSERT INTO `CallLog` VALUES (98,'LEANNE','8055557026','31-Oct','04:11 PM','2018-10-31 16:11:36.780','Permitted','Friend');
+INSERT INTO `CallLog` VALUES (99,'8052040076','8052040076','31-Oct','04:21 PM','2018-10-31 16:21:13.755','Blocked','(805) 204-0076 is a Robocaller with score 2');
+INSERT INTO `CallLog` VALUES (100,'LEANNE','8055557026','31-Oct','04:25 PM','2018-10-31 16:25:45.720','Permitted','Friend');
+DROP TABLE IF EXISTS `Blacklist`;
+CREATE TABLE IF NOT EXISTS `Blacklist` (
+    `PhoneNo`   TEXT,
+    `Name`  TEXT,
+    `Reason`    TEXT,
+    `SystemDateTime`    TEXT,
+    PRIMARY KEY(`PhoneNo`)
+);
+INSERT INTO `Blacklist` VALUES ('5622862447','5622862447','Nomorobo','2018-10-14 18:11:17.696');
+INSERT INTO `Blacklist` VALUES ('8187971765','8268424:4805715','Nomorobo','2018-10-14 20:01:17.384');
+INSERT INTO `Blacklist` VALUES ('5622862459','SEAL BEACH   CA','Nomorobo','2018-10-15 10:58:38.706');
+INSERT INTO `Blacklist` VALUES ('6264002825','6264002825','Nomorobo','2018-10-15 11:53:58.172');
+INSERT INTO `Blacklist` VALUES ('8052293163','8052293163','Nomorobo','2018-10-15 16:41:21.487');
+INSERT INTO `Blacklist` VALUES ('5622862744','5622862744','Nomorobo','2018-10-15 18:35:24.702');
+INSERT INTO `Blacklist` VALUES ('2139639811','V01610363500420','Nomorobo','2018-10-16 10:36:46.035');
+INSERT INTO `Blacklist` VALUES ('5622862873','SEAL BEACH   CA','Nomorobo','2018-10-16 15:08:00.719');
+INSERT INTO `Blacklist` VALUES ('4803089680','AMERICAN EXPRES','Nomorobo','2018-10-17 09:40:37.730');
+INSERT INTO `Blacklist` VALUES ('8189897202','V01710421201047','Nomorobo','2018-10-17 10:42:29.049');
+INSERT INTO `Blacklist` VALUES ('8054724004','V01712585300104','Nomorobo','2018-10-17 12:59:05.385');
+INSERT INTO `Blacklist` VALUES ('8187463231','V02210131301060','(818) 746-3231 is a Robocaller with score 2','2018-10-22 10:13:23.616');
+INSERT INTO `Blacklist` VALUES ('8059484946','V02216032800307','(805) 948-4946 is a Robocaller with score 2','2018-10-22 16:03:44.242');
+INSERT INTO `Blacklist` VALUES ('8187549685','N HOLLYWOOD  CA','(818) 754-9685 is a Robocaller with score 2','2018-10-24 09:20:10.332');
+INSERT INTO `Blacklist` VALUES ('2133062584','Name Unavailabl','(213) 306-2584 is a Robocaller with score 2','2018-10-24 13:26:44.735');
+INSERT INTO `Blacklist` VALUES ('5623544258','5623544258','(562) 354-4258 is a Robocaller with score 2','2018-10-24 16:34:58.002');
+INSERT INTO `Blacklist` VALUES ('9514478040','MURRIETA     CA','(951) 447-8040 is a Robocaller with score 2','2018-10-25 11:20:25.443');
+INSERT INTO `Blacklist` VALUES ('8052442452','8052442452','(805) 244-2452 is a robocaller with score 2','2018-10-25 12:53:43.177');
+INSERT INTO `Blacklist` VALUES ('8056410410','V02513073000062','(805) 641-0410 is a Robocaller with score 2','2018-10-25 13:07:48.310');
+INSERT INTO `Blacklist` VALUES ('7146568821','V02910033300509','(714) 656-8821 is a Robocaller with score 2','2018-10-29 10:03:40.741');
+INSERT INTO `Blacklist` VALUES ('8589433520','8589433520','(858) 943-3520 is a Robocaller with score 2','2018-10-29 10:19:30.105');
+INSERT INTO `Blacklist` VALUES ('7042435004','CALLER ID','(704) 243-5004 is a Robocaller with score 2','2018-10-30 09:23:54.169');
+INSERT INTO `Blacklist` VALUES ('8052442519','8052442519','(805) 244-2519 is a Robocaller with score 2','2018-10-30 11:45:22.834');
+INSERT INTO `Blacklist` VALUES ('7145669939','PACIFIC BELL','(714) 566-9939 is a Robocaller with score 2','2018-10-31 08:48:38.980');
+INSERT INTO `Blacklist` VALUES ('7149696698','V03110405100676','(714) 969-6698 is a Robocaller with score 2','2018-10-31 10:41:08.755');
+INSERT INTO `Blacklist` VALUES ('9165963618','SACRAMENTO   CA','(916) 596-3618 is a Robocaller with score 2','2018-10-31 11:26:02.528');
+INSERT INTO `Blacklist` VALUES ('8722315437','Name Unavailabl','(872) 231-5437 is a robocaller with score 2','2018-10-31 12:12:16.549');
+INSERT INTO `Blacklist` VALUES ('8052040076','8052040076','(805) 204-0076 is a Robocaller with score 2','2018-10-31 16:21:10.868');
+INSERT INTO `Blacklist` VALUES ('8056526785','CTY OF VENTURA','(805) 652-6785 is a robocaller with score 2','2018-11-03 18:52:16.481');
+INSERT INTO `Blacklist` VALUES ('5657892570','Name Unavailabl','(565) 789-2570 is a robocaller with score 2','2018-11-04 06:57:10.118');
+INSERT INTO `Blacklist` VALUES ('8187522201','V10610451501092','(818) 752-2201 is a robocaller with score 2','2018-11-06 10:45:23.501');
+INSERT INTO `Blacklist` VALUES ('8057516701','V10616375900019','(805) 751-6701 is a robocaller with score 2','2018-11-06 13:38:05.552');
+INSERT INTO `Blacklist` VALUES ('8052442557','8052442557','(805) 244-2557 is a Robocaller with score 2','2018-11-06 16:12:13.682');
+INSERT INTO `Blacklist` VALUES ('8052424734','SAN LUIS OBS CA','(805) 242-4734 is a Health Insurance Scam with score 2','2018-11-07 16:41:45.705');
+INSERT INTO `Blacklist` VALUES ('8052442498','8052442498','(805) 244-2498 is a robocaller with score 2','2018-11-08 12:56:25.342');
+INSERT INTO `Blacklist` VALUES ('8552155008','800 Service','(855) 215-5008 is a Vehicle Warranty Scam with score 2','2018-11-09 08:48:31.809');
+INSERT INTO `Blacklist` VALUES ('8052446973','THOUSND OAKS CA','(805) 244-6973 is a Robocaller with score 2','2018-11-12 10:59:21.870');
+INSERT INTO `Blacklist` VALUES ('4028363870','INFO USA','(402) 836-3870 is a Robocaller with score 2','2018-11-12 15:47:52.361');
+INSERT INTO `Blacklist` VALUES ('4153250308','SAN FRANCSCO CA','(415) 325-0308 is a Robocaller with score 2','2018-11-13 14:52:22.098');
+INSERT INTO `Blacklist` VALUES ('3235032315','3235032315','(323) 503-2315 is a Robocaller with score 2','2018-11-15 09:50:15.897');
+INSERT INTO `Blacklist` VALUES ('8185674441','V11510055301097','(818) 567-4441 is a Robocaller with score 2','2018-11-15 10:05:58.742');
+INSERT INTO `Blacklist` VALUES ('3238006714','V11511545100026','(323) 800-6714 is a Robocaller with score 2','2018-11-15 11:54:56.713');
+INSERT INTO `Blacklist` VALUES ('9096661630','V11610190300016','(909) 666-1630 is a Utility Scam with score 2','2018-11-16 10:19:10.163');
+INSERT INTO `Blacklist` VALUES ('8184931155','V11612121800015','(818) 493-1155 is a Utility Scam with score 2','2018-11-16 12:12:24.188');
+INSERT INTO `Blacklist` VALUES ('8448883000','8448883000','(844) 888-3000 is a Mortgage Scam with score 2','2018-11-19 15:53:23.567');
+INSERT INTO `Blacklist` VALUES ('8185841996','8185841996','(818) 584-1996 is a robocaller with score 2','2018-11-20 08:35:13.450');
+INSERT INTO `Blacklist` VALUES ('3107433529','GARCIA YVETTE','(310) 743-3529 is a Robocaller with score 2','2018-11-20 09:08:42.773');
+INSERT INTO `Blacklist` VALUES ('5164907137','CORAL GRAPHICS','(516) 490-7137 is a Robocaller with score 2','2018-11-20 11:31:37.599');
+INSERT INTO `Blacklist` VALUES ('5592067106','FRESNO       CA','(559) 206-7106 is a Robocaller with score 2','2018-11-21 12:43:54.014');
+INSERT INTO `Blacklist` VALUES ('8582254580','TOTAL MERCHANT','(858) 225-4580 is a Robocaller with score 2','2018-11-21 15:16:10.622');
+INSERT INTO `Blacklist` VALUES ('8187488131','8187488131','(818) 748-8131 is a robocaller with score 2','2018-11-23 13:06:04.951');
+INSERT INTO `Blacklist` VALUES ('8182379292','AMERICAN HEART','(818) 237-9292 is a robocaller with score 2','2018-11-25 09:27:32.985');
+INSERT INTO `Blacklist` VALUES ('4245589666','WIRELESS CALLER','(424) 558-9666 is a Robocaller with score 2','2018-11-26 09:33:11.311');
+INSERT INTO `Blacklist` VALUES ('8184572212','V12714241901102','(818) 457-2212 is a Robocaller with score 2','2018-11-27 14:24:26.166');
+INSERT INTO `Blacklist` VALUES ('8182757489','MONTROSE     CA','(818) 275-7489 is a Robocaller with score 2','2018-11-27 17:10:40.152');
+INSERT INTO `Blacklist` VALUES ('8477639607','HALLMARK DATA S','(847) 763-9607 is a robocaller with score 2','2018-11-29 09:40:44.413');
+INSERT INTO `Blacklist` VALUES ('8184571101','V12911464201102','(818) 457-1101 is a Robocaller with score 2','2018-11-29 11:46:49.503');
+INSERT INTO `Blacklist` VALUES ('8188057352','V12916574400135','(818) 805-7352 is a robocaller with score 2','2018-11-29 16:57:51.499');
+INSERT INTO `Blacklist` VALUES ('8182759222','V12917065100015','(818) 275-9222 is a Robocaller with score 2','2018-11-29 17:06:59.327');
+INSERT INTO `Blacklist` VALUES ('8187852210','V20209433301102','(818) 785-2210 is a Robocaller with score 2','2018-12-02 09:43:39.928');
+INSERT INTO `Blacklist` VALUES ('8188948001','V20409302500015','(818) 894-8001 is a robocaller with score 2','2018-12-04 09:30:35.176');
+INSERT INTO `Blacklist` VALUES ('8052442578','8052442578','(805) 244-2578 is a Robocaller with score 2','2018-12-04 10:13:29.907');
+INSERT INTO `Blacklist` VALUES ('8185841714','AMERICAN HEART','(818) 584-1714 is a robocaller with score 2','2018-12-04 12:01:17.451');
+INSERT INTO `Blacklist` VALUES ('8475597330','NORTHBROOK   IL','(847) 559-7330 is a robocaller with score 2','2018-12-04 12:56:48.347');
+INSERT INTO `Blacklist` VALUES ('8057542362','8057542362','(805) 754-2362 is a robocaller with score 2','2018-12-05 11:10:01.484');
+INSERT INTO `Blacklist` VALUES ('8182379321','AMERICAN HEART','(818) 237-9321 is a Robocaller with score 2','2018-12-05 12:06:20.128');
+INSERT INTO `Blacklist` VALUES ('8059474292','V20611023200029','(805) 947-4292 is a Robocaller with score 2','2018-12-06 11:02:47.744');
+INSERT INTO `Blacklist` VALUES ('3233568972','V20616550800135','(323) 356-8972 is a Robocaller with score 2','2018-12-06 16:55:19.280');
+INSERT INTO `Blacklist` VALUES ('3238540725','V20713285700305','(323) 854-0725 is a Robocaller with score 2','2018-12-07 13:29:03.725');
+INSERT INTO `Blacklist` VALUES ('7603639581','MORONGO VLY  CA','(760) 363-9581 is a Robocaller with score 2','2018-12-07 18:32:43.480');
+INSERT INTO `Blacklist` VALUES ('8887772454','V20817093600063','(888) 777-2454 is a Robocaller with score 2','2018-12-08 14:09:43.272');
+INSERT INTO `Blacklist` VALUES ('6267755453','MONROVIA     CA','(626) 775-5453 is a Robocaller with score 2','2018-12-09 15:25:44.822');
+INSERT INTO `Blacklist` VALUES ('8052563117','8052563117','(805) 256-3117 is a Robocaller with score 2','2018-12-11 11:03:32.237');
+INSERT INTO `Blacklist` VALUES ('8185574070','V21112021801105','(818) 557-4070 is a Robocaller with score 2','2018-12-11 12:02:25.626');
+INSERT INTO `Blacklist` VALUES ('8007315874','800 Service','(800) 731-5874 is a robocaller with score 2','2018-12-12 09:22:55.805');
+INSERT INTO `Blacklist` VALUES ('8053422579','8053422579','(805) 342-2579 is a robocaller with score 2','2018-12-13 09:52:25.449');
+INSERT INTO `Blacklist` VALUES ('6174889088','TCG PAYPHONES M','(617) 488-9088 is a robocaller with score 2','2018-12-13 10:19:02.192');
+INSERT INTO `Blacklist` VALUES ('2134034443','J2 GLOBAL COMMU','(213) 403-4443 is a Robocaller with score 2','2018-12-17 08:48:24.310');
+INSERT INTO `Blacklist` VALUES ('3232384948','3232384948','(323) 238-4948 is a Robocaller with score 2','2018-12-18 10:23:11.514');
+INSERT INTO `Blacklist` VALUES ('5622458737','LA HABRA     CA','(562) 245-8737 is a robocaller with score 2','2018-12-18 11:22:38.248');
+INSERT INTO `Blacklist` VALUES ('8052325239','VENTURA      CA','(805) 232-5239 is a robocaller with score 2','2018-12-18 11:31:27.693');
+INSERT INTO `Blacklist` VALUES ('3238001567','V21817385100650','(323) 800-1567 is a Robocaller with score 2','2018-12-18 14:39:02.805');
+INSERT INTO `Blacklist` VALUES ('8185556123','V21911330500015','(818) 555-6123 is a robocaller with score 2','2018-12-19 11:33:13.659');
+INSERT INTO `Blacklist` VALUES ('8052442520','8052442520','(805) 244-2520 is a robocaller with score 2','2018-12-19 12:30:39.004');
+INSERT INTO `Blacklist` VALUES ('3104013091','V21915442300015','(310) 401-3091 is a robocaller with score 2','2018-12-19 15:44:28.677');
+INSERT INTO `Blacklist` VALUES ('8052148536','V21919121500016','(805) 214-8536 is a Utility Scam with score 2','2018-12-19 19:12:25.942');
+INSERT INTO `Blacklist` VALUES ('8183303547','V22015224600026','(818) 330-3547 is a Robocaller with score 2','2018-12-20 15:22:52.683');
+INSERT INTO `Blacklist` VALUES ('9545193506','FT LAUDRDALE FL','(954) 519-3506 is a Robocaller with score 2','2018-12-21 09:16:38.070');
+INSERT INTO `Blacklist` VALUES ('8555509049','800 Service','(855) 550-9049 is a Computer Scam with score 2','2018-12-22 15:09:02.984');
+INSERT INTO `Blacklist` VALUES ('5704056064','WILKES BARRE PA','(570) 405-6064 is a Debt Reduction Scam with score 2','2018-12-26 09:04:42.360');
+INSERT INTO `Blacklist` VALUES ('3238927114','V22609383900016','(323) 892-7114 is a Robocaller with score 2','2018-12-26 09:38:52.208');
+INSERT INTO `Blacklist` VALUES ('8778180060','LOSTMYDOGGY.COM','(877) 818-0060 is a Robocaller with score 2','2018-12-27 12:41:18.778');
+INSERT INTO `Blacklist` VALUES ('2132415210','V23111024300135','(213) 241-5210 is a Home Repair Scam with score 2','2018-12-31 11:02:51.523');
+INSERT INTO `Blacklist` VALUES ('2092992699','BREAST CANCER','(209) 299-2699 is a Robocaller with score 2','2019-01-03 08:43:31.140');
+INSERT INTO `Blacklist` VALUES ('8189521115','V10313364501105','(818) 952-1115 is a Robocaller with score 2','2019-01-03 13:36:51.739');
+INSERT INTO `Blacklist` VALUES ('9095002608','CALIMESA     CA','(909) 500-2608 is a Utility Scam with score 2','2019-01-04 09:36:48.239');
+INSERT INTO `Blacklist` VALUES ('3236423729','3236423729','(323) 642-3729 is a Phone Scam with score 2','2019-01-04 19:03:18.088');
+INSERT INTO `Blacklist` VALUES ('2092992710','2092992710','(209) 299-2710 is a Robocaller with score 2','2019-01-05 12:19:20.962');
+INSERT INTO `Blacklist` VALUES ('8053793691','V10709554000082','(805) 379-3691 is a Robocaller with score 2','2019-01-07 09:55:50.572');
+INSERT INTO `Blacklist` VALUES ('8052463860','VOIP CALLER','(805) 246-3860 is a Robocaller with score 2','2019-01-07 15:38:07.500');
+INSERT INTO `Blacklist` VALUES ('8052031316','8052031316','(805) 203-1316 is a Home Repair Scam with score 2','2019-01-08 15:29:41.911');
+COMMIT;
