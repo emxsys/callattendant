@@ -29,9 +29,10 @@
 # https://iotbytes.wordpress.com/incoming-call-details-logger-with-raspberry-pi/
 # ==============================================================================
 
-import utils
-from pprint import pprint
 from datetime import datetime
+from pprint import pprint
+
+from screening.query_db import query_db
 
 
 class Whitelist(object):
@@ -138,7 +139,7 @@ class Whitelist(object):
     def check_number(self, number):
         query = "SELECT Reason FROM Whitelist WHERE PhoneNo=:number"
         args = {"number": number}
-        results = utils.query_db(self.db, query, args, False)
+        results = query_db(self.db, query, args, False)
         if len(results) > 0:
             return True, results[0][0]
         else:
@@ -147,7 +148,7 @@ class Whitelist(object):
     def get_number(self, number):
         query = "SELECT * FROM Whitelist WHERE PhoneNo = ?"
         args = (number,)
-        results = utils.query_db(self.db, query, args, False)
+        results = query_db(self.db, query, args, False)
         return results
 
 
@@ -165,7 +166,7 @@ def test(db, config):
 
     # List the records
     query = 'SELECT * from Whitelist'
-    results = utils.query_db(db, query)
+    results = query_db(db, query)
     print(query + " results:")
     pprint(results)
 

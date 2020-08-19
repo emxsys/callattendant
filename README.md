@@ -1,102 +1,73 @@
 # Call Attendant
-Automated call attendant with call blocking and voice messaging on a Raspberry Pi.
+Automated call attendant with call blocking and voice messaging running on a Raspberry Pi. Stop annoying robocalls and spammers
+from interrupting your life. It intercepts robocallers and telemarketers before the first ring on your landline. It provides
+voice messaging options to capture messages from humans
+
+_If you're at all interested in this project, please provide some feedback by giving it a 
+__[star](https://github.com/emxsys/callattendant/stargazers)__, or even better, get involved by filing 
+[issues](https://github.com/emxsys/callattendant/issues) and/or [pull requests](https://github.com/emxsys/callattendant/pulls).
+Thanks!_
 
 #### Table of Contents
 - [Overview](#overview)
-- [Software Architecture](#software-architecture)
-- [Software Development Plan](#software-development-plan)
-- [Installation](#installation)
-- [Operation](#operation)
+- [Quick Start](#quick-start)
 - [More Information](#more-information)
-
 
 ## Overview
 The Call Attendant (__callattendant__) is a python-based, automated call attendant that runs on a lightweight Raspberry Pi
 or other Linux-based system. Coupled with a modem, it provides a call blocker and voice messaging system that can screen
 callers and block robocall and scams from your landline.
 
-Features include:
+#### How it works
+The Raspberry Pi and modem are connected to your home phone system in parallel with you phone handset(s). When an incoming
+call is received, the call goes to both your phone and the Call Attendant software on the Pi. During the period of the first ring
+the Call Attendant analyzes the caller ID, and based on your configuration, determines if the call should be blocked or allowed.
+Blocked calls can be simply hung up on, or routed to the voice message system. Calls that are allowed simply ring your home
+phone, if configured to do so. The Call Attendant's filtering mechanisms include an online lookup service, a blocked number list
+and pattern matching on the number and/or name.
+
+#### Features include:
 - [x] A call blocker that intercepts robocallers and blocked numbers at or before the first ring
 - [x] Permitted numbers pass straight through to the local phone system for normal call ringing and answering
 - [x] Visual indicators to show whether the incoming call is from a permitted, blocked, or unknown number
 - [x] Call details, permitted numbers, and blocked numbers are available in a web-based user interface
-- [x] Blocked callers are handled by a voice messaging system that requires human interaction, e.g, "Press 1 to leave a message"
+- [x] Blocked callers are handled by a voice messaging system that optioanlly requires human interaction, e.g, "Press 1 to leave a message"
+
+Call history, voice messaging, permitted numbers, blocked numbers and caller management is performed through the 
+Call Attendant's web interface. Following is an example of the main screen, the Dashboard, including metrics and 
+a list of recent calls. For a complete description see the [User Guide](https://github.com/emxsys/callattendant/wiki/User-Guide).
+
+##### _Dashboard/home page as seen on an IPad Pro and a Pixel 2 phone_
+![Dashboard - Responsive](https://github.com/emxsys/callattendant/blob/master/docs/dashboard-responsive.png)
 
 ### Hardware
 The __callattendant__ uses the following hardware:
 - Raspberry Pi 3B+ or better
 - US Robotics 5637 Modem
 
-For a complete description of the hardware setup see the [Installation](https://github.com/emxsys/callattendant/wiki/User-Guide#installation) 
-section of the [User Guide](https://github.com/emxsys/callattendant/wiki/User-Guide).
+For a complete description of the hardware setup see the [Installation](https://github.com/emxsys/callattendant/wiki/Home#installation) 
+section of the [Wiki](https://github.com/emxsys/callattendant/wiki/Home).
 
 ##### _The required hardware components: a Raspberry Pi 3B+ and USR5637 modem_
 ![Raspberry Pi and USR5637 Modem](https://github.com/emxsys/callattendant/raw/master/docs/raspberry_pi-modem.jpg)
 
-### Web Interface
-Call history, permitted numbers, blocked numbers and caller management is performed through a web interface.
-Following is an example of the main screen, the Call Log, including metrics and a list of recent calls.  
-For a complete description see the [Web Interface](https://github.com/emxsys/callattendant/wiki/User-Guide#web-interface) 
-section of the [User Guide](https://github.com/emxsys/callattendant/wiki/User-Guide).
-
-##### _Call Log Example_
-![Call Log](https://github.com/emxsys/callattendant/blob/master/docs/call-log.png)
+### Setup
+See the [Call Attendant Wiki](https://github.com/emxsys/callattendant/wiki/Home) for complete installation, configuration, and operation instructions.   
 
 ### User Guide
-See the [User Guide](https://github.com/emxsys/callattendant/wiki/User-Guide) in the project's wiki for installation, 
-configuration, operation and web interface instructions.  The [Wiki](https://github.com/emxsys/callattendant/wiki) 
-also includes a [Developer Guide](https://github.com/emxsys/callattendant/wiki/Developer-Guide) and an 
-[Advanced](https://github.com/emxsys/callattendant/wiki/Advanced) page for more complex setups and situations.
+See the [User Guide](https://github.com/emxsys/callattendant/wiki/User-Guide) in the project's wiki for web interface instructions.  
 
-## Software Architecture
-### Archtectural Viewpoints
-###### _Rational Unified Process 4+1 View_
-![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/RUP_41_View.png "RUP 4+1 View")
+### Developer Guide
+The [Wiki](https://github.com/emxsys/callattendant/wiki) includes a [Developer Guide](https://github.com/emxsys/callattendant/wiki/Developer-Guide) 
+that describes the software architecture and software development plan.
 
-### Use Case View
-###### _Use Case Diagram_
-![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Use_Case_View.png "Use Case Diagram")
-
-### Logical View
-###### _Class Diagram_
-![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Logical_View.png "Logical View Diagram")
-
-### Process View
-###### _Activity Diagram_
-![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Process_View.png "Process View Diagram")
-
-###### _Sequence Diagram_
-![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Main_Sequence_Diagram.png "Main Sequence Diagram")
-
-### Implementation View
-###### _Component Diagram_
-![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Implementation_View.png "Implementation Diagram")
-
-### Deployment View
-###### _Deployment Diagram_
-![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Deployment_View.png "Deployment Diagram")
-
-### Data View
-###### _Entity Relationship Diagram_
-![Alt text](https://github.com/emxsys/callattendant/blob/master/docs/images/Data_View.png "Entity Relationship Diagram")
+### More Information
+The [Wiki](https://github.com/emxsys/callattendant/wiki) has an [Advanced](https://github.com/emxsys/callattendant/wiki/Advanced) page for 
+more complex setups and situations. For instance, _running as a service_.
 
 ---
 
-## Software Development Plan
-The development plan's [phase objectives](https://github.com/emxsys/callattendant/projects?query=is%3Aopen+sort%3Acreated-asc) are captured in the GitHub projects.
-### [Inception Phase](https://github.com/emxsys/callattendant/projects/1)
-- [x] Iteration #I1: [v0.1](https://github.com/emxsys/callattendant/releases/tag/v0.1)
-### [Elaboration Phase](https://github.com/emxsys/callattendant/projects/2)
-- [x] Iteration #E1: [v0.2](https://github.com/emxsys/callattendant/releases/tag/v0.2)
-### [Construction Phase](https://github.com/emxsys/callattendant/projects/3)
-- [x] Iteration #C1: [v0.3](https://github.com/emxsys/callattendant/releases/tag/v0.3)
-- [ ] Iteration #C2: [v0.4](https://github.com/emxsys/callattendant/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Release+0.4%22)
-### [Transition Phase](https://github.com/emxsys/callattendant/projects/4)
-- [ ] Iteration #T1: [v1.0](https://github.com/emxsys/callattendant/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Release+1.0%22)
-
----
-
-## Installation
+## Quick Start
 
 ### Prequisites
 #### Hardware
@@ -263,104 +234,27 @@ OK
 Navigate to <pi_address> on port 5000 and you should see the home page. Make a few calls to
 yourself to test the service.
 
-### Run as a Service
-###### *Optional*
-We're going to define a service to automatically run the Call Attendant on the Raspberry Pi at start up. Our simple service will run the `callattendant.py` script and if by any means is aborted it is going to be restarted automatically.
+---
+### Configuration
+The Call Attendant's behavior can be controlled by a configuration file. To override the default configuration, 
+copy the `src/app.cfg.example` file to a new file, e.g. `src/app.cfg` and edit its contents. Use an editor that 
+provides Python syntax highlighting, like nano. Then use your configuration file when starting the callattendant.
 
-#### Create the Service
-
-##### Step 1. Create the Unit File
-The service definition must be on the `/lib/systemd/system` folder. Our service is going to be called "callattendant.service":
-
-```Shell
-cd /lib/systemd/system/
-sudo nano callattendant.service
+Specify the configuration file on the command line, e.g.:
 ```
-
-Copy the following text into the `callattendant.service` unit file, using your path to `callattendant.py`:
-
-```text
-[Unit]
-Description=Call Attendant
-After=multi-user.target
-
-[Service]
-Type=simple
-ExecStart=/usr/bin/python /home/pi/callattendant/src/callattendant.py
-WorkingDirectory=/home/pi/callattendant/src
-Restart=on-abort
-
-[Install]
-WantedBy=multi-user.target
+python3 src/callattendant.py --config app.cfg
 ```
-You can check more on service's options in the next wiki: https://wiki.archlinux.org/index.php/systemd.
-
-##### Step 2. Activate the Service
-Now that we have our service we need to activate it:
-
-```Shell
-sudo chmod 644 /lib/systemd/system/callattendant.service
-chmod +x /home/pi/callattendant/src/callattendant.py
-sudo systemctl daemon-reload
-sudo systemctl enable callattendant.service
-sudo systemctl start callattendant.service
-```
-
-#### Service Tasks
-For every change that we do on the `/lib/systemd/system` folder we need to execute a
-`daemon-reload` (third line of previous code).
-
-You can execute the following commands as needed to check the status, start and stop
-the service, or check the logs. Several shell scripts are included in the root of this
-project to perfom these tasks.
-
-##### Check status
-`sudo systemctl status callattendant.service`
-
-##### Start service
-`sudo systemctl start callattendant.service`
-
-##### Stop service
-`sudo systemctl stop callattendant.service`
-
-##### Check service's log
-`sudo journalctl -f -u callattendant.service`
+See the [Configuration](https://github.com/emxsys/callattendant/wiki/Home#configuration) section in the project's 
+wiki for more information. 
 
 ---
 
-## Operation
-
-### Web Pages
-A few web pages are used to monitor your installation. You can use `localhost` for the `pi_address`
-when you are running the web browser on the pi.
-
-##### Call Log
-The call log displays all the calls that have been processed by the call attendant. This list refreshes
-automatically after a period of several minutes.
+### Web Interface
+#### URL: http://<pi-address>|<pi-hostname>:5000
+To view the web interface, simply point your web browser to port `5000` on your Raspberry Pi. I
+For example, in your Raspberry Pi's browser, you can use:
 ```
 http://localhost:5000/
-```
-##### Blocked List
-This is the list of blocked numbers.
-```
-http://localhost:5000/blocked
-```
-
-##### Permitted List
-This is the list of permitted numbers.
-```
-http://localhost:5000/permitted
-```
-### Tools
-
-#### DB Browser for SQLite
-If needed, you can use **DB Browser for SQLite** to view and edit the tables used by the **callattendant**.
-
-```
-sudo apt-get install sqlitebrowser
-```
-```
-sqlitebrowser callattendant/src/callattendant.db
 ```
 
 ---

@@ -25,10 +25,10 @@
 import os
 import sys
 
-currentdir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(currentdir, "screening"))
-sys.path.append(os.path.join(currentdir, "hardware"))
-sys.path.append(os.path.join(currentdir, "messaging"))
+# ~ currentdir = os.path.dirname(os.path.realpath(__file__))
+# ~ sys.path.append(os.path.join(currentdir, "screening"))
+# ~ sys.path.append(os.path.join(currentdir, "hardware"))
+# ~ sys.path.append(os.path.join(currentdir, "messaging"))
 
 import queue
 import sqlite3
@@ -39,9 +39,9 @@ from datetime import datetime
 from config import Config
 from screening.calllogger import CallLogger
 from screening.callscreener import CallScreener
-from messaging.voicemail import VoiceMail
 from hardware.modem import Modem
-from hardware.indicators import RingIndicator, ApprovedIndicator, BlockedIndicator, MessageIndicator
+from hardware.indicators import ApprovedIndicator, BlockedIndicator
+from messaging.voicemail import VoiceMail
 import userinterface.webapp as webapp
 
 
@@ -71,10 +71,6 @@ class CallAttendant(object):
         #  Initialize the visual indicators (LEDs)
         self.approved_indicator = ApprovedIndicator()
         self.blocked_indicator = BlockedIndicator()
-        self.ring_indicator = RingIndicator()
-        self.message_indicator = MessageIndicator()
-        # The message indicator is shared with the webapp
-        self.config["MESSAGE_INDICATOR_LED"] = self.message_indicator
 
         # Screening subsystem
         self.logger = CallLogger(self.db, self.config)
@@ -82,10 +78,12 @@ class CallAttendant(object):
 
         #  Hardware subsystem
         #  Create (and starts) the modem with callback functions
-        self.modem = Modem(self.config, self.phone_ringing, self.handle_caller)
+        self.modem = Modem(self.config, self.handle_caller)
 
         # Messaging subsystem
-        self.voice_mail = VoiceMail(self.db, self.config, self.modem, self.message_indicator)
+        self.voice_mail = VoiceMail(self.db, self.config, self.modem)
+        # The message indicator is a singleton and is shared with the webapp
+        self.config["MESSAGE_INDICATOR_LED"] = self.voice_mail.message_indicator
 
         # Start the User Interface subsystem (Flask)
         # Skip if we're running functional tests, because when testing
@@ -106,18 +104,6 @@ class CallAttendant(object):
             pprint(caller)
         self._caller_queue.put(caller)
 
-    def phone_ringing(self, enabled):
-        """
-        A callback fucntion used by the modem to signal if the phone
-        is ringing. It controls the phone ringing status indicator.
-            :param enabled: If True, signals the phone is ringing
-        """
-        if enabled:
-            self.ring_indicator.blink()
-        else:
-            self.ring_indicator.turn_off()
-
-
     def run(self):
         """
         Processes incoming callers by logging, screening, blocking
@@ -128,7 +114,11 @@ class CallAttendant(object):
         screening_mode = self.config['SCREENING_MODE']
         block = self.config.get_namespace("BLOCK_")
         blocked = self.config.get_namespace("BLOCKED_")
+        screened = self.config.get_namespace("SCREENED_")
+        permitted = self.config.get_namespace("PERMITTED_")
         blocked_greeting_file = os.path.join(root_path, blocked['greeting_file'])
+        screened_greeting_file = os.path.join(root_path, screened['greeting_file'])
+        permitted_greeting_file = os.path.join(root_path, permitted['greeting_file'])
 
         # Instruct the modem to start feeding calls into the caller queue
         self.modem.handle_calls()
@@ -144,8 +134,9 @@ class CallAttendant(object):
                 phone_no = "{}-{}-{}".format(number[0:3], number[3:6], number[6:])
                 print("Incoming call from {}".format(phone_no))
 
-                # Perform the call screening
+                # Vars used in the call screening
                 caller_permitted = False
+                caller_screened = False
                 caller_blocked = False
                 action = ""
                 reason = ""
@@ -169,43 +160,82 @@ class CallAttendant(object):
                         self.blocked_indicator.blink()
 
                 if not caller_permitted and not caller_blocked:
+                    caller_screened = True
                     action = "Screened"
+                    self.approved_indicator.blink()
 
                 # Log every call to the database (and console)
                 call_no = self.logger.log_caller(caller, action, reason)
                 print("--> {} {}: {}".format(phone_no, action, reason))
 
-                # Apply the configured actions to blocked callers
-                if caller_blocked:
+                # Gather the data used to answer the call
+                if caller_permitted:
+                    actions = permitted["actions"]
+                    greeting = permitted_greeting_file
+                    rings_before_answer = permitted["rings_before_answer"]
+                elif caller_screened:
+                    actions = screened["actions"]
+                    greeting = screened_greeting_file
+                    rings_before_answer = screened["rings_before_answer"]
+                elif caller_blocked:
+                    actions = blocked["actions"]
+                    greeting = blocked_greeting_file
+                    rings_before_answer = blocked["rings_before_answer"]
 
-                    # Go "off-hook" - Acquires a lock on the modem - MUST follow with hang_up()
-                    if self.modem.pick_up():
-                        try:
-                            # Play greeting
-                            if "greeting" in blocked["actions"]:
-                                print(">> Playing greeting...")
-                                self.modem.play_audio(blocked_greeting_file)
+                # Wait for the callee to answer the phone, if configured to do so
+                ok_to_answer = True
+                ring_count = 1  # Already had at least 1 ring to get here
+                while ring_count < rings_before_answer:
+                    # In North America, the standard ring cadence is "2-4", or two seconds
+                    # of ringing followed by four seconds of silence (33% Duty Cycle).
+                    if self.modem.ring_event.wait(7):
+                        ring_count = ring_count + 1
+                        print(" > > > Ring count: {}".format(ring_count))
+                    else:
+                        # wait timeout; assume ringing has stopped before the ring count
+                        # was reached because either the callee answered or caller hung up.
+                        ok_to_answer = False
+                        print(" > > > Ringing stopped: Caller hung up or callee answered")
+                        break
 
-                            # Record message
-                            if "record_message" in blocked["actions"]:
-                                print(">> Recording message...")
-                                self.voice_mail.record_message(call_no, caller)
-
-                            elif "voice_mail" in blocked["actions"]:
-                                print(">> Starting voice mail...")
-                                self.voice_mail.voice_messaging_menu(call_no, caller)
-
-                        except RuntimeError as e:
-                            print("** Error handling a blocked caller: {}".format(e))
-
-                        finally:
-                            # Go "on-hook"
-                            self.modem.hang_up()
+                # Answer the call!
+                if ok_to_answer and len(actions) > 0:
+                    self.answer_call(actions, greeting, call_no, caller)
 
             except Exception as e:
                 pprint(e)
                 print("** Error running callattendant. Exiting.")
                 return 1
+
+    def answer_call(self, actions, greeting, call_no, caller):
+        """
+        Answer the call with the supplied actions, e.g, voice mail,
+        record message, or simply pickup and hang up.
+        """
+        # Go "off-hook" - Acquires a lock on the modem - MUST follow with hang_up()
+        if self.modem.pick_up():
+            try:
+                # Play greeting
+                if "greeting" in actions:
+                    print(">> Playing greeting...")
+                    self.modem.play_audio(greeting)
+
+                # Record message
+                if "record_message" in actions:
+                    print(">> Recording message...")
+                    self.voice_mail.record_message(call_no, caller)
+
+                # Enter voice mail menu
+                elif "voice_mail" in actions:
+                    print(">> Starting voice mail...")
+                    self.voice_mail.voice_messaging_menu(call_no, caller)
+
+            except RuntimeError as e:
+                print("** Error handling a blocked caller: {}".format(e))
+
+            finally:
+                # Go "on-hook"
+                self.modem.hang_up()
 
 
 def make_config(filename=None):
@@ -227,8 +257,19 @@ def make_config(filename=None):
         "BLOCK_ENABLED": True,
         "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID", },
         "BLOCK_NUMBER_PATTERNS": {},
+
         "BLOCKED_ACTIONS": ("greeting", ),
+        "BLOCKED_RINGS_BEFORE_ANSWER": 0,
         "BLOCKED_GREETING_FILE": "resources/blocked_greeting.wav",
+
+        "SCREENED_ACTIONS": ("greeting", "record_message"),
+        "SCREENED_GREETING_FILE": "resources/general_greeting.wav",
+        "SCREENED_RINGS_BEFORE_ANSWER": 0,
+
+        "PERMITTED_ACTIONS": (),
+        "PERMITTED_GREETING_FILE": "resources/general_greeting.wav",
+        "PERMITTED_RINGS_BEFORE_ANSWER": 4,
+
         "VOICE_MAIL_GREETING_FILE": "resources/general_greeting.wav",
         "VOICE_MAIL_GOODBYE_FILE": "resources/goodbye.wav",
         "VOICE_MAIL_INVALID_RESPONSE_FILE": "resources/invalid_response.wav",
@@ -268,10 +309,29 @@ def validate_config(config):
         if mode not in ("whitelist", "blacklist"):
             print("* SCREENING_MODE option is invalid: {}".format(mode))
             success = False
+
     for mode in config["BLOCKED_ACTIONS"]:
         if mode not in ("greeting", "record_message", "voice_mail"):
             print("* BLOCKED_ACTIONS option is invalid: {}".format(mode))
             success = False
+    for mode in config["SCREENED_ACTIONS"]:
+        if mode not in ("greeting", "record_message", "voice_mail"):
+            print("* SCREENED_ACTIONS option is invalid: {}".format(mode))
+            success = False
+    for mode in config["PERMITTED_ACTIONS"]:
+        if mode not in ("greeting", "record_message", "voice_mail"):
+            print("* PERMITTED_ACTIONS option is invalid: {}".format(mode))
+            success = False
+
+    if not isinstance(config["BLOCKED_RINGS_BEFORE_ANSWER"], int):
+        print("* BLOCKED_RINGS_BEFORE_ANSWER should be an integer: {}".format(type(config["BLOCKED_RINGS_BEFORE_ANSWER"])))
+        success = False
+    if not isinstance(config["SCREENED_RINGS_BEFORE_ANSWER"], int):
+        print("* SCREENED_RINGS_BEFORE_ANSWER should be an integer: {}".format(type(config["SCREENED_RINGS_BEFORE_ANSWER"])))
+        success = False
+    if not isinstance(config["PERMITTED_RINGS_BEFORE_ANSWER"], int):
+        print("* PERMITTED_RINGS_BEFORE_ANSWER should be an integer: {}".format(type(config["PERMITTED_RINGS_BEFORE_ANSWER"])))
+        success = False
 
     if not config["DATABASE"] == "../data/callattendant.db":
         print("* DATABASE is not '../data/callattendant.db', are you sure this is right?")
@@ -289,6 +349,15 @@ def validate_config(config):
     if not os.path.exists(filepath):
         print("* BLOCKED_GREETING_FILE not found: {}".format(filepath))
         success = False
+    filepath = os.path.join(rootpath, config["SCREENED_GREETING_FILE"])
+    if not os.path.exists(filepath):
+        print("* SCREENED_GREETING_FILE not found: {}".format(filepath))
+        success = False
+    filepath = os.path.join(rootpath, config["PERMITTED_GREETING_FILE"])
+    if not os.path.exists(filepath):
+        print("* PERMITTED_GREETING_FILE not found: {}".format(filepath))
+        success = False
+
     filepath = os.path.join(rootpath, config["VOICE_MAIL_GREETING_FILE"])
     if not os.path.exists(filepath):
         print("* VOICE_MAIL_GREETING_FILE not found: {}".format(filepath))

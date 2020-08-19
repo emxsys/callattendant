@@ -29,28 +29,35 @@
 # https://iotbytes.wordpress.com/incoming-call-details-logger-with-raspberry-pi/
 # ==============================================================================
 from __future__ import division
-from flask import Flask, request, g, current_app, render_template, redirect, \
-    jsonify, url_for, flash
-from flask_paginate import Pagination, get_page_args
-from screening.blacklist import Blacklist
-from screening.whitelist import Whitelist
-from messaging.voicemail import Message
-from datetime import datetime, timedelta
-from pprint import pprint
-from glob import glob
+
+import logging
 import os
 import re
 import random
-import screening.utils
-import sqlite3
 import string
 import _thread
+from datetime import datetime, timedelta
+from pprint import pprint
+from glob import glob
+
+from flask import Flask, request, g, current_app, render_template, redirect, \
+    jsonify, url_for, flash
+from flask_paginate import Pagination, get_page_args
+import sqlite3
+
+from screening.query_db import query_db
+from screening.blacklist import Blacklist
+from screening.whitelist import Whitelist
+from messaging.voicemail import Message
 
 # Create the Flask micro web-framework application
 app = Flask(__name__)
 app.config.from_pyfile('webapp.cfg')
 app.debug = False  # debug mode prevents app from running in separate thread
 
+# Turn off the HTML GET/POST logging
+log = logging.getLogger('werkzeug')
+log.disabled = True
 
 @app.before_request
 def before_request():
@@ -485,7 +492,7 @@ def callers_manage(call_no):
     LEFT JOIN blacklist AS c ON a.Number = c.PhoneNo
     WHERE a.CallLogID=:call_log_id"""
     arguments = {"call_log_id": call_no}
-    result_set = screening.utils.query_db(get_db(), query, arguments)
+    result_set = query_db(get_db(), query, arguments)
     # Prepare a caller dictionary object for the form
     caller = {}
     if len(result_set) > 0:

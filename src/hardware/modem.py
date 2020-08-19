@@ -40,11 +40,13 @@ import sys
 import threading
 import time
 import wave
-
+from hardware.indicators import RingIndicator
 
 # ACSII codes
 DLE_CODE = chr(16)      # Data Link Escape (DLE) code
 ETX_CODE = chr(3)       # End Transmission (ETX) code
+CR_CODE = chr(13)       # Carraige return
+LF_CODE = chr(10)       # Line feed
 
 #  Modem AT commands:
 #  See http://support.usr.com/support/5637/5637-ug/ref_data.html
@@ -60,7 +62,7 @@ DISABLE_SILENCE_DETECTION = "AT+VSD=128,0"
 ENABLE_SILENCE_DETECTION_5_SECS = "AT+VSD=128,50"
 ENABLE_SILENCE_DETECTION_10_SECS = "AT+VSD=128,100"
 ENTER_VOICE_MODE = "AT+FCLASS=8"
-ENTER_TELEPHONE_ANSWERING_DEVICE_MODE = "AT+VLS=1"  # DCE off-hook, connected to telco.
+ENTER_TELEPHONE_ANSWERING_DEVICE_OFF_HOOK = "AT+VLS=1"  # DCE off-hook, connected to telco.
 ENTER_VOICE_TRANSMIT_DATA_STATE = "AT+VTX"
 ENTER_VOICE_RECIEVE_DATA_STATE = "AT+VRX"
 SET_VOICE_COMPRESSION_8BIT_SAMPLING_8K = "AT+VSM=128,8000"  # 128 = 8-bit linear, 8.0 kHz
@@ -86,12 +88,15 @@ DTE_LOWER_VOLUME = (chr(16) + chr(100))                 # <DLE>-d
 DTE_END_VOICE_DATA_TX = (chr(16) + chr(3))              # <DLE><ETX>
 DTE_END_RECIEVE_DATA_STATE = (chr(16) + chr(33))        # <DLE>-!
 
+# Return codes
+CRLF = (chr(13) + chr(10)).encode()
+
 # Record Voice Mail variables
 REC_VM_MAX_DURATION = 120  # Time in Seconds
 
 TEST_DATA = [
-    b"RING", b"DATE=0801", b"TIME=1800", b"NMBR=5551234567", b"NAME=Test1 - Spammer",
-    b"RING", b"DATE=0801", b"TIME=1801", b"NMBR=8055554567", b"NAME=Test2 - Permitted",
+    b"RING", b"DATE=0801", b"TIME=1801", b"NMBR=8055554567", b"NAME=Test1 - Permitted", b"RING", b"RING", b"RING", b"RING",
+    b"RING", b"DATE=0801", b"TIME=1800", b"NMBR=5551234567", b"NAME=Test2 - Spammer",
     b"RING", b"DATE=0801", b"TIME=1802", b"NMBR=3605554567", b"NAME=Test3 - Blocked",
     b"RING", b"DATE=0801", b"TIME=1802", b"NMBR=8005554567", b"NAME=V123456789012345",
 ]
@@ -103,22 +108,29 @@ class Modem(object):
     Raspberry Pi and a US Robotics 5637 modem.
     """
 
-    def __init__(self, config, phone_ringing, handle_caller):
+    def __init__(self, config, handle_caller):
         """
         Constructs a modem object for serial communications.
             :param config: application configuration dict
-            :param phone_ringing: callback function that takes a boolean
-            :param handle_caller: callback function that takes a caller
+            :param handle_caller: callback function that takes a caller dict
         """
         self.config = config
-        self.phone_ringing = phone_ringing
         self.handle_caller = handle_caller
+
         # Thread synchronization object
         self._lock = threading.RLock()
+
+        # Ring notifications
+        self.ring_indicator = RingIndicator()
+        self.ring_event = threading.Event()
+
         # Setup and open the serial port
         self._serial = serial.Serial()
 
     def handle_calls(self):
+        """
+        Starts the thread that processes incoming data.
+        """
         self._init_modem()
         self.event_thread = threading.Thread(target=self._call_handler)
         self.event_thread.name = "modem_call_handler"
@@ -145,7 +157,7 @@ class Modem(object):
         # Save the modem data to a file for development purposes
         if dev_mode:
             print("Saving raw modem data to modem.log")
-            filename = os.path.join(self.config["ROOT_PATH"],"resources/modem.log")
+            filename = os.path.join(self.config["ROOT_PATH"], "resources/modem.log")
             logfile = open(filename, 'wb')
 
         # Handle incoming calls
@@ -165,21 +177,27 @@ class Modem(object):
                         modem_data = TEST_DATA[test_index]
                         test_index += 1
                     else:
-                        # Read a line of data from the serial port
+                        # Wait/read a line of data from the serial port.
+                        # The verbose-form code is preceded and terminated by the
+                        # sequence <CR><LF>. The numeric-form is also terminated
+                        # by <CR>, but it has no preceding sequence.
                         modem_data = self._serial.readline()
 
                 # Process the modem data
-                if modem_data != b'':
-
+                if modem_data != b'' and modem_data != CRLF:
                     if debugging:
                         print(modem_data)
                     if dev_mode:
                         logfile.write(modem_data)
                         logfile.flush()
 
-                    # Extract caller info
                     if RING in modem_data:
-                        self.phone_ringing(True)
+                        # Notify other threads that a ring occurred
+                        self.ring_event.set()
+                        self.ring_event.clear()
+                        # Visual notification (LED)
+                        self.ring_indicator.ring()
+                    # Extract caller info
                     if DATE in modem_data:
                         call_record['DATE'] = decode(modem_data[5:])
                     if TIME in modem_data:
@@ -191,12 +209,10 @@ class Modem(object):
 
                     # https://stackoverflow.com/questions/1285911/how-do-i-check-that-multiple-keys-are-in-a-dict-in-a-single-pass
                     if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
-                        # Screen caller
+                        # Queue caller for screening
                         self.handle_caller(call_record)
                         call_record = {}
-                        # Sleep for a short duration ( secs) to allow the
-                        # call attendant to screen the call before resuming
-                        time.sleep(2)
+
         finally:
             if dev_mode:
                 print("Closing modem log file")
@@ -216,9 +232,15 @@ class Modem(object):
         if self.config["DEBUG"]:
             print(">>> Lock acquired in pick-up()")
         try:
-            if not self._send(GO_OFF_HOOK):
-                print("Error: Failed to pickup.")
-                return False
+            if not self._send(ENTER_VOICE_MODE):
+                raise RuntimeError("Failed to put modem into voice mode.")
+
+            if not self._send(DISABLE_SILENCE_DETECTION):
+                raise RuntimeError("Failed to disable silence detection.")
+
+            if not self._send(ENTER_TELEPHONE_ANSWERING_DEVICE_OFF_HOOK):
+                raise RuntimeError("Unable put modem into TAD mode.")
+
             # Flush any existing input outout data from the buffers
             # self._serial.flushInput()
             # self._serial.flushOutput()
@@ -227,6 +249,8 @@ class Modem(object):
             pprint(e)
             # Only release the lock if we failed to go off-hook
             self._lock.release()
+            print(">>> Lock released in pick-up()")
+            return False
 
         return True
 
@@ -244,8 +268,8 @@ class Modem(object):
             if not self._send(GO_ON_HOOK):
                 raise RuntimeError("Failed to hang up the call.")
 
-            #if not self._send(RESET):
-            #    raise RuntimeError("Failed to reset the modem.")
+            # ~ if not self._send(RESET):
+                # ~ raise RuntimeError("Failed to reset the modem.")
 
         except Exception as e:
             print("**Error: hang_up() failed")
@@ -279,7 +303,7 @@ class Modem(object):
             if not self._send(SET_VOICE_COMPRESSION_8BIT_SAMPLING_8K):
                 print("* Error: Failed to set compression method and sampling rate specifications.")
                 return False
-            if not self._send(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE):
+            if not self._send(ENTER_TELEPHONE_ANSWERING_DEVICE_OFF_HOOK):
                 print("* Error: Unable put modem into TAD mode.")
                 return False
             if not self._send(ENTER_VOICE_TRANSMIT_DATA_STATE, "CONNECT"):
@@ -330,7 +354,7 @@ class Modem(object):
                 if not self._send(DISABLE_SILENCE_DETECTION):
                     raise RuntimeError("Failed to disable silence detection.")
 
-                if not self._send(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE):
+                if not self._send(ENTER_TELEPHONE_ANSWERING_DEVICE_OFF_HOOK):
                     raise RuntimeError("Unable put modem into TAD mode.")
 
                 # Play 1.2 beep
@@ -353,7 +377,16 @@ class Modem(object):
             audio_frames = []
             while 1:
                 # Read audio data from the Modem
+
                 audio_data = self._serial.read(CHUNK)
+
+                if (DCE_PHONE_OFF_HOOK in audio_data):
+                    print(">> Local phone off hook... Stop recording")
+                    break
+
+                if (DCE_RING in audio_data):
+                    print(">> Ring detected... Call is disconnected; new call coming in")
+                    break
 
                 # Check if <DLE>b is in the stream
                 if (DCE_BUSY_TONE in audio_data):
@@ -417,27 +450,30 @@ class Modem(object):
                 if not self._send(ENABLE_SILENCE_DETECTION_10_SECS):
                     raise RuntimeError("Failed to enable silence detection.")
 
-                if not self._send(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE):
+                if not self._send(ENTER_TELEPHONE_ANSWERING_DEVICE_OFF_HOOK):
                     raise RuntimeError("Unable put modem into TAD mode.")
 
                 # Wait for keypress
                 start_time = datetime.now()
                 modem_data = b''
                 while 1:
-                    # Read 1 bytes from the Modem
+                    # Read 1 bytes from the Modem into the buffer
                     modem_data = modem_data + self._serial.read(1)
                     if debugging:
                         pprint(modem_data)
 
-                    # Check if <DLE>b is in the stream
+                    if (DCE_PHONE_OFF_HOOK in modem_data):
+                        raise RuntimeError("Local phone off hook... Aborting.")
+
+                    if (DCE_RING in modem_data):
+                        raise RuntimeError("Ring detected... Aborting.")
+
                     if (DCE_BUSY_TONE in modem_data):
                         raise RuntimeError("Busy Tone... Aborting.")
 
-                    # Check if <DLE>s is in the stream
                     if (DCE_SILENCE_DETECTED in modem_data):
                         raise RuntimeError("Silence Detected... Aborting.")
 
-                    # Check if <DLE><ETX> is in the stream
                     if (DCE_END_VOICE_DATA_TX in modem_data):
                         raise RuntimeError("<DLE><ETX> Recieved... Aborting.")
 
@@ -629,13 +665,13 @@ def decode(bytestr):
     return string
 
 
-def test(config, phone_ringing, handle_caller):
+def test(config, handle_caller):
     """ Unit Tests """
     import os
 
     print("*** Running Modem Unit Tests ***")
 
-    modem = Modem(config, phone_ringing, handle_caller)
+    modem = Modem(config, handle_caller)
 
     try:
         # modem.open_serial_port()
@@ -662,7 +698,7 @@ def test(config, phone_ringing, handle_caller):
         assert modem._send(SET_VOICE_COMPRESSION_8BIT_SAMPLING_8K), "SET_VOICE_COMPRESSION_8BIT_SAMPLING_8K"
 
         print("Assert put modem into TAD mode.")
-        assert modem._send(ENTER_TELEPHONE_ANSWERING_DEVICE_MODE), "ENTER_TELEPHONE_ANSWERING_DEVICE_MODE"
+        assert modem._send(ENTER_TELEPHONE_ANSWERING_DEVICE_OFF_HOOK), "ENTER_TELEPHONE_ANSWERING_DEVICE_OFF_HOOK"
 
         print("Assert put modem into voice transmit data state.")
         assert modem._send(ENTER_VOICE_TRANSMIT_DATA_STATE, "CONNECT"), "ENTER_VOICE_TRANSMIT_DATA_STATE"
@@ -687,14 +723,10 @@ def test(config, phone_ringing, handle_caller):
 
         # Test audio play/recording when functional testing is enabled
         if config["TESTING"]:
-            #modem._send(RESET)
 
             print("Assert playing audio")
             currentdir = os.path.dirname(os.path.realpath(__file__))
             assert modem.play_audio(os.path.join(currentdir, "../resources/sample.wav")), "Play audio"
-            #modem._send(TERMINATE_CALL)
-
-            #modem._send(RESET)
 
             print("Assert recording audio")
             modem.record_audio("message.wav")
@@ -725,11 +757,8 @@ if __name__ == '__main__':
     print_config(config)
 
     # Dummy callback functions
-    def dummy_phone_ringing(is_ringing):
-        print(is_ringing)
-
     def dummy_handle_caller(caller):
         pprint(caller)
 
     # Run the tests
-    sys.exit(test(config, dummy_phone_ringing, dummy_handle_caller))
+    sys.exit(test(config, dummy_handle_caller))
