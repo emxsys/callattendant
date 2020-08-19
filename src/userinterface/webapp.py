@@ -54,6 +54,9 @@ app = Flask(__name__)
 app.config.from_pyfile('webapp.cfg')
 app.debug = False  # debug mode prevents app from running in separate thread
 
+# Turn off the HTML GET/POST logging
+log = logging.getLogger('werkzeug')
+log.disabled = True
 
 @app.before_request
 def before_request():
