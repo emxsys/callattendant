@@ -25,9 +25,10 @@
 
 # See: https://gpiozero.readthedocs.io/en/stable/
 # See: https://gpiozero.readthedocs.io/en/stable/api_output.html#led
-from gpiozero import LED, PWMLED, LEDBoard, OutputDeviceError, LEDCollection
-from pprint import pprint
+
 import time
+from pprint import pprint
+from gpiozero import LED, PWMLED, LEDBoard, OutputDeviceError, LEDCollection
 
 GPIO_RING = 2       # pin 3
 GPIO_APPROVED = 3   # pin 5
@@ -79,8 +80,8 @@ class RingIndicator(LEDIndicator):
                 #~ self.led.blink(0.1, 0.1, 20)
 
     def ring(self):
-        self.led.blink(0.1, 0.1, 10)
-
+        self.led.blink(0.1, 0.1, 20)
+        print("{RING LED BLINKING}")
 
 class ApprovedIndicator(LEDIndicator):
 
