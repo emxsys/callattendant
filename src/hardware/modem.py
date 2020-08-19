@@ -40,7 +40,7 @@ import sys
 import threading
 import time
 import wave
-
+from hardware.indicators import RingIndicator
 
 # ACSII codes
 DLE_CODE = chr(16)      # Data Link Escape (DLE) code
@@ -108,23 +108,24 @@ class Modem(object):
     Raspberry Pi and a US Robotics 5637 modem.
     """
 
-    def __init__(self, config, phone_ringing, handle_caller):
+    def __init__(self, config, handle_caller):
         """
         Constructs a modem object for serial communications.
             :param config: application configuration dict
-            :param phone_ringing: callback function that takes a boolean
-            :param handle_caller: callback function that takes a caller
+            :param handle_caller: callback function that takes a caller dict
         """
         self.config = config
-        self.phone_ringing = phone_ringing
         self.handle_caller = handle_caller
+
         # Thread synchronization object
         self._lock = threading.RLock()
 
+        # Ring notifications
+        self.ring_indicator = RingIndicator()
+        self.ring_event = threading.Event()
+
         # Setup and open the serial port
         self._serial = serial.Serial()
-
-        self.ring_event = threading.Event()
 
     def handle_calls(self):
         """
@@ -182,7 +183,6 @@ class Modem(object):
                         # by <CR>, but it has no preceding sequence.
                         modem_data = self._serial.readline()
 
-
                 # Process the modem data
                 if modem_data != b'' and modem_data != CRLF:
                     if debugging:
@@ -192,13 +192,11 @@ class Modem(object):
                         logfile.flush()
 
                     if RING in modem_data:
-                        # Reset the ring event
+                        # Notify other threads that a ring occurred
                         self.ring_event.set()
                         self.ring_event.clear()
-                        # deprecate this ring notification
-                        self.phone_ringing(True)
-                        if testing:
-                            time.sleep(4)
+                        # Visual notification (LED)
+                        self.ring_indicator.ring()
                     # Extract caller info
                     if DATE in modem_data:
                         call_record['DATE'] = decode(modem_data[5:])
@@ -246,7 +244,6 @@ class Modem(object):
             # Flush any existing input outout data from the buffers
             # self._serial.flushInput()
             # self._serial.flushOutput()
-            self.phone_ringing(False)
 
         except Exception as e:
             pprint(e)
@@ -668,13 +665,13 @@ def decode(bytestr):
     return string
 
 
-def test(config, phone_ringing, handle_caller):
+def test(config, handle_caller):
     """ Unit Tests """
     import os
 
     print("*** Running Modem Unit Tests ***")
 
-    modem = Modem(config, phone_ringing, handle_caller)
+    modem = Modem(config, handle_caller)
 
     try:
         # modem.open_serial_port()
@@ -760,11 +757,8 @@ if __name__ == '__main__':
     print_config(config)
 
     # Dummy callback functions
-    def dummy_phone_ringing(is_ringing):
-        print(is_ringing)
-
     def dummy_handle_caller(caller):
         pprint(caller)
 
     # Run the tests
-    sys.exit(test(config, dummy_phone_ringing, dummy_handle_caller))
+    sys.exit(test(config, dummy_handle_caller))
