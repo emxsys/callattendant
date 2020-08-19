@@ -25,10 +25,10 @@
 import os
 import sys
 
-currentdir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(currentdir, "screening"))
-sys.path.append(os.path.join(currentdir, "hardware"))
-sys.path.append(os.path.join(currentdir, "messaging"))
+# ~ currentdir = os.path.dirname(os.path.realpath(__file__))
+# ~ sys.path.append(os.path.join(currentdir, "screening"))
+# ~ sys.path.append(os.path.join(currentdir, "hardware"))
+# ~ sys.path.append(os.path.join(currentdir, "messaging"))
 
 import queue
 import sqlite3
@@ -39,9 +39,9 @@ from datetime import datetime
 from config import Config
 from screening.calllogger import CallLogger
 from screening.callscreener import CallScreener
-from messaging.voicemail import VoiceMail
 from hardware.modem import Modem
-from hardware.indicators import RingIndicator, ApprovedIndicator, BlockedIndicator, MessageIndicator
+from hardware.indicators import ApprovedIndicator, BlockedIndicator
+from messaging.voicemail import VoiceMail
 import userinterface.webapp as webapp
 
 
@@ -71,10 +71,6 @@ class CallAttendant(object):
         #  Initialize the visual indicators (LEDs)
         self.approved_indicator = ApprovedIndicator()
         self.blocked_indicator = BlockedIndicator()
-        self.ring_indicator = RingIndicator()
-        self.message_indicator = MessageIndicator()
-        # The message indicator is shared with the webapp
-        self.config["MESSAGE_INDICATOR_LED"] = self.message_indicator
 
         # Screening subsystem
         self.logger = CallLogger(self.db, self.config)
@@ -82,10 +78,12 @@ class CallAttendant(object):
 
         #  Hardware subsystem
         #  Create (and starts) the modem with callback functions
-        self.modem = Modem(self.config, self.phone_ringing, self.handle_caller)
+        self.modem = Modem(self.config, self.handle_caller)
 
         # Messaging subsystem
-        self.voice_mail = VoiceMail(self.db, self.config, self.modem, self.message_indicator)
+        self.voice_mail = VoiceMail(self.db, self.config, self.modem)
+        # The message indicator is a singleton and is shared with the webapp
+        self.config["MESSAGE_INDICATOR_LED"] = self.voice_mail.message_indicator
 
         # Start the User Interface subsystem (Flask)
         # Skip if we're running functional tests, because when testing
@@ -105,18 +103,6 @@ class CallAttendant(object):
             print("Adding to caller queue:")
             pprint(caller)
         self._caller_queue.put(caller)
-
-    def phone_ringing(self, enabled):
-        """
-        A callback fucntion used by the modem to signal if the phone
-        is ringing. It controls the phone ringing status indicator.
-            :param enabled: If True, signals the phone is ringing
-        """
-        self.ring_indicator.ring()
-        #~ if enabled:
-            #~ self.ring_indicator.blink()
-        #~ else:
-            #~ self.ring_indicator.turn_off()
 
     def run(self):
         """
@@ -213,8 +199,6 @@ class CallAttendant(object):
 
                 if ok_to_answer and len(actions) > 0:
                     self.answer_call(actions, greeting, call_no, caller)
-
-                self.phone_ringing(False)
 
             except Exception as e:
                 pprint(e)
