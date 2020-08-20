@@ -268,16 +268,20 @@ def calls():
     # Get GET request args, if available
     number = request.args.get('number')
     search_text = request.args.get('search')
+    search_type = request.args.get('submit')
 
     # Get search criteria, if applicable
     search_criteria = ""
     if search_text:
-        num_list = re.findall('[0-9]+', search_text)
-        number = "".join(num_list)  # override GET arg if we're searching
-        search_criteria = "WHERE Number='{}'".format(number)
+        if search_type == "phone":
+            num_list = re.findall('[0-9]+', search_text)
+            number = "".join(num_list)  # override GET arg if we're searching
+            search_criteria = "WHERE Number='{}'".format(number)
+        else:
+            search_criteria = "WHERE Caller LIKE '%{}%'".format(search_text)
 
     # Get values used for pagination of the call log
-    sql = "SELECT COUNT(*) FROM CallLog {}".format(search_criteria)
+    sql = "SELECT COUNT(*), Number, Name Caller FROM CallLog {}".format(search_criteria)
     g.cur.execute(sql)
     total = g.cur.fetchone()[0]
     page, per_page, offset = get_page_args(
@@ -291,7 +295,7 @@ def calls():
             WHEN b.PhoneNo is not null then b.Name
             WHEN c.PhoneNo is not null then c.Name
             ELSE a.Name
-        END Name,
+        END Caller,
         a.Number Number,
         a.Date,
         a.Time,
