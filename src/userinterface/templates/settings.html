@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block stylesheet %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/pygments.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2>Settings <img src="../static/gear.svg" alt="" width="32" height="32"></h2>
+
+  <h5>Current Configuration</h5>
+  {{ curr_settings|safe }}
+
+  <h5>Config File: {{ config_file }}</h5>
+  {{ file_settings|safe }}
+
+</div>
+{% endblock %}
+

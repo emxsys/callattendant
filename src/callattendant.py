@@ -282,6 +282,7 @@ def make_config(filename=None):
     # Load the config file, which may overwrite defaults
     if filename is not None:
         cfg.from_pyfile(filename)
+        cfg["CONFIG_FILE"] = filename
     # Always print the configuration
     print_config(cfg)
 

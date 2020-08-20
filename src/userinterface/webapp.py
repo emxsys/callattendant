@@ -37,13 +37,16 @@ import random
 import string
 import _thread
 from datetime import datetime, timedelta
-from pprint import pprint
+from pprint import pprint, pformat
 from glob import glob
 
+import sqlite3
 from flask import Flask, request, g, current_app, render_template, redirect, \
     jsonify, url_for, flash
 from flask_paginate import Pagination, get_page_args
-import sqlite3
+from pygments import highlight
+from pygments.lexers import PythonLexer
+from pygments.formatters import HtmlFormatter
 
 from screening.query_db import query_db
 from screening.blacklist import Blacklist
@@ -831,6 +834,40 @@ def messages_played():
     return jsonify(success=success, msg_no=msg_no, unplayed_count=unplayed_count)
 
 
+@app.route('/settings', methods=['GET'])
+def settings():
+    """
+    Display the current settings.
+
+    CSS: pygmentize -S colorful -f html > pygments.css
+    """
+    # Get the application-wide config object
+    config = current_app.config.get("APPLICATION_CONFIG")
+
+    # Read the current config into a str for display
+    config_contents = pformat(config)
+
+    # Read the config file contents into a buffer for display
+    file_contents = ""
+    file_name = config.get("CONFIG_FILE")
+    if file_name:
+        file_path = os.path.join(config["ROOT_PATH"], file_name)
+        with open(file_path, mode="r") as f:
+            file_contents += f.read()
+
+    # Convert the strings to pretty HTML
+    curr_settings = highlight(config_contents, PythonLexer(), HtmlFormatter())
+    file_settings = highlight(file_contents, PythonLexer(), HtmlFormatter())
+
+
+    return render_template(
+            "settings.html",
+            active_nav_item='settings',
+            config_file=file_name,
+            curr_settings=curr_settings,
+            file_settings=file_settings)
+
+
 def format_phone_no(number):
     return'{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
 
@@ -912,6 +949,8 @@ def run_flask(config):
     '''
     app.secret_key = get_random_string()
     with app.app_context():
+        # Application-wide config dict
+        app.config["APPLICATION_CONFIG"] = config
         # Override Flask settings with CallAttendant config settings
         app.config["DEBUG"] = config["DEBUG"]
         app.config["TESTING"] = config["TESTING"]
