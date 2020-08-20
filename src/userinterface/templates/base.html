@@ -53,8 +53,17 @@
           </li>
         </ul>
         <form class="form-inline my-2 my-lg-0" action="/calls" method="get">
-          <input class="form-control mr-sm-2" type="search" name="search" placeholder="Phone number" aria-label="Search">
-          <button class="btn btn-success my-2 my-sm-0" name="submit" type="submit">Search</button>
+          <input class="form-control mr-sm-2" type="search" name="search" id="input-search" placeholder="Phone number" aria-label="Search">
+          <div class="btn-group">
+            <button type="submit" class="btn btn-success my-2 my-sm-0" id="btn-search" name="submit" value="phone">Search</button>
+            <button type="button" class="btn btn-success my-2 my-sm-0 dropdown-toggle dropdown-toggle-split" data-toggle="dropdown">
+              <span class="caret"></span>
+            </button>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" id="menu-phone" href="#">Search Phone</a>
+              <a class="dropdown-item" id="menu-name" href="#">Search Name</a>
+            </div>
+          </div>
         </form>
       </div>
     </div>
@@ -82,6 +91,18 @@
 {% block js %}{% endblock %}
 
   <script>
+    // Set the search type
+    $('#menu-name').on('click', function() {
+      $('#btn-search').val('name')
+      $('#input-search').attr('placeholder',"Enter Text")
+    })
+    $('#menu-phone').on('click', function() {
+      $('#btn-search').val('phone')
+      $('#input-search').attr('placeholder',"Phone Number")
+    })
+
+
+
     // Highlight the nav-item in the navbar with the matching "active_nav_item" id
     $(document).ready( function () {
       {% if active_nav_item %}
