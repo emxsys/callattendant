@@ -1,6 +1,8 @@
 # Call Attendant data files
 callattendant/data/messages/*.wav
 callattendant/data/*.db
+# Symlink to data/messages folder
+callattendant/userinterface/static/messages
 
 # vim Swap files
 *.swp
@@ -105,6 +107,7 @@ ENV/
 env.bak/
 venv.bak/
 ca_testing/
+python3/
 
 # Spyder project settings
 .spyderproject
