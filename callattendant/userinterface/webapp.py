@@ -56,11 +56,7 @@ from messaging.voicemail import Message
 # Create the Flask micro web-framework application
 app = Flask(__name__)
 app.config.from_pyfile('webapp.cfg')
-app.debug = False  # debug mode prevents app from running in separate thread
 
-# Turn off the HTML GET/POST logging
-log = logging.getLogger('werkzeug')
-log.disabled = True
 
 @app.before_request
 def before_request():
@@ -961,6 +957,11 @@ def run_flask(config):
         app.config["MESSAGE_INDICATOR_LED"] = config["MESSAGE_INDICATOR_LED"]
         # Add a new derived setting
         app.config["DB_PATH"] = os.path.join(config["ROOT_PATH"], config["DATABASE"])
+
+    # Turn off the HTML GET/POST logging
+    if not app.config["DEBUG"]:
+        log = logging.getLogger('werkzeug')
+        log.disabled = True
 
     print("Running Flask webapp")
     # debug mode prevents app from running in separate thread
