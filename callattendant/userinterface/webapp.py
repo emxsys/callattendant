@@ -56,11 +56,7 @@ from messaging.voicemail import Message
 # Create the Flask micro web-framework application
 app = Flask(__name__)
 app.config.from_pyfile('webapp.cfg')
-app.debug = False  # debug mode prevents app from running in separate thread
 
-# Turn off the HTML GET/POST logging
-log = logging.getLogger('werkzeug')
-log.disabled = True
 
 @app.before_request
 def before_request():
@@ -877,7 +873,7 @@ def get_db():
     # Flask template for database connections
     if 'db' not in g:
         g.db = sqlite3.connect(
-            current_app.config.get("DATABASE"),
+            current_app.config.get("DB_PATH"),
             detect_types=sqlite3.PARSE_DECLTYPES
         )
         g.db.row_factory = sqlite3.Row
@@ -951,6 +947,7 @@ def run_flask(config):
     with app.app_context():
         # Application-wide config dict
         app.config["APPLICATION_CONFIG"] = config
+
         # Override Flask settings with CallAttendant config settings
         app.config["DEBUG"] = config["DEBUG"]
         app.config["TESTING"] = config["TESTING"]
@@ -961,6 +958,19 @@ def run_flask(config):
         app.config["MESSAGE_INDICATOR_LED"] = config["MESSAGE_INDICATOR_LED"]
         # Add a new derived setting
         app.config["DB_PATH"] = os.path.join(config["ROOT_PATH"], config["DATABASE"])
+
+    # Create a softlink/symlink to messages within the static folder
+    # so that the HTML pages have access to the .wav files
+    messages_path = os.path.join(config["ROOT_PATH"], "userinterface/static/messages")
+    if not os.path.exists(messages_path):
+        actual_path = os.path.join(config["ROOT_PATH"], config["VOICE_MAIL_MESSAGE_FOLDER"])
+        os.symlink(actual_path, messages_path)
+
+
+    # Turn off the HTML GET/POST logging
+    if not app.config["DEBUG"]:
+        log = logging.getLogger('werkzeug')
+        log.disabled = True
 
     print("Running Flask webapp")
     # debug mode prevents app from running in separate thread

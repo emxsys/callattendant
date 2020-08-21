@@ -30,8 +30,8 @@ from pprint import pprint
 
 import pytest
 
-from src.callattendant import make_config
-from src.screening.callscreener import CallScreener
+from callattendant.app import make_config
+from callattendant.screening.callscreener import CallScreener
 
 
 # Create a blocked caller

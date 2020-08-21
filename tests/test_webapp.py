@@ -30,7 +30,7 @@ import tempfile
 import pytest
 
 # ~ from hardware.indicators import MessageIndicator
-from src.userinterface.webapp import app, get_random_string, get_db
+from callattendant.userinterface.webapp import app, get_random_string, get_db
 
 
 # Read in SQL for populating test data

@@ -1,0 +1,12 @@
+[Unit]
+Description=Call Attendant
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -u /home/pi/callattendant/callattendant --config app.cfg
+WorkingDirectory=/home/pi/callattendant/callattendant
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target

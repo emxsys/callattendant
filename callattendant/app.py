@@ -24,12 +24,6 @@
 
 import os
 import sys
-
-# ~ currentdir = os.path.dirname(os.path.realpath(__file__))
-# ~ sys.path.append(os.path.join(currentdir, "screening"))
-# ~ sys.path.append(os.path.join(currentdir, "hardware"))
-# ~ sys.path.append(os.path.join(currentdir, "messaging"))
-
 import queue
 import sqlite3
 import time
@@ -252,7 +246,7 @@ def make_config(filename=None):
         "DEBUG": False,
         "TESTING": False,
         "ROOT_PATH": root_path,
-        "DATABASE": "../data/callattendant.db",
+        "DATABASE": "data/callattendant.db",
         "SCREENING_MODE": ("whitelist", "blacklist"),
         "BLOCK_ENABLED": True,
         "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID", },
@@ -275,7 +269,7 @@ def make_config(filename=None):
         "VOICE_MAIL_INVALID_RESPONSE_FILE": "resources/invalid_response.wav",
         "VOICE_MAIL_LEAVE_MESSAGE_FILE": "resources/please_leave_message.wav",
         "VOICE_MAIL_MENU_FILE": "resources/voice_mail_menu.wav",
-        "VOICE_MAIL_MESSAGE_FOLDER": "../data/messages",
+        "VOICE_MAIL_MESSAGE_FOLDER": "data/messages",
     }
     # Create the default configuration
     cfg = Config(root_path, default_config)
@@ -334,13 +328,13 @@ def validate_config(config):
         print("* PERMITTED_RINGS_BEFORE_ANSWER should be an integer: {}".format(type(config["PERMITTED_RINGS_BEFORE_ANSWER"])))
         success = False
 
-    if not config["DATABASE"] == "../data/callattendant.db":
-        print("* DATABASE is not '../data/callattendant.db', are you sure this is right?")
+    if not config["DATABASE"] == "data/callattendant.db":
+        print("* DATABASE is not 'data/callattendant.db', are you sure this is right?")
         print("  Path is {}".format(config["DATABASE"]))
         if config["ENV"] == "production":
             success = False
-    if not config["VOICE_MAIL_MESSAGE_FOLDER"] == "../data/messages":
-        print("* VOICE_MAIL_MESSAGE_FOLDER is not '../data/messages', are you sure this is right?")
+    if not config["VOICE_MAIL_MESSAGE_FOLDER"] == "data/messages":
+        print("* VOICE_MAIL_MESSAGE_FOLDER is not 'data/messages', are you sure this is right?")
         print("  Path is {}".format(config["VOICE_MAIL_MESSAGE_FOLDER"]))
         if config["ENV"] == "production":
             success = False
@@ -438,4 +432,3 @@ def main(argv):
 if __name__ == '__main__':
 
     sys.exit(main(sys.argv))
-    print("Done")

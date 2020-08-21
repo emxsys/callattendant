@@ -30,7 +30,7 @@ from pprint import pprint
 
 import pytest
 
-from src.hardware.indicators import RingIndicator, ApprovedIndicator, BlockedIndicator, MessageIndicator
+from callattendant.hardware.indicators import RingIndicator, ApprovedIndicator, BlockedIndicator, MessageIndicator
 
 def test_multiple():
 

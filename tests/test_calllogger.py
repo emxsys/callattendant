@@ -30,8 +30,8 @@ from pprint import pprint
 
 import pytest
 
-from src.callattendant import make_config
-from src.screening.calllogger import CallLogger
+from callattendant.app import make_config
+from callattendant.screening.calllogger import CallLogger
 
 @pytest.fixture(scope='module')
 def calllogger():

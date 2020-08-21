@@ -30,10 +30,10 @@ from pprint import pprint
 
 import pytest
 
-from src.callattendant import make_config
-from src.hardware.modem import Modem
-from src.screening.calllogger import CallLogger
-from src.messaging.voicemail import VoiceMail
+from callattendant.app import make_config
+from callattendant.hardware.modem import Modem
+from callattendant.screening.calllogger import CallLogger
+from callattendant.messaging.voicemail import VoiceMail
 
 # Dummy call back function for modem
 def dummy_handle_caller(caller):

@@ -101,7 +101,12 @@ class VoiceMail:
             caller["NAME"].replace('_', '-'),
             datetime.now().strftime("%m%d%y_%H%M")))
 
-        self.modem.play_audio(self.config["VOICE_MAIL_LEAVE_MESSAGE_FILE"])
+        leave_msg_file = os.path.join(
+            self.config['ROOT_PATH'],
+            self.config["VOICE_MAIL_LEAVE_MESSAGE_FILE"])
+
+        # Play instructions to caller
+        self.modem.play_audio(leave_msg_file)
 
         # Show recording in progress
         self.message_indicator.turn_on()

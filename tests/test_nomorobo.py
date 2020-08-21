@@ -30,8 +30,8 @@ from pprint import pprint
 
 import pytest
 
-from src.callattendant import make_config
-from src.screening.nomorobo import NomoroboService
+from callattendant.app import make_config
+from callattendant.screening.nomorobo import NomoroboService
 
 def test_lookup():
     nomorobo = NomoroboService()
