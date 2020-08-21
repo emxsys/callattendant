@@ -1,7 +1,8 @@
-include data/DO_NOT_DELETE
-include data/messages/DO_NOT_DELETE
+include callattendant/data/DO_NOT_DELETE
+include callattendant/data/messages/DO_NOT_DELETE
 include callattendant/app.cfg.example
-include callattendant/userinterface/static *
-include callattendant/userinterface/static/css *
-include callattendant/userinterface/static/messages
+include callattendant/resources/*
+include callattendant/userinterface/webapp.cfg
+include callattendant/userinterface/static/*
+include callattendant/userinterface/static/css/*
 recursive-include callattendant/userinterface/templates *
