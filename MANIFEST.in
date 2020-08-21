@@ -1,0 +1,4 @@
+recursive-include src/userinterface/templates *
+recursive-include src/userinterface/static *
+recursive-exclude src/userinterface/static/messages *.wav
+include src/app.cfg.example
