@@ -1,6 +1,6 @@
 # Call Attendant
-Automated call attendant with call blocking and voice messaging running on a Raspberry Pi. Stop
-annoying robocalls and spammers from interrupting your life. It intercepts robocallers and
+An automated call attendant with call blocking and voice messaging running on a Raspberry Pi.
+Stop annoying robocalls and spammers from interrupting your life. It intercepts robocallers and
 telemarketers before the first ring on your landline. It provides voice messaging options to
 only record messages from humans.
 
@@ -42,20 +42,21 @@ management is all done through the Call Attendant's web interface. Following is 
 home page with metrics and a list of recent calls. For a complete description see the
 [User Guide](https://github.com/emxsys/callattendant/wiki/User-Guide).
 
-##### _Home page as seen on an IPad Pro and a Pixel 2 phone_
-![Dashboard - Responsive](https://github.com/emxsys/callattendant/blob/master/docs/dashboard-responsive.png)
+##### _Screenshots of the home page as seen on an IPad Pro and a Pixel 2 phone_
+![Dashboard-Responsive](https://github.com/emxsys/callattendant/blob/master/docs/dashboard-responsive.png)
 
 ### Project Wiki on GitHub
+The project wiki contains the documentation for the Call Attendant:
 
-- See the [Call Attendant Wiki](https://github.com/emxsys/callattendant/wiki/Home) for complete
+- See the [Wiki Home](https://github.com/emxsys/callattendant/wiki/Home) for complete
 installation, configuration, and operation instructions.
-- The [User Guide](https://github.com/emxsys/callattendant/wiki/User-Guide) section provides the
+- See the [User Guide](https://github.com/emxsys/callattendant/wiki/User-Guide) section for the
 web interface instructions.
 - The [Developer Guide](https://github.com/emxsys/callattendant/wiki/Developer-Guide) section
 describes the software architecture and software development plan, and shows you how to setup
 your software development environment
-- The [Advanced](https://github.com/emxsys/callattendant/wiki/Advanced) section in the addresses
-more complex setups and situations. For instance, _running as a service_.
+- The [Advanced](https://github.com/emxsys/callattendant/wiki/Advanced) section addresses more
+ omplex setups and situations. For instance, _Running as a Service_.
 
 
 ### Hardware Requirements
@@ -63,17 +64,12 @@ The __callattendant__ uses the following hardware:
 - Raspberry Pi 3B+ or better
 - [US Robotics 5637 Modem](https://www.amazon.com/gp/product/B0013FDLM0/ref=ppx_yo_dt_b_asin_image_o03_s00?ie=UTF8&psc=1)
 
-See the [Installation](https://github.com/emxsys/callattendant/wiki/Home#installation)
-section of the [Call Attendant Wiki](https://github.com/emxsys/callattendant/wiki/Home)
-for a complete description of the hardware setup,
-
-##### _Photo of the required hardware components: a Raspberry Pi 3B+ and USR5637 modem_
+##### _Photo of the required hardware: a Raspberry Pi 3B+ and USR5637 modem_
 ![Raspberry Pi and USR5637 Modem](https://github.com/emxsys/callattendant/raw/master/docs/raspberry_pi-modem.jpg)
 
 ---
 
 ## Quick Start
-
 ### Prequisites
 
 #### Hardware
