@@ -12,8 +12,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="callattendant-emxsys", # Replace with your own username
-    version="0.5.0a1",
+    name="callattendant-emxsys", # Remove user name for upload to PyPI
+    version="0.5.0a2",
     author="Bruce Schubert",
     author_email="bruce@emxsys.com",
     description="An automated call attendant and call blocker using a Raspberry Pi and USR-5637 modem",
@@ -23,10 +23,9 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     entry_points={
         "console_scripts": [
-            "start-me-up = callattendant.app:main",
+            "callattendant = callattendant.__main__:main",
         ]
     },
-    scripts=["scripts/run-callattendant"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
