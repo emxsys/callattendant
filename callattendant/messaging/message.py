@@ -103,14 +103,18 @@ class Message:
         success = True
         if len(results) > 0:
 
-            # Delete the wav file
-            filename = results[0]
-            print("Deleting message: {}".format(filename))
+            # Delete the .wav file
+            # Build a filename using the config instead of the filepath
+            # stored in the db, in case the files have been moved
+            basename = os.path.basename(results[0])
+            msgpath = os.path.join(self.config["ROOT_PATH"], self.config["VOICE_MAIL_MESSAGE_FOLDER"])
+            filepath = os.path.join(msgpath, basename)
+            print("Deleting message: {}".format(filepath))
             try:
-                os.remove(filename)
+                os.remove(filepath)
             except Exception as error:
                 pprint(error)
-                print("{} cannot be removed".format(filename))
+                print("{} cannot be removed".format(filepath))
                 success = False
 
             # Delete the row
