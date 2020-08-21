@@ -30,9 +30,9 @@ from pprint import pprint
 
 import pytest
 
-from src.callattendant import make_config
-from src.screening.query_db import query_db
-from src.screening.blacklist import Blacklist
+from callattendant.app import make_config
+from callattendant.screening.query_db import query_db
+from callattendant.screening.blacklist import Blacklist
 
 @pytest.fixture(scope='module')
 def blacklist():

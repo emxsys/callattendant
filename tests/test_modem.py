@@ -30,8 +30,9 @@ from pprint import pprint
 
 import pytest
 
-from src.callattendant import make_config
-from src.hardware.modem import Modem, FACTORY_RESET, RESET, DISPLAY_MODEM_SETTINGS, \
+from callattendant.app import make_config
+
+from callattendant.hardware.modem import Modem, FACTORY_RESET, RESET, DISPLAY_MODEM_SETTINGS, \
     ENTER_VOICE_MODE, SET_VOICE_COMPRESSION_8BIT_SAMPLING_8K, ENTER_TELEPHONE_ANSWERING_DEVICE_OFF_HOOK, \
     ENTER_VOICE_TRANSMIT_DATA_STATE, DTE_END_VOICE_DATA_TX, ENTER_VOICE_RECIEVE_DATA_STATE, \
     DTE_END_RECIEVE_DATA_STATE, TERMINATE_CALL, ETX_CODE
@@ -47,7 +48,6 @@ def dummy_handle_caller(caller):
 def modem():
 
     # Load and tweak the default config
-    from callattendant import make_config, print_config
     config = make_config()
     config['DEBUG'] = True
     config['TESTING'] = True
@@ -115,7 +115,7 @@ def test_hang_up(modem):
 
 def test_playing_audio(modem):
     currentdir = os.path.dirname(os.path.realpath(__file__))
-    assert modem.play_audio(os.path.join(currentdir, "../src/resources/sample.wav"))
+    assert modem.play_audio(os.path.join(currentdir, "../callattendant/resources/sample.wav"))
 
 
 def test_recording_audio(modem):

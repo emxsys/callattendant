@@ -23,7 +23,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     entry_points={
         "console_scripts": [
-            "start-me-up = src.callattendant:main",
+            "start-me-up = callattendant.app:main",
         ]
     },
     scripts=["scripts/run-callattendant"],
