@@ -14,7 +14,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="callattendant-emxsys", # Remove user name for upload to PyPI
-    version="0.5.0a5",
+    version="0.5.0b1",
     author="Bruce Schubert",
     author_email="bruce@emxsys.com",
     description="An automated call attendant and call blocker using a Raspberry Pi and USR-5637 modem",
@@ -22,7 +22,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/emxsys/callattendant",
     packages=setuptools.find_packages(),
-    include_package_data=True,      # Include files from MANIFEST.in
+    include_package_data=True,      # Includes files from MANIFEST.in
     install_requires=[
         "backports.functools-lru-cache>=1.6.1",
         "beautifulsoup4>=4.9.1",
