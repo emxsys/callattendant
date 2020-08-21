@@ -24,12 +24,6 @@
 
 import os
 import sys
-
-# ~ currentdir = os.path.dirname(os.path.realpath(__file__))
-# ~ sys.path.append(os.path.join(currentdir, "screening"))
-# ~ sys.path.append(os.path.join(currentdir, "hardware"))
-# ~ sys.path.append(os.path.join(currentdir, "messaging"))
-
 import queue
 import sqlite3
 import time
@@ -438,4 +432,3 @@ def main(argv):
 if __name__ == '__main__':
 
     sys.exit(main(sys.argv))
-    print("Done")
