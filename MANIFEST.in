@@ -1,4 +1,7 @@
-recursive-include src/userinterface/templates *
-recursive-include src/userinterface/static *
-recursive-exclude src/userinterface/static/messages *.wav
-include src/app.cfg.example
+include data/DO_NOT_DELETE
+include data/messages/DO_NOT_DELETE
+include callattendant/app.cfg.example
+include callattendant/userinterface/static *
+include callattendant/userinterface/static/css *
+include callattendant/userinterface/static/messages
+recursive-include callattendant/userinterface/templates *
