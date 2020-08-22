@@ -22,7 +22,7 @@ TESTING = False
 
 # DATABASE: Sqlite database for incoming call log, whitelist and blacklist
 #   This should not be changed/overrriden except during development/testing
-#DATABASE = "data/callattendant.db"
+#DATABASE = "callattendant.db"
 
 # SCREENING_MODE: A tuple containing: "whitelist" and/or "blacklist", or empty
 SCREENING_MODE = ("whitelist", "blacklist")
@@ -126,4 +126,4 @@ VOICE_MAIL_MENU_FILE = "resources/voice_mail_menu.wav"
 
 # VOICE_MAIL_MESSAGE_FOLDER: The folder where voice mail message are stored
 #   This should not be changed/overridden except during development/testing
-#VOICE_MAIL_MESSAGE_FOLDER = "data/messages"
+#VOICE_MAIL_MESSAGE_FOLDER = "messages"

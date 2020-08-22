@@ -51,7 +51,7 @@ def myapp():
         app.config["TESTING"] = True
         app.config["DEBUG"] = True
         app.config['DATABASE'] = db_path
-        app.config["DB_PATH"] = db_path
+        app.config["DB_FILE"] = db_path
         # ~ app.config["VOICE_MAIL_MESSAGE_FOLDER"] = "../data/messages"
         # ~ app.config["MESSAGE_INDICATOR_LED"] = MessageIndicator(10)
 

@@ -119,4 +119,5 @@ def test_playing_audio(modem):
 
 
 def test_recording_audio(modem):
-    assert modem.record_audio("message.wav")
+    filename = os.path.join(modem.config["DATA_PATH"], "message.wav")
+    assert modem.record_audio(filename)

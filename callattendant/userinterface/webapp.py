@@ -63,7 +63,7 @@ def before_request():
     """
     Establish a database connection for the current request
     """
-    g.conn = sqlite3.connect(current_app.config.get("DB_PATH"))
+    g.conn = sqlite3.connect(current_app.config.get("DB_FILE"))
     g.conn.row_factory = sqlite3.Row
     g.cur = g.conn.cursor()
 
@@ -847,7 +847,7 @@ def settings():
     file_contents = ""
     file_name = config.get("CONFIG_FILE")
     if file_name:
-        file_path = os.path.join(config["ROOT_PATH"], file_name)
+        file_path = os.path.join(config.root_path, file_name)
         with open(file_path, mode="r") as f:
             file_contents += f.read()
 
@@ -873,7 +873,7 @@ def get_db():
     # Flask template for database connections
     if 'db' not in g:
         g.db = sqlite3.connect(
-            current_app.config.get("DB_PATH"),
+            current_app.config.get("DB_FILE"),
             detect_types=sqlite3.PARSE_DECLTYPES
         )
         g.db.row_factory = sqlite3.Row
@@ -947,25 +947,19 @@ def run_flask(config):
     with app.app_context():
         # Application-wide config dict
         app.config["APPLICATION_CONFIG"] = config
-
         # Override Flask settings with CallAttendant config settings
         app.config["DEBUG"] = config["DEBUG"]
         app.config["TESTING"] = config["TESTING"]
         # Add addtional settings from callattendant config
-        app.config["ROOT_PATH"] = config["ROOT_PATH"]
-        app.config["DATA_PATH"] = config["DATA_PATH"]
-        app.config["DATABASE"] = config["DATABASE"]
-        app.config["VOICE_MAIL_MESSAGE_FOLDER"] = config["VOICE_MAIL_MESSAGE_FOLDER"]
+        app.config["DB_FILE"] = config["DB_FILE"]
         app.config["MESSAGE_INDICATOR_LED"] = config["MESSAGE_INDICATOR_LED"]
-        # Add a new derived setting
-        app.config["DB_PATH"] = os.path.join(config["DATA_PATH"], config["DATABASE"])
+        app.config["VOICE_MAIL_MESSAGE_FOLDER"] = config["VOICE_MAIL_MESSAGE_FOLDER"]
 
     # Create a softlink/symlink to messages within the static folder
     # so that the HTML pages have access to the .wav files
-    symlink_path = os.path.join(config["ROOT_PATH"], "userinterface/static/messages")
+    symlink_path = os.path.join(config.root_path, "userinterface/static/messages")
     if not os.path.exists(symlink_path):
-        actual_path = os.path.join(config["DATA_PATH"], config["VOICE_MAIL_MESSAGE_FOLDER"])
-        os.symlink(actual_path, symlink_path)
+        os.symlink(config["VOICE_MAIL_MESSAGE_FOLDER"], symlink_path)
 
 
     # Turn off the HTML GET/POST logging

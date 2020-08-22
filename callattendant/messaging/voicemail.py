@@ -55,11 +55,10 @@ class VoiceMail:
         Play a voice message menu and respond to the choices.
         """
         # Build some common paths
-        root_path = self.config['ROOT_PATH']
         voice_mail = self.config.get_namespace("VOICE_MAIL_")
-        voice_mail_menu_file = os.path.join(root_path, voice_mail['menu_file'])
-        invalid_response_file = os.path.join(root_path, voice_mail['invalid_response_file'])
-        goodbye_file = os.path.join(root_path, voice_mail['goodbye_file'])
+        voice_mail_menu_file = voice_mail['menu_file']
+        invalid_response_file = voice_mail['invalid_response_file']
+        goodbye_file = voice_mail['goodbye_file']
 
         # Indicate the user is in the menu
         self.message_indicator.blink()
@@ -92,20 +91,15 @@ class VoiceMail:
         Records a message.
         """
         # Build the filename used for a potential message
-        path = os.path.join(
-            self.config['DATA_PATH'],
-            self.config["VOICE_MAIL_MESSAGE_FOLDER"])
+        path = self.config["VOICE_MAIL_MESSAGE_FOLDER"]
         filepath = os.path.join(path, "{}_{}_{}_{}.wav".format(
             call_no,
             caller["NMBR"],
             caller["NAME"].replace('_', '-'),
             datetime.now().strftime("%m%d%y_%H%M")))
 
-        leave_msg_file = os.path.join(
-            self.config['ROOT_PATH'],
-            self.config["VOICE_MAIL_LEAVE_MESSAGE_FILE"])
-
         # Play instructions to caller
+        leave_msg_file = self.config["VOICE_MAIL_LEAVE_MESSAGE_FILE"]
         self.modem.play_audio(leave_msg_file)
 
         # Show recording in progress

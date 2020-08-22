@@ -55,9 +55,7 @@ class CallAttendant(object):
         if self.config["TESTING"]:
             self.db = sqlite3.connect(":memory:")
         else:
-            self.db = sqlite3.connect(os.path.join(
-                self.config['DATA_PATH'],
-                self.config['DATABASE']))
+            self.db = sqlite3.connect(self.config['DB_FILE'])
 
         # Create a synchronized queue for incoming callers from the modem
         self._caller_queue = queue.Queue()
@@ -104,15 +102,14 @@ class CallAttendant(object):
         and/or recording messages.
         """
         # Get relevant config settings
-        root_path = self.config['ROOT_PATH']
         screening_mode = self.config['SCREENING_MODE']
         block = self.config.get_namespace("BLOCK_")
         blocked = self.config.get_namespace("BLOCKED_")
         screened = self.config.get_namespace("SCREENED_")
         permitted = self.config.get_namespace("PERMITTED_")
-        blocked_greeting_file = os.path.join(root_path, blocked['greeting_file'])
-        screened_greeting_file = os.path.join(root_path, screened['greeting_file'])
-        permitted_greeting_file = os.path.join(root_path, permitted['greeting_file'])
+        blocked_greeting_file = blocked['greeting_file']
+        screened_greeting_file = screened['greeting_file']
+        permitted_greeting_file = permitted['greeting_file']
 
         # Instruct the modem to start feeding calls into the caller queue
         self.modem.handle_calls()
@@ -241,142 +238,32 @@ def make_config(filename=None):
 
     # Establish the default configuration settings
     root_path = os.path.dirname(os.path.realpath(__file__))
-    default_config = {
-        "ENV": 'production',
-        "DEBUG": False,
-        "TESTING": False,
-        "ROOT_PATH": root_path,
-        "DATA_PATH": "$HOME/.callattendant",
-        "DATABASE": "callattendant.db",
-        "SCREENING_MODE": ("whitelist", "blacklist"),
-        "BLOCK_ENABLED": True,
-        "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID", },
-        "BLOCK_NUMBER_PATTERNS": {},
+    data_path = os.path.expandvars("$HOME/.callattendant")   # could be a cmdline arg
 
-        "BLOCKED_ACTIONS": ("greeting", ),
-        "BLOCKED_RINGS_BEFORE_ANSWER": 0,
-        "BLOCKED_GREETING_FILE": "resources/blocked_greeting.wav",
-
-        "SCREENED_ACTIONS": ("greeting", "record_message"),
-        "SCREENED_GREETING_FILE": "resources/general_greeting.wav",
-        "SCREENED_RINGS_BEFORE_ANSWER": 0,
-
-        "PERMITTED_ACTIONS": (),
-        "PERMITTED_GREETING_FILE": "resources/general_greeting.wav",
-        "PERMITTED_RINGS_BEFORE_ANSWER": 4,
-
-        "VOICE_MAIL_GREETING_FILE": "resources/general_greeting.wav",
-        "VOICE_MAIL_GOODBYE_FILE": "resources/goodbye.wav",
-        "VOICE_MAIL_INVALID_RESPONSE_FILE": "resources/invalid_response.wav",
-        "VOICE_MAIL_LEAVE_MESSAGE_FILE": "resources/please_leave_message.wav",
-        "VOICE_MAIL_MENU_FILE": "resources/voice_mail_menu.wav",
-        "VOICE_MAIL_MESSAGE_FOLDER": "messages",
-    }
     # Create the default configuration
-    cfg = Config(root_path, default_config)
-    # Load the config file, which may overwrite defaults
+    config = Config(root_path, data_path)
+
+    # Load the supplied config file, which may overwrite the defaults
     if filename is not None:
-        cfg.from_pyfile(filename)
-        cfg["CONFIG_FILE"] = filename
-    # Expand any env vars into valid paths
-    cfg["DATA_PATH"] = os.path.expandvars(cfg["DATA_PATH"])
-    cfg["VOICE_MAIL_MESSAGE_FOLDER"] = os.path.expandvars(cfg["VOICE_MAIL_MESSAGE_FOLDER"])
+        config.from_pyfile(filename)
+        config["CONFIG_FILE"] = filename
+
+    # Build abs paths for all the file based settings
+    config.normalize_paths()
+
+    # Ensure data folders exist
+    if not os.path.isdir(data_path):
+        print("The DATA_PATH folder is not present. Creating {}".format(data_path))
+        os.makedirs(data_path)
+    msgpath = config["VOICE_MAIL_MESSAGE_FOLDER"]
+    if not os.path.isdir(msgpath):
+        print("The VOICE_MAIL_MESSAGE_FOLDER folder is not present. Creating {}".format(msgpath))
+        os.makedirs(msgpath)
+
     # Always print the configuration
-    print_config(cfg)
+    config.pretty_print()
 
-    return cfg
-
-
-def validate_config(config):
-    success = True
-
-    if config["ENV"] not in ("production", "development"):
-        print("* ENV is incorrect: {}".format(config["ENV"]))
-        success = False
-
-    if not isinstance(config["DEBUG"], bool):
-        print("* DEBUG should be a bool: {}".format(type(config["DEBUG"])))
-        success = False
-    if not isinstance(config["TESTING"], bool):
-        print("* TESTING should be bool: {}".format(type(config["TESTING"])))
-        success = False
-    if not isinstance(config["BLOCK_ENABLED"], bool):
-        print("* BLOCK_ENABLED should be a bool: {}".format(type(config["BLOCK_ENABLED"])))
-        success = False
-
-    for mode in config["SCREENING_MODE"]:
-        if mode not in ("whitelist", "blacklist"):
-            print("* SCREENING_MODE option is invalid: {}".format(mode))
-            success = False
-
-    for mode in config["BLOCKED_ACTIONS"]:
-        if mode not in ("greeting", "record_message", "voice_mail"):
-            print("* BLOCKED_ACTIONS option is invalid: {}".format(mode))
-            success = False
-    for mode in config["SCREENED_ACTIONS"]:
-        if mode not in ("greeting", "record_message", "voice_mail"):
-            print("* SCREENED_ACTIONS option is invalid: {}".format(mode))
-            success = False
-    for mode in config["PERMITTED_ACTIONS"]:
-        if mode not in ("greeting", "record_message", "voice_mail"):
-            print("* PERMITTED_ACTIONS option is invalid: {}".format(mode))
-            success = False
-
-    if not isinstance(config["BLOCKED_RINGS_BEFORE_ANSWER"], int):
-        print("* BLOCKED_RINGS_BEFORE_ANSWER should be an integer: {}".format(type(config["BLOCKED_RINGS_BEFORE_ANSWER"])))
-        success = False
-    if not isinstance(config["SCREENED_RINGS_BEFORE_ANSWER"], int):
-        print("* SCREENED_RINGS_BEFORE_ANSWER should be an integer: {}".format(type(config["SCREENED_RINGS_BEFORE_ANSWER"])))
-        success = False
-    if not isinstance(config["PERMITTED_RINGS_BEFORE_ANSWER"], int):
-        print("* PERMITTED_RINGS_BEFORE_ANSWER should be an integer: {}".format(type(config["PERMITTED_RINGS_BEFORE_ANSWER"])))
-        success = False
-
-    rootpath = config["ROOT_PATH"]
-    datapath = config["DATA_PATH"]
-    filepath = os.path.join(rootpath, config["BLOCKED_GREETING_FILE"])
-    if not os.path.exists(filepath):
-        print("* BLOCKED_GREETING_FILE not found: {}".format(filepath))
-        success = False
-    filepath = os.path.join(rootpath, config["SCREENED_GREETING_FILE"])
-    if not os.path.exists(filepath):
-        print("* SCREENED_GREETING_FILE not found: {}".format(filepath))
-        success = False
-    filepath = os.path.join(rootpath, config["PERMITTED_GREETING_FILE"])
-    if not os.path.exists(filepath):
-        print("* PERMITTED_GREETING_FILE not found: {}".format(filepath))
-        success = False
-
-    filepath = os.path.join(rootpath, config["VOICE_MAIL_GREETING_FILE"])
-    if not os.path.exists(filepath):
-        print("* VOICE_MAIL_GREETING_FILE not found: {}".format(filepath))
-        success = False
-    filepath = os.path.join(rootpath, config["VOICE_MAIL_GOODBYE_FILE"])
-    if not os.path.exists(filepath):
-        print("* VOICE_MAIL_GOODBYE_FILE not found: {}".format(filepath))
-        success = False
-    filepath = os.path.join(rootpath, config["VOICE_MAIL_LEAVE_MESSAGE_FILE"])
-    if not os.path.exists(filepath):
-        print("* VOICE_MAIL_LEAVE_MESSAGE_FILE not found: {}".format(filepath))
-        success = False
-    filepath = os.path.join(rootpath, config["VOICE_MAIL_MENU_FILE"])
-    if not os.path.exists(filepath):
-        print("* VOICE_MAIL_MENU_FILE not found: {}".format(filepath))
-        success = False
-    filepath = os.path.join(datapath, config["VOICE_MAIL_MESSAGE_FOLDER"])
-    if not os.path.exists(filepath):
-        print("* VOICE_MAIL_MESSAGE_FOLDER not found: {}".format(filepath))
-        success = False
-
-    return success
-
-
-def print_config(config):
-    """ Pretty print the given configuration dict """
-    print("[Configuration]")
-    keys = sorted(config.keys())
-    for key in keys:
-        print("  {} = {}".format(key, config[key]))
+    return config
 
 
 def get_args(argv):
@@ -409,27 +296,16 @@ def main(argv):
 
     # Process command line arguments
     config_file = get_args(argv)
-
     # Create the application-wide config dict
     config = make_config(config_file)
-    # Create any req'd folders before validating
-    datapath = config["DATA_PATH"]
-    if not os.path.isdir(datapath):
-        print("The DATA_PATH folder is not present. Creating {}".format(datapath))
-        os.makedirs(datapath)
-    msgpath = os.path.join(datapath, config["VOICE_MAIL_MESSAGE_FOLDER"])
-    if not os.path.isdir(msgpath):
-        print("The VOICE_MAIL_MESSAGE_FOLDER folder is not present. Creating {}".format(msgpath))
-        os.makedirs(msgpath)
     # Ensure all specified files exist and that values are conformant
-    if not validate_config(config):
+    if not config.validate():
         print("Configuration is invalid. Please check {}".format(config_file))
         return 1
 
     # Create and start the application
     app = CallAttendant(config)
     app.run()
-
     return 0
 
 
