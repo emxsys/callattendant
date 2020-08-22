@@ -13,8 +13,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="callattendant-emxsys", # Remove user name for upload to PyPI
-    version="0.5.0b1",
+    name="callattendant", # Add user name for upload to TestPyPI
+    version="0.5.0rc",
     author="Bruce Schubert",
     author_email="bruce@emxsys.com",
     description="An automated call attendant and call blocker using a Raspberry Pi and USR-5637 modem",
