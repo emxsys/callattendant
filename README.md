@@ -175,12 +175,11 @@ http://localhost:5000/
 
 ### Configuration
 The Call Attendant's behavior can be controlled by a configuration file. To override the default
-configuration, copy the `callattendant/app.cfg.example` file, located in the top-level package,
-to a new file, e.g. `~/app.cfg` and edit its contents.
-
-Specify the configuration file and path on the command line, e.g.:
+configuration, copy the [callattendant/app.cfg.example](https://github.com/emxsys/callattendant/blob/master/callattendant/app.cfg.example) 
+file, located in the top-level package, to a new file, e.g. `~/app.cfg` and edit its contents.
+Then specify the configuration file and path on the command line, e.g.:
 ```
-callattendant.py --config ~/app.cfg
+callattendant --config ~/app.cfg
 ```
 See the [Configuration](https://github.com/emxsys/callattendant/wiki/Home#configuration)
 section in the project's wiki for more information.
