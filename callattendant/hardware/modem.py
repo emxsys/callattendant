@@ -267,9 +267,13 @@ class Modem(object):
         print("> Going on hook...")
         try:
             self._serial.cancel_read()
+
+            # Prevent any pending data from corrupting the next call
+            self._serial.flushInput()
+            self._serial.flushOutput()
+
             if not self._send(GO_ON_HOOK):
                 raise RuntimeError("Failed to hang up the call.")
-
             # ~ if not self._send(RESET):
                 # ~ raise RuntimeError("Failed to reset the modem.")
 
