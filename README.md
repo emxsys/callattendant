@@ -1,14 +1,13 @@
 # Call Attendant
 An automated call attendant with call blocking and voice messaging running on a Raspberry Pi.
-Stop annoying robocalls and spammers from interrupting your life. It intercepts robocallers and
-telemarketers before the first ring on your landline.
+Stop annoying robocalls and spammers from interrupting your life. Let the Call Attendant 
+intercept and block robocallers and telemarketers before the first ring on your landline.
 
 _If you're at all interested in this project, please provide some feedback by giving it a
 __[star](https://github.com/emxsys/callattendant/stargazers)__, or even better, get involved
 by filing [issues](https://github.com/emxsys/callattendant/issues) and/or
 [pull requests](https://github.com/emxsys/callattendant/pulls).
 Thanks!_
-
 
 #### Table of Contents
 - [Overview](#overview)
@@ -19,26 +18,26 @@ The Call Attendant (__callattendant__) is a python-based, automated call attenda
 lightweight Raspberry Pi, or other Linux-based system, coupled with a US Robotics 5637 USB modem.
 
 #### How it works
-The Raspberry Pi and modem are connected to your home phone system in parallel with you phone
+The Raspberry Pi and modem are connected to your home phone system in parallel with your phone
 handset(s). When an incoming call is received, the call goes to both your phone and the
-__callattendant__ running on the Pi. During the period of the first ring the __callattendant__
-analyzes the caller ID, and based on your configuration, determines if the call should be blocked
-or allowed. Blocked calls can be simply hung up on, or routed to the voice message system. Calls
-that are allowed will simply ring your home phone, if configured to do so. The __callattendant__'s
-filtering mechanisms include an online lookup service, a permitted number list, a blocked number
-list and pattern matching on the caller's number and/or name.
+__callattendant__. During the period of the first ring the __callattendant__ analyzes the caller ID, 
+and based on your configuration, determines if the call should be blocked or allowed. Blocked calls 
+can be simply hung up on, or routed to the voice message system. Calls that are allowed will simply 
+ring your home phone like normal. All calls can be sent to a voice mail system if you choose. The 
+__callattendant__'s filtering mechanisms include an online lookup service, a permitted number list,
+a blocked number list and pattern matching on the caller's number and/or name.
 
 #### Features include:
 - A call blocker that intercepts robocallers and blocked numbers at or before the first ring
 - Permitted numbers pass straight through to the local phone system for normal call ringing and answering
 - Visual indicators to show whether the incoming call is from a permitted, blocked, or unknown number
 - Call details, permitted numbers, and blocked numbers are available in a web-based user interface
-- Blocked callers are handled by a voice messaging system that optioanlly requires human interaction,
+- Calls can be handled by a voice messaging system that optioanlly requires human interaction,
 e.g, "Press 1 to leave a message"
 
-Reviewing call history, voice messages, permitted and blocked numbers, and performing caller
-management is all done through the Call Attendant's web interface. Here is an example of the
-home page with metrics and a list of recent calls. For a complete description see the
+You can review call history, voice messages, permitted and blocked numbers, and performing caller
+management through the Call Attendant's web interface. Here is an example of the home page with metrics 
+and a convienient list of recent calls. For a complete description see the
 [User Guide](https://github.com/emxsys/callattendant/wiki/User-Guide).
 
 ##### _Screenshots of the home page as seen on an IPad Pro and a Pixel 2 phone_
@@ -69,52 +68,49 @@ The __callattendant__ uses the following hardware:
 ---
 
 ## Quick Start
-### Hardware
 
+### Hardware
 You will need a Raspberry Pi running Raspbian or better and access to the Internet for the software
 installation. For the project, you will need a modem of some sort to do the telephony communications.
 The **U.S. Robotics USR5637 56K USB Modem** has been proven effective. For some installs, it just
 works, no config needed. It showed up as /dev/ttyACM0.
 
-### Installation
+---
+
+### Software
 The installation calls for Python3.X.
 
-#### Setup Virtual Environment
+#### Setup a Virtual Environment
 ###### *Optional*
-
 The following instructions create and activate a virtual environment named _python3_ within the
 current folder:
 ```bash
 sudo apt install virtualenv
-
 virtualenv python3 --python=python3
-
 source python3/bin/activate
 ```
 
 Now you're operating with a virtual Python. To check, issue the `which` command and ensure the
-output points to your virtual environment:
+output points to your virtual environment; and also check the Python version:
 ```bash
 $ which python
 /home/pi/python3/bin/python
-```
 
-To make sure you're on 3.x as requested, issue:
-```bash
 $ python --version
 Python 3.7.3
 ```
 
-#### Install Software
+#### Install the Software
 Install and update using pip:
 ```bash
 pip install callattendant
 ```
+---
 
-### Initialization
+### Operation
 
-The __callattendant__ package includes a `callattendant` command to start the system. You can
-change the behavior of the system with a configuration file.
+The __callattendant__ package includes a `callattendant` command to start the system. Run this command without
+any options to use the default configuration.
 
 ```bash
 # Using the default configuration
@@ -159,15 +155,17 @@ Running Flask webapp
 Modem COM Port is: /dev/ttyACM0
 ```
 
-Make a few calls to yourself to test the service. The stdout output will indicate the
+Make a few calls to yourself to test the service. The standard output will show the
 progress of the calls. Then navigate to `http://<pi-address>|<pi-hostname>:5000` in a
-web browser to checkout the web interface
+web browser to checkout the web interface.
+
+Press `ctrl-c` a couple of times to exit the system
 
 ---
 
 ### Web Interface
 #### URL: http://<pi-address>|<pi-hostname>:5000
-To view the web interface, simply point your web browser to port `5000` on your Raspberry Pi. I
+To view the web interface, simply point your web browser to port `5000` on your Raspberry Pi. 
 For example, in your Raspberry Pi's browser, you can use:
 ```
 http://localhost:5000/
