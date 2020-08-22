@@ -107,7 +107,7 @@ class Message:
             # Build a filename using the config instead of the filepath
             # stored in the db, in case the files have been moved
             basename = os.path.basename(results[0])
-            msgpath = os.path.join(self.config["ROOT_PATH"], self.config["VOICE_MAIL_MESSAGE_FOLDER"])
+            msgpath = os.path.join(self.config["DATA_PATH"], self.config["VOICE_MAIL_MESSAGE_FOLDER"])
             filepath = os.path.join(msgpath, basename)
             print("Deleting message: {}".format(filepath))
             try:

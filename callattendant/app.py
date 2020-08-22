@@ -56,7 +56,7 @@ class CallAttendant(object):
             self.db = sqlite3.connect(":memory:")
         else:
             self.db = sqlite3.connect(os.path.join(
-                self.config['ROOT_PATH'],
+                self.config['DATA_PATH'],
                 self.config['DATABASE']))
 
         # Create a synchronized queue for incoming callers from the modem
@@ -246,7 +246,8 @@ def make_config(filename=None):
         "DEBUG": False,
         "TESTING": False,
         "ROOT_PATH": root_path,
-        "DATABASE": "data/callattendant.db",
+        "DATA_PATH": "$HOME/.callattendant",
+        "DATABASE": "callattendant.db",
         "SCREENING_MODE": ("whitelist", "blacklist"),
         "BLOCK_ENABLED": True,
         "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID", },
@@ -269,7 +270,7 @@ def make_config(filename=None):
         "VOICE_MAIL_INVALID_RESPONSE_FILE": "resources/invalid_response.wav",
         "VOICE_MAIL_LEAVE_MESSAGE_FILE": "resources/please_leave_message.wav",
         "VOICE_MAIL_MENU_FILE": "resources/voice_mail_menu.wav",
-        "VOICE_MAIL_MESSAGE_FOLDER": "data/messages",
+        "VOICE_MAIL_MESSAGE_FOLDER": "messages",
     }
     # Create the default configuration
     cfg = Config(root_path, default_config)
@@ -277,6 +278,9 @@ def make_config(filename=None):
     if filename is not None:
         cfg.from_pyfile(filename)
         cfg["CONFIG_FILE"] = filename
+    # Expand any env vars into valid paths
+    cfg["DATA_PATH"] = os.path.expandvars(cfg["DATA_PATH"])
+    cfg["VOICE_MAIL_MESSAGE_FOLDER"] = os.path.expandvars(cfg["VOICE_MAIL_MESSAGE_FOLDER"])
     # Always print the configuration
     print_config(cfg)
 
@@ -328,18 +332,8 @@ def validate_config(config):
         print("* PERMITTED_RINGS_BEFORE_ANSWER should be an integer: {}".format(type(config["PERMITTED_RINGS_BEFORE_ANSWER"])))
         success = False
 
-    if not config["DATABASE"] == "data/callattendant.db":
-        print("* DATABASE is not 'data/callattendant.db', are you sure this is right?")
-        print("  Path is {}".format(config["DATABASE"]))
-        if config["ENV"] == "production":
-            success = False
-    if not config["VOICE_MAIL_MESSAGE_FOLDER"] == "data/messages":
-        print("* VOICE_MAIL_MESSAGE_FOLDER is not 'data/messages', are you sure this is right?")
-        print("  Path is {}".format(config["VOICE_MAIL_MESSAGE_FOLDER"]))
-        if config["ENV"] == "production":
-            success = False
-
     rootpath = config["ROOT_PATH"]
+    datapath = config["DATA_PATH"]
     filepath = os.path.join(rootpath, config["BLOCKED_GREETING_FILE"])
     if not os.path.exists(filepath):
         print("* BLOCKED_GREETING_FILE not found: {}".format(filepath))
@@ -369,7 +363,7 @@ def validate_config(config):
     if not os.path.exists(filepath):
         print("* VOICE_MAIL_MENU_FILE not found: {}".format(filepath))
         success = False
-    filepath = os.path.join(rootpath, config["VOICE_MAIL_MESSAGE_FOLDER"])
+    filepath = os.path.join(datapath, config["VOICE_MAIL_MESSAGE_FOLDER"])
     if not os.path.exists(filepath):
         print("* VOICE_MAIL_MESSAGE_FOLDER not found: {}".format(filepath))
         success = False
@@ -416,8 +410,18 @@ def main(argv):
     # Process command line arguments
     config_file = get_args(argv)
 
-    # Create the application config dict
+    # Create the application-wide config dict
     config = make_config(config_file)
+    # Create any req'd folders before validating
+    datapath = config["DATA_PATH"]
+    if not os.path.isdir(datapath):
+        print("The DATA_PATH folder is not present. Creating {}".format(datapath))
+        os.makedirs(datapath)
+    msgpath = os.path.join(datapath, config["VOICE_MAIL_MESSAGE_FOLDER"])
+    if not os.path.isdir(msgpath):
+        print("The VOICE_MAIL_MESSAGE_FOLDER folder is not present. Creating {}".format(msgpath))
+        os.makedirs(msgpath)
+    # Ensure all specified files exist and that values are conformant
     if not validate_config(config):
         print("Configuration is invalid. Please check {}".format(config_file))
         return 1

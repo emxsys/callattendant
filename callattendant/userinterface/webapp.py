@@ -953,18 +953,19 @@ def run_flask(config):
         app.config["TESTING"] = config["TESTING"]
         # Add addtional settings from callattendant config
         app.config["ROOT_PATH"] = config["ROOT_PATH"]
+        app.config["DATA_PATH"] = config["DATA_PATH"]
         app.config["DATABASE"] = config["DATABASE"]
         app.config["VOICE_MAIL_MESSAGE_FOLDER"] = config["VOICE_MAIL_MESSAGE_FOLDER"]
         app.config["MESSAGE_INDICATOR_LED"] = config["MESSAGE_INDICATOR_LED"]
         # Add a new derived setting
-        app.config["DB_PATH"] = os.path.join(config["ROOT_PATH"], config["DATABASE"])
+        app.config["DB_PATH"] = os.path.join(config["DATA_PATH"], config["DATABASE"])
 
     # Create a softlink/symlink to messages within the static folder
     # so that the HTML pages have access to the .wav files
-    messages_path = os.path.join(config["ROOT_PATH"], "userinterface/static/messages")
-    if not os.path.exists(messages_path):
-        actual_path = os.path.join(config["ROOT_PATH"], config["VOICE_MAIL_MESSAGE_FOLDER"])
-        os.symlink(actual_path, messages_path)
+    symlink_path = os.path.join(config["ROOT_PATH"], "userinterface/static/messages")
+    if not os.path.exists(symlink_path):
+        actual_path = os.path.join(config["DATA_PATH"], config["VOICE_MAIL_MESSAGE_FOLDER"])
+        os.symlink(actual_path, symlink_path)
 
 
     # Turn off the HTML GET/POST logging
