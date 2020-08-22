@@ -4,8 +4,8 @@ After=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 -u /home/pi/callattendant/callattendant --config app.cfg
-WorkingDirectory=/home/pi/callattendant/callattendant
+ExecStart=callattendant --config /home/pi/.callattendant/app.cfg
+WorkingDirectory=/home/pi/.callattendant
 Restart=on-abort
 
 [Install]

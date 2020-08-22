@@ -6,3 +6,4 @@ include callattendant/userinterface/webapp.cfg
 include callattendant/userinterface/static/*
 include callattendant/userinterface/static/css/*
 recursive-include callattendant/userinterface/templates *
+

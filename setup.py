@@ -14,14 +14,14 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="callattendant", # Add user name for upload to TestPyPI
-    version="0.5.0rc",
+    version="0.5.0",
     author="Bruce Schubert",
     author_email="bruce@emxsys.com",
     description="An automated call attendant and call blocker using a Raspberry Pi and USR-5637 modem",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/emxsys/callattendant",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=["tests"]),
     include_package_data=True,      # Includes files from MANIFEST.in
     install_requires=[
         "backports.functools-lru-cache>=1.6.1",
@@ -53,7 +53,12 @@ setuptools.setup(
             "callattendant = callattendant.__main__:main",
         ]
     },
-    # ~ scripts=["scripts/run-callattendant"],
+    scripts=[
+        "bin/start-callattendant",
+        "bin/stop-callattendant",
+        "bin/restart-callattendant",
+        "bin/monitor-callattendant",
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
