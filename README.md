@@ -70,10 +70,10 @@ The __callattendant__ uses the following hardware:
 ## Quick Start
 
 ### Hardware
-You will need a Raspberry Pi running Raspbian or better and access to the Internet for the software
-installation. For the project, you will need a modem of some sort to do the telephony communications.
-The **U.S. Robotics USR5637 56K USB Modem** has been proven effective. For some installs, it just
-works, no config needed. It showed up as /dev/ttyACM0.
+You will need a Raspberry Pi running Raspbian or better with access to the Internet for the software
+installation, and ultimately for the the online robocaller lookups. For the project, you will need a 
+modem of some sort to do the telephony communications. The **U.S. Robotics USR5637 56K USB Modem** has 
+been proven effective. For some installs, it just works, no config needed. It showed up as /dev/ttyACM0.
 
 ---
 
@@ -176,7 +176,7 @@ http://localhost:5000/
 ### Configuration
 The Call Attendant's behavior can be controlled by a configuration file. To override the default
 configuration, copy the [callattendant/app.cfg.example](https://github.com/emxsys/callattendant/blob/master/callattendant/app.cfg.example) 
-file, located in the top-level package, to a new file, e.g. `~/app.cfg` and edit its contents.
+file, to a new file, e.g. `~/app.cfg` and edit its contents.
 Then specify the configuration file and path on the command line, e.g.:
 ```
 callattendant --config ~/app.cfg
