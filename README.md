@@ -164,7 +164,7 @@ Press `ctrl-c` a couple of times to exit the system
 ---
 
 ### Web Interface
-#### URL: http://<pi-address>|<pi-hostname>:5000
+#### URL: `http://<pi-address>|<pi-hostname>:5000`
 To view the web interface, simply point your web browser to port `5000` on your Raspberry Pi. 
 For example, in your Raspberry Pi's browser, you can use:
 ```
