@@ -93,7 +93,7 @@ class VoiceMail:
         """
         # Build the filename used for a potential message
         path = os.path.join(
-            self.config['ROOT_PATH'],
+            self.config['DATA_PATH'],
             self.config["VOICE_MAIL_MESSAGE_FOLDER"])
         filepath = os.path.join(path, "{}_{}_{}_{}.wav".format(
             call_no,
