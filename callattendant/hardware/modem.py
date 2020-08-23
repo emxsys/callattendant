@@ -391,27 +391,27 @@ class Modem(object):
                     break
 
                 if (DCE_RING in audio_data):
-                    print(">> Ring detected... Call is disconnected; new call coming in")
+                    print(">> Ring detected... Stop recording; new call coming in")
                     break
 
                 # Check if <DLE>b is in the stream
                 if (DCE_BUSY_TONE in audio_data):
-                    print(">> Busy Tone... Call will be disconnected.")
+                    print(">> Busy Tone... Stop recording.")
                     break
 
                 # Check if <DLE>s is in the stream
                 if (DCE_SILENCE_DETECTED in audio_data):
-                    print(">> Silence Detected... Call will be disconnected.")
+                    print(">> Silence Detected... Stop recording.")
                     break
 
                 # Check if <DLE><ETX> is in the stream
                 if (DCE_END_VOICE_DATA_TX in audio_data):
-                    print(">> <DLE><ETX> Char Recieved... Call will be disconnected.")
+                    print(">> <DLE><ETX> Char Recieved... Stop recording.")
                     break
 
                 # Timeout
                 if ((datetime.now() - start_time).seconds) > REC_VM_MAX_DURATION:
-                    print(">> Timeout - Max recording limit reached.")
+                    print(">> Stop recording: max time limit reached.")
                     break
 
                 # Add Audio Data to Audio Buffer
@@ -423,9 +423,10 @@ class Modem(object):
                 wf.setsampwidth(1)
                 wf.setframerate(8000)
                 wf.writeframes(b''.join(audio_frames))
+            print(">> Recording stopped after {} seconds".format((datetime.now() - start_time).seconds))
 
-            # Clear buffer before sending commands else its
-            # contents may interpreted as a return code
+            # Clear input buffer before sending commands else its
+            # contents may interpreted as the cmd's return code
             self._serial.reset_input_buffer()
 
             # Send End of Recieve Data state by passing "<DLE>!"
@@ -648,10 +649,10 @@ class Modem(object):
         self._serial.parity = serial.PARITY_NONE        # set parity check: no parity
         self._serial.stopbits = serial.STOPBITS_ONE     # number of stop bits
         self._serial.timeout = 3                        # non-block read
+        self._serial.writeTimeout = 3                   # timeout for write
         self._serial.xonxoff = False                    # disable software flow control
         self._serial.rtscts = False                     # disable hardware (RTS/CTS) flow control
         self._serial.dsrdtr = False                     # disable hardware (DSR/DTR) flow control
-        self._serial.writeTimeout = 3                   # timeout for write
 
     def close_serial_port(self):
         """Closes the serial port attached to the modem."""
