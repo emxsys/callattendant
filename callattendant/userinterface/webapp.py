@@ -845,9 +845,10 @@ def settings():
 
     # Read the config file contents into a buffer for display
     file_contents = ""
+    file_path = ""
     file_name = config.get("CONFIG_FILE")
     if file_name:
-        file_path = os.path.join(config.root_path, file_name)
+        file_path = os.path.join(config.data_path, file_name)
         with open(file_path, mode="r") as f:
             file_contents += f.read()
 
@@ -859,7 +860,7 @@ def settings():
     return render_template(
             "settings.html",
             active_nav_item='settings',
-            config_file=file_name,
+            config_file=file_path,
             curr_settings=curr_settings,
             file_settings=file_settings)
 
@@ -954,13 +955,6 @@ def run_flask(config):
         app.config["DB_FILE"] = config["DB_FILE"]
         app.config["MESSAGE_INDICATOR_LED"] = config["MESSAGE_INDICATOR_LED"]
         app.config["VOICE_MAIL_MESSAGE_FOLDER"] = config["VOICE_MAIL_MESSAGE_FOLDER"]
-
-    # Create a softlink/symlink to messages within the static folder
-    # so that the HTML pages have access to the .wav files
-    symlink_path = os.path.join(config.root_path, "userinterface/static/messages")
-    if not os.path.exists(symlink_path):
-        os.symlink(config["VOICE_MAIL_MESSAGE_FOLDER"], symlink_path)
-
 
     # Turn off the HTML GET/POST logging
     if not app.config["DEBUG"]:
