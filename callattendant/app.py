@@ -121,6 +121,7 @@ class CallAttendant(object):
         while 1:
             try:
                 # Wait (blocking) for a caller
+                print("Waiting for call...")
                 caller = self._caller_queue.get()
 
                 # An incoming call has occurred, log it
@@ -182,7 +183,7 @@ class CallAttendant(object):
                 while ring_count < rings_before_answer:
                     # In North America, the standard ring cadence is "2-4", or two seconds
                     # of ringing followed by four seconds of silence (33% Duty Cycle).
-                    if self.modem.ring_event.wait(7):
+                    if self.modem.ring_event.wait(10.0):
                         ring_count = ring_count + 1
                         print(" > > > Ring count: {}".format(ring_count))
                     else:
@@ -267,6 +268,12 @@ def make_config(filename=None, datapath=None, create_folder=False):
 
             print("Adding a default 'app.cfg' configuration file.")
             copyfile(os.path.join(root_path, "app.cfg.example"), os.path.join(data_path, "app.cfg"))
+    else:
+        if not os.path.isdir(data_path):
+            print("Error: The data path ({}) does not exist.".format(data_path))
+            print("Run the app with the --create-folder option or create the data folder before retrying.")
+            show_syntax()
+            sys.exit(2)
 
     # Create the default configuration...
     config = Config(root_path, data_path)
