@@ -29,6 +29,7 @@ import sqlite3
 import time
 from pprint import pprint
 from datetime import datetime
+from shutil import copyfile
 
 from config import Config
 from screening.calllogger import CallLogger
@@ -45,7 +46,8 @@ class CallAttendant(object):
     def __init__(self, config):
         """
         The constructor initializes and starts the Call Attendant.
-            :param config: the application config dict
+            :param config:
+                the application config dict
         """
         # The application-wide configuration
         self.config = config
@@ -81,7 +83,7 @@ class CallAttendant(object):
         # Skip if we're running functional tests, because when testing
         # we use a memory database which can't be shared between threads.
         if not self.config["TESTING"]:
-            print("Staring the Flask webapp")
+            print("Starting the Flask webapp")
             webapp.start(self.config)
 
     def handle_caller(self, caller):
@@ -89,7 +91,8 @@ class CallAttendant(object):
         A callback function used by the modem that places the given
         caller object into the synchronized queue for processing by the
         run method.
-            :param caller: a dict object with caller ID information
+            :param caller:
+                a dict object with caller ID information
         """
         if self.config["DEBUG"]:
             print("Adding to caller queue:")
@@ -202,6 +205,14 @@ class CallAttendant(object):
         """
         Answer the call with the supplied actions, e.g, voice mail,
         record message, or simply pickup and hang up.
+            :param actions:
+                A tuple containing the actions to take for this call
+            :param greeting:
+                The wav file to play to the caller upon answering
+            :param call_no:
+                The unique call number identifying this call
+            :param caller:
+                The caller ID data
         """
         # Go "off-hook" - Acquires a lock on the modem - MUST follow with hang_up()
         if self.modem.pick_up():
@@ -229,75 +240,140 @@ class CallAttendant(object):
                 self.modem.hang_up()
 
 
-def make_config(filename=None):
-    '''Creates the config dictionary for this application/module.
-        :param filename: the filename of a python configuration file.
+def make_config(filename=None, datapath=None, create_folder=False):
+    """
+    Creates the config dictionary for this application/module.
+        :param filename:
+            The filename of a python configuration file.
             This can either be an absolute filename or a filename
-            relative to this module's location.
-        :return: a config dict'''
-
+            relative to the datapath folder.
+        :param datapath:
+            A folder for the database, messages and configuration files.
+            It will be created if it doesn't exist.
+        :return:
+            A config dict object
+    """
     # Establish the default configuration settings
     root_path = os.path.dirname(os.path.realpath(__file__))
-    data_path = os.path.expandvars("$HOME/.callattendant")   # could be a cmdline arg
+    data_path = datapath
+    if data_path is None:
+        # The default data_path is a hidden folder at the root of the user home folder
+        data_path = os.path.expanduser("~/.callattendant")
+    if create_folder:
+        # Create the data-path folder hierachy with a default app.cfg file
+        if not os.path.isdir(data_path):
+            print("The DATA_PATH folder is not present. Creating {}".format(data_path))
+            os.makedirs(data_path)
 
-    # Create the default configuration
+            print("Adding a default 'app.cfg' configuration file.")
+            copyfile(os.path.join(root_path, "app.cfg.example"), os.path.join(data_path, "app.cfg"))
+
+    # Create the default configuration...
     config = Config(root_path, data_path)
-
-    # Load the supplied config file, which may overwrite the defaults
     if filename is not None:
+        # ... and now load values from the supplied config file
         config.from_pyfile(filename)
         config["CONFIG_FILE"] = filename
 
-    # Build abs paths for all the file based settings
+    # Build absolute paths for all the file based settings
     config.normalize_paths()
-
-    # Ensure data folders exist
-    if not os.path.isdir(data_path):
-        print("The DATA_PATH folder is not present. Creating {}".format(data_path))
-        os.makedirs(data_path)
-    msgpath = config["VOICE_MAIL_MESSAGE_FOLDER"]
-    if not os.path.isdir(msgpath):
-        print("The VOICE_MAIL_MESSAGE_FOLDER folder is not present. Creating {}".format(msgpath))
-        os.makedirs(msgpath)
-
+    # Initialize the data_path folder contents using the normalized paths
+    init_data_path(config)
     # Always print the configuration
     config.pretty_print()
 
     return config
 
 
+def init_data_path(config):
+    """
+    Ensures requisite folders exist.
+        :param config:
+            The application's config dict object
+    """
+    # Create the sub-folder used for the message wav files
+    msgpath = config["VOICE_MAIL_MESSAGE_FOLDER"]
+    if not os.path.isdir(msgpath):
+        print("The VOICE_MAIL_MESSAGE_FOLDER folder is not present. Creating {}".format(msgpath))
+        os.mkdir(msgpath)
+
+    # Create a softlink/symlink to messages within the static folder
+    # so that the HTML pages have access to the .wav files
+    symlink_path = os.path.join(config.root_path, "userinterface/static/messages")
+
+    # TODO validate and/or delete the existing link and then create a new one for this session
+    # TODO could use os.readlink to test the viability of the symlink in case the data_path moved
+    if not os.path.exists(symlink_path):
+        print("The VOICE_MAIL_MESSAGE_FOLDER symlink is not present. Creating {} symlink".format(symlink_path))
+        os.symlink(config["VOICE_MAIL_MESSAGE_FOLDER"], symlink_path)
+
+
 def get_args(argv):
-    """Get arguments from the command line
-        :param argv: sys.argv
-        :return: configfile
+    """Get and validate the command line arguments.
+        :param argv:
+            sys.argv from main
+        :return:
+            string: config filename,
+            string: datapath folder,
+            boolean: create folder flag
     """
     import sys
     import getopt
-    syntax = 'Usage: python callattendant.py -c [FILE]'
-    configfile = None
+    config_file = None
+    data_path = None
+    create_folder = False
     try:
-        opts, args = getopt.getopt(argv[1:], "hc:", ["help", "config="])
-    except getopt.GetoptError:
-        print(syntax)
+        opts, args = getopt.getopt(argv[1:], "hc:d:f", ["help", "config=", "data-path=", "create-folder"])
+        if args:
+            raise getopt.GetoptError("unhandled arguments: {}".format(args))
+    except getopt.GetoptError as e:
+        print("Error: {}".format(e))
+        show_syntax()
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            print(syntax)
-            print("-c, --config=[FILE]\tload a python configuration file")
-            print("-h, --help\t\tdisplays this help text")
+            show_syntax()
             sys.exit()
         elif opt in ("-c", "--config"):
-            configfile = arg
-    return configfile
+            config_file = arg
+        elif opt in ("-d", "--data-path"):
+            data_path = arg
+        elif opt in ("-f", "--create-folder"):
+            create_folder = True
+        else:
+            raise RuntimeError("Invalid command line option: {} {}".format(opt, arg))
+
+    return config_file, data_path, create_folder
+
+
+def show_syntax():
+    """
+    Print the command line syntax.
+    """
+    print("Usage: callattendant --config [FILE] --data-path [FOLDER]")
+    print("Options:")
+    print("-c, --config [FILE]\t\t load a python configuration file")
+    print("-d, --data-path [FOLDER]\t path to data and configuration files")
+    print("-f, --create-folder\t\t create the data-path folder if it does not exist")
+    print("-h, --help\t\t\t displays this help text")
 
 
 def main(argv):
-    """Create and run the call attendent application"""
-
+    """
+    Create and run the call attendent application.
+        :param argv:
+            The command line arguments, e.g., --config [FILE] --data-path [FOLDER]
+    """
     # Process command line arguments
-    config_file = get_args(argv)
+    config_file, data_path, create_folder = get_args(argv)
+    print("Command line options:")
+    print("  --config={}".format(config_file))
+    print("  --data-path={}".format(data_path))
+    print("  --create-folder={}".format(create_folder))
+
     # Create the application-wide config dict
-    config = make_config(config_file)
+    config = make_config(config_file, data_path, create_folder)
+
     # Ensure all specified files exist and that values are conformant
     if not config.validate():
         print("Configuration is invalid. Please check {}".format(config_file))
