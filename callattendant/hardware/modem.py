@@ -212,6 +212,7 @@ class Modem(object):
                     # https://stackoverflow.com/questions/1285911/how-do-i-check-that-multiple-keys-are-in-a-dict-in-a-single-pass
                     if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
                         # Queue caller for screening
+                        print("> Queueing call {} for processing".format(call_record["NMBR"]))
                         self.handle_caller(call_record)
                         call_record = {}
 
