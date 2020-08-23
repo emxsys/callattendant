@@ -193,11 +193,11 @@ class Config(dict):
         """Updates the values in the config from a Python file.
         :param filename: the filename of the config.  This can either be an
                          absolute filename or a filename relative to the
-                         root path.
+                         data path.
         :param silent: set to ``True`` if you want silent failure for missing
                        files.
         """
-        filename = os.path.join(self.root_path, filename)
+        filename = os.path.join(self.data_path, filename)
         d = types.ModuleType("config")
         d.__file__ = filename
         try:
@@ -206,7 +206,6 @@ class Config(dict):
         except OSError as e:
             if silent and e.errno in (errno.ENOENT, errno.EISDIR, errno.ENOTDIR):
                 return False
-            # e.strerror = f"Unable to load configuration file ({e.strerror})"
             e.strerror = "Unable to load configuration file ({})".format(e.strerror)
             raise
         self.from_object(d)
