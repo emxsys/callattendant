@@ -11,6 +11,10 @@ import errno
 import os
 import types
 
+# This default configuration (used when when a configuration file is not provided)
+# will record messages from blocked (denied) callers, and will simply pass permitted
+# and screened callers through to the home phone.
+#
 default_config = {
     "ENV": 'production',
     "DEBUG": False,
@@ -22,11 +26,11 @@ default_config = {
     "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID", },
     "BLOCK_NUMBER_PATTERNS": {},
 
-    "BLOCKED_ACTIONS": ("greeting", ),
+    "BLOCKED_ACTIONS": ("greeting", "record_message" ),
     "BLOCKED_RINGS_BEFORE_ANSWER": 0,
     "BLOCKED_GREETING_FILE": "resources/blocked_greeting.wav",
 
-    "SCREENED_ACTIONS": ("greeting", "record_message"),
+    "SCREENED_ACTIONS": (),
     "SCREENED_GREETING_FILE": "resources/general_greeting.wav",
     "SCREENED_RINGS_BEFORE_ANSWER": 0,
 
@@ -44,7 +48,9 @@ default_config = {
 
 
 class ConfigAttribute:
-    """Makes an attribute forward to the config"""
+    """
+    Makes an attribute forward to the config
+    """
 
     def __init__(self, name, get_converter=None):
         self.__name__ = name
@@ -63,9 +69,10 @@ class ConfigAttribute:
 
 
 class Config(dict):
-    """Works exactly like a dict but provides ways to fill it from files
-    or special dictionaries. You can fill the config from a config file::
-        app.config.from_pyfile('yourconfig.cfg')
+    """
+    Config objects works exactly like a dict but provides ways to fill it
+    from files or special dictionaries. You can fill the config from a
+    config file, e.g., app.config.from_pyfile('yourconfig.cfg')
     Only uppercase keys are added to the config.  This makes it possible to use
     lowercase values in the config file for temporary values that are not added
     to the config or to define the config keys in the same file that implements
@@ -73,6 +80,16 @@ class Config(dict):
     """
 
     def __init__(self, root_path, data_path, defaults=default_config):
+        """
+        Constructor.
+            :param root_path:
+                Path to the top-level package.
+            :param data_path:
+                Path to the data folder.
+                The application database and message files are stored here.
+            :param defaults:
+                The default configuration values
+        """
         dict.__init__(self, defaults or {})
         self.root_path = root_path
         self.data_path = data_path
@@ -80,6 +97,10 @@ class Config(dict):
         self["DATA_PATH"] = data_path
 
     def normalize_paths(self):
+        """
+        Normalizes the file based setting will absolute paths built from the
+        root_path and data_path values passed in the contstructor.
+        """
         rootpath = self.root_path
         datapath = self.data_path
 
@@ -98,6 +119,11 @@ class Config(dict):
         self["VOICE_MAIL_MESSAGE_FOLDER"] = os.path.join(datapath, self["VOICE_MAIL_MESSAGE_FOLDER"])
 
     def validate(self):
+        """
+        Validates the settings.
+            :return:
+                True if the settings are permissible.
+        """
         success = True
 
         if self["ENV"] not in ("production", "development"):
@@ -183,7 +209,9 @@ class Config(dict):
         return success
 
     def pretty_print(self):
-        """ Pretty print the given configuration dict """
+        """
+        Pretty print the given configuration dict object.
+        """
         print("[Configuration]")
         keys = sorted(self.keys())
         for key in keys:
@@ -191,11 +219,11 @@ class Config(dict):
 
     def from_pyfile(self, filename, silent=False):
         """Updates the values in the config from a Python file.
-        :param filename: the filename of the config.  This can either be an
-                         absolute filename or a filename relative to the
-                         data path.
-        :param silent: set to ``True`` if you want silent failure for missing
-                       files.
+            :param filename:
+                The filename of the config.  This can either be an
+                absolute filename or a filename relative to the data path.
+            :param silent:
+                set to ``True`` if you want silent failure for missing files.
         """
         filename = os.path.join(self.data_path, filename)
         d = types.ModuleType("config")
@@ -212,7 +240,8 @@ class Config(dict):
         return True
 
     def from_object(self, obj):
-        """Updates the values from the given object.  An object can be of one
+        """
+        Updates the values from the given object.  An object can be of one
         of the following two types:
         -   a string: in this case the object with that name will be imported
         -   an actual object reference: that object is used directly
@@ -233,7 +262,8 @@ class Config(dict):
         package because the package might be installed system wide.
         See :ref:`config-dev-prod` for an example of class-based configuration
         using :meth:`from_object`.
-        :param obj: an import name or object
+            :param obj:
+                an import name or object
         """
         if isinstance(obj, str):
             obj = import_string(obj)
@@ -242,7 +272,8 @@ class Config(dict):
                 self[key] = getattr(obj, key)
 
     def get_namespace(self, namespace, lowercase=True, trim_namespace=True):
-        """Returns a dictionary containing a subset of configuration options
+        """
+        Returns a dictionary containing a subset of configuration options
         that match the specified namespace/prefix. Example usage::
             app.config['IMAGE_STORE_TYPE'] = 'fs'
             app.config['IMAGE_STORE_PATH'] = '/var/app/images'
@@ -256,12 +287,15 @@ class Config(dict):
             }
         This is often useful when configuration options map directly to
         keyword arguments in functions or class constructors.
-        :param namespace: a configuration namespace
-        :param lowercase: a flag indicating if the keys of the resulting
-                          dictionary should be lowercase
-        :param trim_namespace: a flag indicating if the keys of the resulting
-                          dictionary should not include the namespace
-        .. versionadded:: 0.11
+
+        :param namespace:
+            a configuration namespace
+        :param lowercase:
+            a flag indicating if the keys of the resulting
+            dictionary should be lowercase
+        :param trim_namespace:
+            a flag indicating if the keys of the resulting
+            dictionary should not include the namespace
         """
         rv = {}
         for k, v in self.items():
