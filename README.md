@@ -1,4 +1,6 @@
 # Call Attendant
+![PyPI](https://img.shields.io/pypi/v/callattendant?style=flat) ![PyPI - License](https://img.shields.io/pypi/l/callattendant) ![PyPI - Status](https://img.shields.io/pypi/status/callattendant)
+
 An automated call attendant with call blocking and voice messaging running on a Raspberry Pi.
 Stop annoying robocalls and spammers from interrupting your life. Let the Call Attendant
 intercept and block robocallers and telemarketers before the first ring on your landline.
@@ -82,25 +84,31 @@ The installation calls for Python3.X.
 
 #### Setup a Virtual Environment
 ###### _Optional_
-The following instructions create and activate a virtual environment named _CallAttendant_ within the
+The following instructions create and activate a virtual environment named _venv_ within the
 current folder:
 ```bash
+# Intall - if necessary
 sudo apt install virtualenv
-virtualenv CallAttendant --python=python3
-source CallAttendant/bin/activate
+
+# Create the virtual environment
+virtualenv venv --python=python3
+
+# Activate it
+source venv/bin/activate
 ```
 
 Now you're operating with a virtual Python. To check, issue the `which` command and ensure the
 output points to your virtual environment; and also check the Python version:
 ```bash
 $ which python
-/home/pi/CallAttendant/bin/python
+/home/pi/venv/bin/python
 
 $ python --version
 Python 3.7.3
 ```
-When you install the __callattendant__ software, it will be placed within the virtual environment
-folder (under `lib/python3.x/site-packages` to be exact).
+Later, when you install the __callattendant__ software, it will be placed within the virtual environment
+folder (under `lib/python3.x/site-packages` to be exact). The virtual environment, when activated, alters
+your _PATH_ so that the system looks for python and its packages within this folder hierarchy. 
 
 #### Install the Software
 Install and update using pip:
@@ -113,7 +121,7 @@ pip3 install callattendant
 ```
 
 If your not using the virtual environment, you may need to reboot or logoff/login to update the
-`$PATH` in order to find/use the `callattendant` command.
+`$PATH` for your profile in order to find and use the `callattendant` command.
 
 ---
 
