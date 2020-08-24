@@ -114,6 +114,7 @@ pip3 install callattendant
 
 If your not using the virtual environment, you may need to reboot or logoff/login to update the
 `$PATH` in order to find/use the `callattendant` command.
+
 ---
 
 ### Operation
@@ -126,10 +127,10 @@ can override this location with the `--data-path` option.
 ```
 Usage: callattendant --config [FILE] --data-path [FOLDER]
 Options:
--c, --config [FILE]    load a python configuration file
--d, --data-path [FOLDER]   path to data and configuration files
--f, --create-folder    create the data-path folder if it does not exist
--h, --help       displays this help text
+-c, --config [FILE]       load a python configuration file
+-d, --data-path [FOLDER]  path to data and configuration files
+-f, --create-folder       create the data-path folder if it does not exist
+-h, --help                displays this help text
 ```
 
 ```bash
