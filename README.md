@@ -1,5 +1,5 @@
 # Call Attendant
-![PyPI](https://img.shields.io/pypi/v/callattendant?style=flat&link=https://pypi.org/project/callattendant/) ![PyPI - License](https://img.shields.io/pypi/l/callattendant?link=https://github.com/emxsys/callattendant/blob/master/LICENSE) ![PyPI - Status](https://img.shields.io/pypi/status/callattendant)
+![PyPI](https://img.shields.io/pypi/v/callattendant?style=flat&link=https://pypi.org/project/callattendant/&link=https://pypi.org/project/callattendant/) ![PyPI - License](https://img.shields.io/pypi/l/callattendant?link=https://github.com/emxsys/callattendant/blob/master/LICENSE&link=https://github.com/emxsys/callattendant/blob/master/LICENSE) ![PyPI - Status](https://img.shields.io/pypi/status/callattendant)
 
 An automated call attendant with call blocking and voice messaging running on a Raspberry Pi.
 Stop annoying robocalls and spammers from interrupting your life. Let the Call Attendant
