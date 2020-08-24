@@ -87,7 +87,7 @@ The installation calls for Python3.X.
 The following instructions create and activate a virtual environment named _venv_ within the
 current folder:
 ```bash
-# Intall - if necessary
+# Install virtualenv - if not installed
 sudo apt install virtualenv
 
 # Create the virtual environment
