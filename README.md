@@ -1,6 +1,6 @@
 # Call Attendant
 An automated call attendant with call blocking and voice messaging running on a Raspberry Pi.
-Stop annoying robocalls and spammers from interrupting your life. Let the Call Attendant 
+Stop annoying robocalls and spammers from interrupting your life. Let the Call Attendant
 intercept and block robocallers and telemarketers before the first ring on your landline.
 
 _If you're at all interested in this project, please provide some feedback by giving it a
@@ -20,10 +20,10 @@ lightweight Raspberry Pi, or other Linux-based system, coupled with a US Robotic
 #### How it works
 The Raspberry Pi and modem are connected to your home phone system in parallel with your phone
 handset(s). When an incoming call is received, the call goes to both your phone and the
-__callattendant__. During the period of the first ring the __callattendant__ analyzes the caller ID, 
-and based on your configuration, determines if the call should be blocked or allowed. Blocked calls 
-can be simply hung up on, or routed to the voice message system. Calls that are allowed will simply 
-ring your home phone like normal. All calls can be sent to a voice mail system if you choose. The 
+__callattendant__. During the period of the first ring the __callattendant__ analyzes the caller ID,
+and based on your configuration, determines if the call should be blocked or allowed. Blocked calls
+can be simply hung up on, or routed to the voice message system. Calls that are allowed will simply
+ring your home phone like normal. All calls can be sent to a voice mail system if you choose. The
 __callattendant__'s filtering mechanisms include an online lookup service, a permitted number list,
 a blocked number list and pattern matching on the caller's number and/or name.
 
@@ -36,7 +36,7 @@ a blocked number list and pattern matching on the caller's number and/or name.
 e.g, "Press 1 to leave a message"
 
 You can review call history, voice messages, permitted and blocked numbers, and performing caller
-management through the Call Attendant's web interface. Here is an example of the home page with metrics 
+management through the Call Attendant's web interface. Here is an example of the home page with metrics
 and a convienient list of recent calls. For a complete description see the
 [User Guide](https://github.com/emxsys/callattendant/wiki/User-Guide).
 
@@ -71,8 +71,8 @@ The __callattendant__ uses the following hardware:
 
 ### Hardware
 You will need a Raspberry Pi running Raspbian or better with access to the Internet for the software
-installation, and ultimately for the the online robocaller lookups. For the project, you will need a 
-modem of some sort to do the telephony communications. The **U.S. Robotics USR5637 56K USB Modem** has 
+installation, and ultimately for the the online robocaller lookups. For the project, you will need a
+modem of some sort to do the telephony communications. The **U.S. Robotics USR5637 56K USB Modem** has
 been proven effective. For some installs, it just works, no config needed. It showed up as /dev/ttyACM0.
 
 ---
@@ -81,40 +81,66 @@ been proven effective. For some installs, it just works, no config needed. It sh
 The installation calls for Python3.X.
 
 #### Setup a Virtual Environment
-###### *Optional*
-The following instructions create and activate a virtual environment named _python3_ within the
+###### _Optional_
+The following instructions create and activate a virtual environment named _CallAttendant_ within the
 current folder:
 ```bash
 sudo apt install virtualenv
-virtualenv python3 --python=python3
-source python3/bin/activate
+virtualenv CallAttendant --python=python3
+source CallAttendant/bin/activate
 ```
 
 Now you're operating with a virtual Python. To check, issue the `which` command and ensure the
 output points to your virtual environment; and also check the Python version:
 ```bash
 $ which python
-/home/pi/python3/bin/python
+/home/pi/CallAttendant/bin/python
 
 $ python --version
 Python 3.7.3
 ```
+When you install the __callattendant__ software, it will be placed within the virtual environment
+folder (under `lib/python3.x/site-packages` to be exact).
 
 #### Install the Software
 Install and update using pip:
 ```bash
+# Using the virtual environment you use "pip" to install the software
 pip install callattendant
+
+# You must use "pip3" on the Pi if your not using a virtual environment
+pip3 install callattendant
 ```
+
+If your not using the virtual environment, you may need to reboot or logoff/login to update the
+`$PATH` in order to find/use the `callattendant` command.
 ---
 
 ### Operation
 
-The __callattendant__ package includes a `callattendant` command to start the system. Run this command without
-any options to use the default configuration.
+The __callattendant__ package includes a `callattendant` command to start the system. Run this command
+the first time with the `--create-folder` option to create the initial data and files in the default
+data folder: `~/.callattendant`. This is a hidden folder off the root of your home directory. You
+can override this location with the `--data-path` option.
+
+```
+Usage: callattendant --config [FILE] --data-path [FOLDER]
+Options:
+-c, --config [FILE]    load a python configuration file
+-d, --data-path [FOLDER]   path to data and configuration files
+-f, --create-folder    create the data-path folder if it does not exist
+-h, --help       displays this help text
+```
 
 ```bash
+# Creating the default data folder with the default configuration
+callattendant --create-folder
+
 # Using the default configuration
 callattendant
+
+# Using a customized config file in an alternate, existing location
+callattendant --config myapp.cfg --data-path /var/lib/callattendant
 ```
 
 You should see output of the form:
@@ -165,7 +191,7 @@ Press `ctrl-c` a couple of times to exit the system
 
 ### Web Interface
 #### URL: `http://<pi-address>|<pi-hostname>:5000`
-To view the web interface, simply point your web browser to port `5000` on your Raspberry Pi. 
+To view the web interface, simply point your web browser to port `5000` on your Raspberry Pi.
 For example, in your Raspberry Pi's browser, you can use:
 ```
 http://localhost:5000/
@@ -175,11 +201,15 @@ http://localhost:5000/
 
 ### Configuration
 The Call Attendant's behavior can be controlled by a configuration file. To override the default
-configuration, copy the [callattendant/app.cfg.example](https://github.com/emxsys/callattendant/blob/master/callattendant/app.cfg.example) 
-file, to a new file, e.g. `~/app.cfg` and edit its contents.
+configuration, open the  the `~/.callattenant/app.cfg` and edit its contents.
+
+```bash
+nano ~/.callattendant/app.cfg
+```
+
 Then specify the configuration file and path on the command line, e.g.:
 ```
-callattendant --config ~/app.cfg
+callattendant --config app.cfg
 ```
 See the [Configuration](https://github.com/emxsys/callattendant/wiki/Home#configuration)
 section in the project's wiki for more information.
