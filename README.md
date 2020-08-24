@@ -111,7 +111,7 @@ folder (under `lib/python3.x/site-packages` to be exact). The virtual environmen
 your _PATH_ so that the system looks for python and its packages within this folder hierarchy. 
 
 #### Install the Software
-Install and update using pip:
+The software is available on [PyPI](https://pypi.org/project/callattendant/). Install and update using `pip`:
 ```bash
 # Using the virtual environment you use "pip" to install the software
 pip install callattendant
