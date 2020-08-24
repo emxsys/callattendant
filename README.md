@@ -206,6 +206,8 @@ For example, in your Raspberry Pi's browser, you can use:
 http://localhost:5000/
 ```
 
+See the [User Guide](https://github.com/emxsys/callattendant/wiki/User-Guide) for more information.
+
 ---
 
 ### Configuration
