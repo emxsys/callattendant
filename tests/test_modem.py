@@ -38,12 +38,12 @@ from callattendant.hardware.modem import Modem, FACTORY_RESET, RESET, DISPLAY_MO
     DTE_END_RECIEVE_DATA_STATE, TERMINATE_CALL, ETX_CODE
 
 
+pytestmark = pytest.mark.skipif(True, reason="Hardware not installed")
+
+
 # Dummy callback function
 def dummy_handle_caller(caller):
     pass
-
-
-pytestmark = pytest.mark.skipif(False, reason="Hardware not installed")
 
 
 @pytest.fixture(scope='module')
