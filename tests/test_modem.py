@@ -38,17 +38,12 @@ from callattendant.hardware.modem import Modem, FACTORY_RESET, RESET, DISPLAY_MO
     DTE_END_RECIEVE_DATA_STATE, TERMINATE_CALL, ETX_CODE
 
 
+# Dummy callback function
 def dummy_handle_caller(caller):
-    # Dummy callback function
     pass
 
 
-mdm = Modem(Config(), dummy_handle_caller)
-can_open = mdm.open_serial_port()
-if can_open:
-    mdm.close_serial_port()
-mdm.ring_indicator.close()
-pytestmark = pytest.mark.skipif(not can_open, reason="Hardware not installed")
+pytestmark = pytest.mark.skipif(False, reason="Hardware not installed")
 
 
 @pytest.fixture(scope='module')
