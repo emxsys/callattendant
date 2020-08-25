@@ -40,10 +40,21 @@ from callattendant.hardware.modem import Modem, FACTORY_RESET, RESET, DISPLAY_MO
 
 def dummy_handle_caller(caller):
     # Dummy callback function
-    pprint(caller)
     pass
 
+def check_for_modem():
+    # Create a config object with default settings
+    config = Config()
+    modem = Modem(config, dummy_handle_caller)
+    can_open = modem.open_serial_port()
+    if can_open:
+        modem.close_serial_port()
+    return can_open
 
+        
+pytestmark = pytest.mark.skipif(not check_for_modem(), reason="Hardware not installed")
+
+    
 @pytest.fixture(scope='module')
 def modem():
 
@@ -54,8 +65,7 @@ def modem():
     config['VOICE_MAIL_MESSAGE_FOLDER'] = gettempdir()
 
     modem = Modem(config, dummy_handle_caller)
-    # modem.open_serial_port()
-    modem._init_modem()
+    modem.open_serial_port()
 
     yield modem
 
