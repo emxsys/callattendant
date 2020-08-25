@@ -11,6 +11,8 @@ import errno
 import os
 import types
 
+from werkzeug.utils import import_string
+
 # This default configuration (used when when a configuration file is not provided)
 # will record messages from blocked (denied) callers, and will simply pass permitted
 # and screened callers through to the home phone.
