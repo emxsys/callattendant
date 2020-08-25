@@ -640,7 +640,8 @@ class Modem(object):
                         print("Modem COM Port is: " + com_port.decode("utf-8"))
                         self._serial.flushInput()
                         self._serial.flushOutput()
-                        break
+                        return True
+        return False
 
     def _init_serial_port(self, com_port):
         """Initializes the given COM port for communications with the modem."""

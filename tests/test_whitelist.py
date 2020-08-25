@@ -30,7 +30,6 @@ from pprint import pprint
 
 import pytest
 
-from callattendant.app import make_config
 from callattendant.screening.query_db import query_db
 from callattendant.screening.whitelist import Whitelist
 
@@ -40,8 +39,8 @@ def whitelist():
     # Create the test db in RAM
     db = sqlite3.connect(":memory:")
 
-    # Load and tweak the default config
-    config = make_config()
+    # Mock the application config, which is a dict-based object
+    config = {}
     config['DEBUG'] = True
     config['TESTING'] = True
 

@@ -30,7 +30,7 @@ from pprint import pprint
 
 import pytest
 
-from callattendant.app import make_config
+from callattendant.config import Config
 from callattendant.screening.callscreener import CallScreener
 
 
@@ -52,9 +52,10 @@ def screener():
     # Create the test db in RAM
     db = sqlite3.connect(":memory:")
 
-    # Load and tweak the default config
-    config = make_config()
+    # Create a config object with default settings
+    config = Config()
     config['DEBUG'] = True
+    config['TESTING'] = True
     config['BLOCK_NAME_PATTERNS'] = {
         "V[0-9]{15}": "Telemarketer Caller ID",
     }

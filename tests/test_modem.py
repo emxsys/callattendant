@@ -27,34 +27,36 @@ import os
 import sys
 import tempfile
 from pprint import pprint
+from tempfile import gettempdir
 
 import pytest
 
-from callattendant.app import make_config
-
+from callattendant.config import Config
 from callattendant.hardware.modem import Modem, FACTORY_RESET, RESET, DISPLAY_MODEM_SETTINGS, \
     ENTER_VOICE_MODE, SET_VOICE_COMPRESSION_8BIT_SAMPLING_8K, ENTER_TELEPHONE_ANSWERING_DEVICE_OFF_HOOK, \
     ENTER_VOICE_TRANSMIT_DATA_STATE, DTE_END_VOICE_DATA_TX, ENTER_VOICE_RECIEVE_DATA_STATE, \
     DTE_END_RECIEVE_DATA_STATE, TERMINATE_CALL, ETX_CODE
 
+# Skip the test when running under continous integraion
+pytestmark = pytest.mark.skipif(os.getenv("CI")=="true", reason="Hardware not installed")
 
+
+# Dummy callback function
 def dummy_handle_caller(caller):
-    # Dummy callback function
-    pprint(caller)
     pass
 
 
 @pytest.fixture(scope='module')
 def modem():
 
-    # Load and tweak the default config
-    config = make_config()
+    # Create a config object with default settings
+    config = Config()
     config['DEBUG'] = True
     config['TESTING'] = True
+    config['VOICE_MAIL_MESSAGE_FOLDER'] = gettempdir()
 
     modem = Modem(config, dummy_handle_caller)
-    # modem.open_serial_port()
-    modem._init_modem()
+    modem.open_serial_port()
 
     yield modem
 

@@ -26,7 +26,6 @@
 import sqlite3
 import pytest
 
-from callattendant.app import make_config
 from callattendant.screening.calllogger import CallLogger
 
 
@@ -36,8 +35,8 @@ def calllogger():
     # Create the test db in RAM
     db = sqlite3.connect(":memory:")
 
-    # Load and tweak the default config
-    config = make_config()
+    # Mock the application config, which is a dict-based object
+    config = {}
     config['DEBUG'] = True
     config['TESTING'] = True
 
