@@ -37,12 +37,11 @@ import random
 import string
 import _thread
 from datetime import datetime, timedelta
-from pprint import pprint, pformat
-from glob import glob
+from pprint import pformat
 
 import sqlite3
 from flask import Flask, request, g, current_app, render_template, redirect, \
-    jsonify, url_for, flash
+    jsonify, flash
 from flask_paginate import Pagination, get_page_args
 from pygments import highlight
 from pygments.lexers import PythonLexer
@@ -856,13 +855,12 @@ def settings():
     curr_settings = highlight(config_contents, PythonLexer(), HtmlFormatter())
     file_settings = highlight(file_contents, PythonLexer(), HtmlFormatter())
 
-
     return render_template(
-            "settings.html",
-            active_nav_item='settings',
-            config_file=file_path,
-            curr_settings=curr_settings,
-            file_settings=file_settings)
+        "settings.html",
+        active_nav_item='settings',
+        config_file=file_path,
+        curr_settings=curr_settings,
+        file_settings=file_settings)
 
 
 def format_phone_no(number):

@@ -24,7 +24,6 @@
 #  SOFTWARE.
 
 import os
-from pprint import pprint
 from datetime import datetime
 from messaging.message import Message
 from hardware.indicators import MessageIndicator

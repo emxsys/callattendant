@@ -26,9 +26,7 @@ import os
 import sys
 import queue
 import sqlite3
-import time
 from pprint import pprint
-from datetime import datetime
 from shutil import copyfile
 
 from config import Config
@@ -53,7 +51,6 @@ class CallAttendant(object):
         self.config = config
 
         # Open the database
-        db_path = None
         if self.config["TESTING"]:
             self.db = sqlite3.connect(":memory:")
         else:
@@ -106,7 +103,6 @@ class CallAttendant(object):
         """
         # Get relevant config settings
         screening_mode = self.config['SCREENING_MODE']
-        block = self.config.get_namespace("BLOCK_")
         blocked = self.config.get_namespace("BLOCKED_")
         screened = self.config.get_namespace("SCREENED_")
         permitted = self.config.get_namespace("PERMITTED_")

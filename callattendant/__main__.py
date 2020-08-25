@@ -10,6 +10,7 @@ import sys
 
 def main():
 
+
     # Ensure the top-level package is on the path
     currentdir = os.path.dirname(os.path.realpath(__file__))
     sys.path.append(currentdir)
@@ -17,6 +18,7 @@ def main():
     # Launch the app with the command line args.
     from app import main
     sys.exit(main(sys.argv))
+
 
 if __name__ == '__main__':
 

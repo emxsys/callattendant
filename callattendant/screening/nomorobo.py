@@ -24,8 +24,6 @@
 #  SOFTWARE.
 
 
-import sys
-import argparse
 import urllib.request
 from bs4 import BeautifulSoup
 
@@ -86,5 +84,3 @@ class NomoroboService(object):
     def __init__(self, spam_threshold=2):
 
         self.spam_threshold = spam_threshold
-
-

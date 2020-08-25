@@ -162,4 +162,3 @@ class Message:
             self.message_indicator.pulse()
         else:
             self.message_indicator.turn_off()
-

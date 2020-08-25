@@ -25,8 +25,6 @@
 
 
 import re
-import os
-from pprint import pprint
 import sys
 
 from screening.blacklist import Blacklist
@@ -69,7 +67,7 @@ class CallScreener(object):
                 if result["spam"]:
                     reason = "{} with score {}".format(result["reason"], result["score"])
                     if self.config["DEBUG"]:
-                        print (">>> {}".format(reason))
+                        print(">>> {}".format(reason))
                     self.blacklist_caller(callerid, reason)
                     return True, reason
                 print("Caller has been screened")

@@ -37,7 +37,7 @@ from callattendant.screening.callscreener import CallScreener
 # Create a blocked caller
 caller1 = {"NAME": "caller1", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
 # Create a permitted caller
-caller2 = {"NAME": "caller2", "NMBR": "1111111111", "DATE": "1012", "TIME": "0600",}
+caller2 = {"NAME": "caller2", "NMBR": "1111111111", "DATE": "1012", "TIME": "0600"}
 # Create a V123456789012345 Telemarketer caller
 caller3 = {"NAME": "V123456789012345", "NMBR": "80512345678", "DATE": "1012", "TIME": "0600"}
 # Create a robocaller
@@ -76,25 +76,31 @@ def test_is_blacklisted(screener):
     is_blacklisted, reason = screener.is_blacklisted(caller1)
     assert is_blacklisted
 
+
 def test_not_is_whitelisted(screener):
     is_whitelisted, reason = screener.is_whitelisted(caller1)
     assert not is_whitelisted, "caller1 should not be permitted"
+
 
 def test_not_is_blacklisted(screener):
     is_blacklisted, reason = screener.is_blacklisted(caller2)
     assert not is_blacklisted, "caller2 should not be blocked"
 
+
 def test_is_whitelisted(screener):
     is_whitelisted, reason = screener.is_whitelisted(caller2)
     assert is_whitelisted, "caller2 should be permitted"
+
 
 def test_blocked_name_pattern(screener):
     is_blacklisted, reason = screener.is_blacklisted(caller3)
     assert is_blacklisted, "caller3 should be blocked by name pattern"
 
+
 def test_is_blacklisted_by_nomorobo(screener):
     is_blacklisted, reason = screener.is_blacklisted(caller4)
     assert is_blacklisted, "caller4 should be blocked by nomorobo"
+
 
 def test_blocked_number_pattern(screener):
     is_blacklisted, reason = screener.is_blacklisted(caller5)

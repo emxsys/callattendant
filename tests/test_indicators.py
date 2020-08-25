@@ -24,13 +24,12 @@
 #  SOFTWARE.
 
 import os
-import sys
 import time
-from pprint import pprint
 
 import pytest
 
 from callattendant.hardware.indicators import RingIndicator, ApprovedIndicator, BlockedIndicator, MessageIndicator
+
 
 def test_multiple():
 

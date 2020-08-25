@@ -23,15 +23,12 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-import os
-import sys
 import sqlite3
-from pprint import pprint
-
 import pytest
 
 from callattendant.app import make_config
 from callattendant.screening.calllogger import CallLogger
+
 
 @pytest.fixture(scope='module')
 def calllogger():
@@ -49,6 +46,7 @@ def calllogger():
 
     return calllogger
 
+
 def test_add_caller(calllogger):
 
     # Caller to be added
@@ -57,7 +55,7 @@ def test_add_caller(calllogger):
         "NMBR": "1234567890",
         "DATE": "1012",
         "TIME": "0600",
-        }
+    }
 
     assert calllogger.log_caller(callerid, "Permitted", "Test1") == 1
 
