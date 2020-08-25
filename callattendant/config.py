@@ -11,6 +11,7 @@ import errno
 import os
 import types
 
+from tempfile import gettempdir
 from werkzeug.utils import import_string
 
 # This default configuration (used when when a configuration file is not provided)
@@ -81,22 +82,32 @@ class Config(dict):
     the application.
     """
 
-    def __init__(self, root_path, data_path, defaults=default_config):
+    def __init__(self, root_path=None, data_path=None, defaults=default_config):
         """
         Constructor.
             :param root_path:
                 Path to the top-level package.
+                If None, will use the path to this file, assumed to be in the top package
             :param data_path:
                 Path to the data folder.
                 The application database and message files are stored here.
+                If None, will use the tmp folder - used in unit tests
             :param defaults:
                 The default configuration values
         """
         dict.__init__(self, defaults or {})
-        self.root_path = root_path
-        self.data_path = data_path
-        self["ROOT_PATH"] = root_path
-        self["DATA_PATH"] = data_path
+        if root_path:
+            self.root_path = root_path
+        else:
+            # This file must be in the top-level package
+            self.root_path = os.path.dirname(os.path.realpath(__file__))
+        if data_path:
+            self.data_path = data_path
+        else:
+            # Use the tmp folder
+            self.data_path = gettempdir()
+        self["ROOT_PATH"] = self.root_path
+        self["DATA_PATH"] = self.data_path
 
     def normalize_paths(self):
         """
@@ -105,6 +116,8 @@ class Config(dict):
         """
         rootpath = self.root_path
         datapath = self.data_path
+        if not datapath:
+            return
 
         self["DB_FILE"] = os.path.join(datapath, self["DATABASE"])
 
