@@ -47,6 +47,7 @@ mdm = Modem(Config(), dummy_handle_caller)
 can_open = mdm.open_serial_port()
 if can_open:
     mdm.close_serial_port()
+mdm.ring_indicator.close()
 pytestmark = pytest.mark.skipif(not can_open, reason="Hardware not installed")
 
 
