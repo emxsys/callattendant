@@ -42,19 +42,14 @@ def dummy_handle_caller(caller):
     # Dummy callback function
     pass
 
-def check_for_modem():
-    # Create a config object with default settings
-    config = Config()
-    modem = Modem(config, dummy_handle_caller)
-    can_open = modem.open_serial_port()
-    if can_open:
-        modem.close_serial_port()
-    return can_open
 
-        
-pytestmark = pytest.mark.skipif(not check_for_modem(), reason="Hardware not installed")
+mdm = Modem(Config(), dummy_handle_caller)
+can_open = mdm.open_serial_port()
+if can_open:
+    mdm.close_serial_port()
+pytestmark = pytest.mark.skipif(not can_open, reason="Hardware not installed")
 
-    
+
 @pytest.fixture(scope='module')
 def modem():
 
