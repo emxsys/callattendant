@@ -27,10 +27,11 @@ import os
 import sys
 import sqlite3
 from pprint import pprint
+from tempfile import gettempdir
 
 import pytest
 
-from callattendant.app import make_config
+from callattendant.config import Config
 from callattendant.hardware.modem import Modem
 from callattendant.screening.calllogger import CallLogger
 from callattendant.messaging.voicemail import VoiceMail
@@ -53,10 +54,12 @@ def db():
 @pytest.fixture(scope='module')
 def config():
 
-    # Load and tweak the default config
-    config = make_config()
+    # Use a config object with defaults
+    config = Config()
     config['DEBUG'] = True
     config['TESTING'] = True
+    config['VOICE_MAIL_MESSAGE_FOLDER'] = gettempdir()
+
     return config
 
 @pytest.fixture(scope='module')

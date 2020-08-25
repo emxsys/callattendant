@@ -30,9 +30,9 @@ from pprint import pprint
 
 import pytest
 
-from callattendant.app import make_config
 from callattendant.screening.query_db import query_db
 from callattendant.screening.blacklist import Blacklist
+
 
 @pytest.fixture(scope='module')
 def blacklist():
@@ -40,8 +40,8 @@ def blacklist():
     # Create the test db in RAM
     db = sqlite3.connect(":memory:")
 
-    # Load and tweak the default config
-    config = make_config()
+    # Mock the application config, which is a dict-based object
+    config = {}
     config['DEBUG'] = True
     config['TESTING'] = True
 
@@ -50,9 +50,10 @@ def blacklist():
 
     return blacklist
 
+
 def test_add_caller(blacklist):
     # Add a record
-    callerid = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600",}
+    callerid = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600", }
     assert blacklist.add_caller(callerid, "Test")
 
 
@@ -70,6 +71,7 @@ def test_check_number(blacklist):
 
     assert not is_blacklisted
 
+
 def test_get_number(blacklist):
     number = "1234567890"
 
@@ -77,6 +79,7 @@ def test_get_number(blacklist):
     pprint(caller)
 
     assert caller[0][0] == number
+
 
 def test_multiple(blacklist):
     new_caller = {"NAME": "New Caller", "NMBR": "12312351234", "DATE": "1012", "TIME": "0600"}
