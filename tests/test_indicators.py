@@ -32,6 +32,11 @@ import pytest
 
 from callattendant.hardware.indicators import RingIndicator, ApprovedIndicator, BlockedIndicator, MessageIndicator
 
+
+# Skip the test when running under continous integraion
+pytestmark = pytest.mark.skipif(os.getenv("CI")=="true", reason="Hardware not installed")
+
+
 def test_multiple():
 
     ring = RingIndicator()
