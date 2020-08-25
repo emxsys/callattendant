@@ -83,7 +83,7 @@ def voicemail(db, config, modem):
     return voicemail
 
 # Skip the test when running under continous integraion
-@pytest.mark.skipif(os.getenv("CI"), reason="Hardware not installed")
+@pytest.mark.skipif(os.getenv("CI")=="true", reason="Hardware not installed")
 def test_multiple(voicemail, logger):
 
         call_no = logger.log_caller(caller)
