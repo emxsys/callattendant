@@ -37,8 +37,8 @@ from callattendant.hardware.modem import Modem, FACTORY_RESET, RESET, DISPLAY_MO
     ENTER_VOICE_TRANSMIT_DATA_STATE, DTE_END_VOICE_DATA_TX, ENTER_VOICE_RECIEVE_DATA_STATE, \
     DTE_END_RECIEVE_DATA_STATE, TERMINATE_CALL, ETX_CODE
 
-
-pytestmark = pytest.mark.skipif(True, reason="Hardware not installed")
+# Skip the test when running under continous integraion
+pytestmark = pytest.mark.skipif(os.getenv("CI"), reason="Hardware not installed")
 
 
 # Dummy callback function
