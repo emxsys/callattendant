@@ -8,8 +8,8 @@
 import os
 import sys
 
-def main():
 
+def main():
 
     # Ensure the top-level package is on the path
     currentdir = os.path.dirname(os.path.realpath(__file__))

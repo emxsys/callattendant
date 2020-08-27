@@ -30,10 +30,12 @@ import time
 from pprint import pprint
 from gpiozero import LED, PWMLED, LEDBoard, OutputDeviceError, LEDCollection
 
-GPIO_RING = 2       # pin 3
-GPIO_APPROVED = 3   # pin 5
-GPIO_BLOCKED = 4    # pin 7
-GPIO_MESSAGE = 5    # pin 27
+GPIO_RING = 12
+GPIO_APPROVED = 6
+GPIO_BLOCKED = 5
+GPIO_MESSAGE = 27
+GPIO_MESSAGE_COUNT_PINS = (10, 9, 8, 7, 4, 23, 11, 17)
+GPIO_MESSAGE_COUNT_KWARGS = {"active_high": False}
 
 
 class LEDIndicator(object):
@@ -54,10 +56,16 @@ class LEDIndicator(object):
         self.led = LED(gpio_pin)
 
 
-class PWMLEDIndicator(LEDIndicator):
+class PWMLEDIndicator(object):
+
+    def __init__(self, gpio_pin):
+        self.led = PWMLED(gpio_pin)
 
     def turn_on(self):
         self.led.on()
+
+    def turn_off(self):
+        self.led.off()
 
     def blink(self, max_times=10):
         # blink in a separate thread
@@ -67,59 +75,8 @@ class PWMLEDIndicator(LEDIndicator):
         # pulse in a separate thread
         self.led.pulse(n=max_times)
 
-    def turn_off(self):
-        self.led.off()
-
-    def __init__(self, gpio_pin):
-        self.led = PWMLED(gpio_pin)
-
-
-class RingIndicator(LEDIndicator):
-
-    def __init__(self, gpio_pin=GPIO_RING):
-        LEDIndicator.__init__(self, gpio_pin)
-        #~ if ring_event:
-            #~ while ring_event.wait():
-                #~ self.led.blink(0.1, 0.1, 20)
-
-    def ring(self):
-        self.led.blink(0.1, 0.1, 20)
-        print("{RING LED BLINKING}")
-
-class ApprovedIndicator(LEDIndicator):
-
-    def __init__(self, gpio_pin=GPIO_APPROVED):
-        LEDIndicator.__init__(self, gpio_pin)
-
-
-class BlockedIndicator(LEDIndicator):
-
-    def __init__(self, gpio_pin=GPIO_BLOCKED):
-        LEDIndicator.__init__(self, gpio_pin)
-
-
-class MessageIndicator(PWMLEDIndicator):
-
-    def turn_off(self):
-        print("{MSG LED OFF}")
-        super().turn_off()
-
-    def turn_on(self):
-        print("{MSG LED ON}")
-        super().turn_on()
-
-    def blink(self):
-        print("{MSG LED Blinking}")
-        super().blink(max_times=None)   # None = forever
-
-    def pulse(self):
-        print("{MSG LED Pulsing}")
-        super().pulse(max_times=None)   # None = forever
-
-    def __init__(self, gpio_pin=GPIO_MESSAGE):
-        super().__init__(gpio_pin)
-
-
+    def close(self):
+        self.led.close()
 
 
 class SevenSegmentDisplay(LEDBoard):
@@ -133,12 +90,12 @@ class SevenSegmentDisplay(LEDBoard):
     Instances of this class can be used to display characters or control
     individual leds on the display. For example::
 
-        from gpiozero import SevenSegmentDisplay
+        from indicators import SevenSegmentDisplay
 
         seven = SevenSegmentDisplay(1,2,3,4,5,6,7,8,active_high=False)
         seven.display("7")
 
-    :param int \*pins:
+    :param int *pins:
         Specify the GPIO pins that the 7 segment display is attached to.
         Pins should be in the LED segment order A,B,C,D,E,F,G,decimal_point
         (the decimal_point is optional).
@@ -286,3 +243,54 @@ class SevenSegmentDisplay(LEDBoard):
         self._layouts[char] = layout
 
 
+class RingIndicator(PWMLEDIndicator):
+
+    def __init__(self, gpio_pin=GPIO_RING):
+        super().__init__(gpio_pin)
+
+    def ring(self):
+        self.led.blink(0.2, 0.2, 30)
+        print("{RING LED BLINKING}")
+
+
+class ApprovedIndicator(PWMLEDIndicator):
+
+    def __init__(self, gpio_pin=GPIO_APPROVED):
+        super().__init__(gpio_pin)
+
+
+class BlockedIndicator(PWMLEDIndicator):
+
+    def __init__(self, gpio_pin=GPIO_BLOCKED):
+        super().__init__(gpio_pin)
+
+
+class MessageIndicator(PWMLEDIndicator):
+
+    def __init__(self, gpio_pin=GPIO_MESSAGE):
+        super().__init__(gpio_pin)
+
+    def turn_off(self):
+        print("{MSG LED OFF}")
+        super().turn_off()
+
+    def turn_on(self):
+        print("{MSG LED ON}")
+        super().turn_on()
+
+    def blink(self):
+        print("{MSG LED Blinking}")
+        super().blink(max_times=None)   # None = forever
+
+    def pulse(self):
+        print("{MSG LED Pulsing}")
+        super().pulse(max_times=None)   # None = forever
+
+
+class MessageCountIndicator(SevenSegmentDisplay):
+
+    def __init__(self, *pins, **kwargs):
+        if len(pins) > 0:
+            super().__init__(pins, kwargs)
+        else:
+            super().__init__(*GPIO_MESSAGE_COUNT_PINS, **GPIO_MESSAGE_COUNT_KWARGS)

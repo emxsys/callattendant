@@ -28,7 +28,9 @@ import time
 
 import pytest
 
-from callattendant.hardware.indicators import RingIndicator, ApprovedIndicator, BlockedIndicator, MessageIndicator
+from config import Config
+from callattendant.hardware.indicators import RingIndicator, ApprovedIndicator, BlockedIndicator, \
+    MessageIndicator, MessageCountIndicator
 
 # Skip the test when running under continous integraion
 pytestmark = pytest.mark.skipif(os.getenv("CI") == "true", reason="Hardware not installed")
@@ -36,22 +38,33 @@ pytestmark = pytest.mark.skipif(os.getenv("CI") == "true", reason="Hardware not 
 
 def test_multiple():
 
-    ring = RingIndicator()
+    config = Config()
+
+    # ~ ringer = RingIndicator(config["GPIO_LED_RING"])
+    # ~ approved = ApprovedIndicator(config["GPIO_LED_APPROVED"])
+    # ~ blocked = BlockedIndicator(config["GPIO_LED_BLOCKED"])
+    # ~ message = MessageIndicator(config["GPIO_LED_MESSAGE"])
+
+    # ~ pins_tuple = config["GPIO_LED_MESSAGE_COUNT_PINS"]
+    # ~ kwargs_dict = config["GPIO_LED_MESSAGE_COUNT_KWARGS"]
+    # ~ message_count = MessageCountIndicator(*pins_tuple, **kwargs_dict)
+    ringer = RingIndicator()
     approved = ApprovedIndicator()
     blocked = BlockedIndicator()
     message = MessageIndicator()
+    message_count = MessageCountIndicator()
 
     print("[Visual Tests]")
 
     print("Turning on all LEDs for 5 seconds...")
-    ring.turn_on()
+    ringer.turn_on()
     approved.turn_on()
     blocked.turn_on()
     message.turn_on()
     time.sleep(5)
 
     print("Blinking on all LEDs for 5 seconds...")
-    ring.blink()
+    ringer.blink()
     time.sleep(.1)
     approved.blink()
     time.sleep(.1)
@@ -61,14 +74,21 @@ def test_multiple():
     time.sleep(5)
 
     print("Turning off all LEDs...")
-    ring.turn_off()
+    ringer.turn_off()
     approved.turn_off()
     blocked.turn_off()
     message.turn_off()
     time.sleep(5)
 
+
+    print("Test normal status")
+    ringer.ring()
+    message.pulse(),
+    message_count.display(2)
+    time.sleep(5)
+
     # Release GPIO pins
-    ring.close()
+    ringer.close()
     approved.close()
     blocked.close()
     message.close()
