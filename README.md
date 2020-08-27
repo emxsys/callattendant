@@ -1,9 +1,12 @@
 # Call Attendant
 ![PyPI](https://img.shields.io/pypi/v/callattendant?style=flat&link=https://pypi.org/project/callattendant/) ![PyPI - License](https://img.shields.io/pypi/l/callattendant?link=https://github.com/emxsys/callattendant/blob/master/LICENSE) ![PyPI - Status](https://img.shields.io/pypi/status/callattendant) ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/emxsys/callattendant/callattendant)
 
-An automated call attendant with call blocking and voice messaging running on a Raspberry Pi.
-Stop annoying robocalls and spammers from interrupting your life. Let the Call Attendant
-intercept and block robocallers and telemarketers before the first ring on your landline.
+#### `pip install callattendant`
+
+The Call Attendant (__callattendant__) is an auto attendant with call blocking and voice
+messaging features running on a Raspberry Pi. It stops annoying robocalls and spammers from 
+interruing your life. Let the Call Attendant intercept and block robocallers and telemarketers 
+before the first ring on your landline.
 
 _If you're at all interested in this project, please provide some feedback by giving it a
 __[star](https://github.com/emxsys/callattendant/stargazers)__, or even better, get involved
