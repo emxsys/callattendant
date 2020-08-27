@@ -249,7 +249,7 @@ class RingIndicator(PWMLEDIndicator):
         super().__init__(gpio_pin)
 
     def ring(self):
-        self.led.blink(0.2, 0.2, 30)
+        self.blink()
         print("{RING LED BLINKING}")
 
 

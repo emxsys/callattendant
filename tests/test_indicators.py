@@ -53,6 +53,10 @@ def test_multiple():
     blocked = BlockedIndicator()
     message = MessageIndicator()
     message_count = MessageCountIndicator()
+    
+    for i in range(0, 16):
+        message_count.display_hex(i)
+        time.sleep(1)
 
     print("[Visual Tests]")
 

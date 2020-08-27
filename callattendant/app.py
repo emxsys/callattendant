@@ -153,7 +153,6 @@ class CallAttendant(object):
                 if not caller_permitted and not caller_blocked:
                     caller_screened = True
                     action = "Screened"
-                    self.approved_indicator.blink()
 
                 # Log every call to the database (and console)
                 call_no = self.logger.log_caller(caller, action, reason)
