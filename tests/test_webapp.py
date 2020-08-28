@@ -48,12 +48,13 @@ def myapp():
     app.secret_key = get_random_string()
     with app.app_context():
 
+        master_config = {
+            "DB_FILE": db_path,
+        }
+
+        app.config['MASTER_CONFIG'] = master_config
         app.config["TESTING"] = True
         app.config["DEBUG"] = True
-        app.config['DATABASE'] = db_path
-        app.config["DB_FILE"] = db_path
-        # ~ app.config["VOICE_MAIL_MESSAGE_FOLDER"] = "../data/messages"
-        # ~ app.config["MESSAGE_INDICATOR_LED"] = MessageIndicator(10)
 
         get_db().executescript(_data_sql)
 
@@ -77,5 +78,3 @@ def test_dashboard(client):
     assert b"Statistics" in response.data
     assert b"Recent Calls" in response.data
     assert b"Calls per Day" in response.data
-
-
