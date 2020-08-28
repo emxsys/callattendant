@@ -50,20 +50,29 @@ class VoiceMail:
 
         self.messages = Message(db, config, self.message_indicator)
         self.event_thread = threading.Thread(target=self._event_handler)
-        self.event_thread.name = "modem_call_handler"
+        self.event_thread.name = "voice_mail_event_handler"
         self.event_thread.start()
 
         # Pulse the indicator if an unplayed msg is waiting
-        self.reset_message_indicator()
+        self.reset_message_indicator(self.messages.get_unplayed_count())
 
         if self.config["DEBUG"]:
             print("VoiceMail initialized")
 
 
     def _event_handler(self):
+        """
+        Thread function
+        """
+        db = sqlite3.connect(self.config['DB_FILE'])
+        sql = "SELECT COUNT(*) FROM Message WHERE Played = 0"
+
         while 1:
+        # Get the number of unread messages
             if self.messages.message_event.wait():
-                self.reset_message_indicator()
+                curs = self.db.execute(sql)
+                unplayed_count = curs.fetchone()[0]
+                self.reset_message_indicator(unplayed_count)
 
     def voice_messaging_menu(self, call_no, caller):
         """
@@ -99,7 +108,7 @@ class VoiceMail:
                 tries += 1
         self.modem.play_audio(goodbye_file)
         if not rec_msg:
-            self.reset_message_indicator()
+            self.reset_message_indicator(self.messages.get_unplayed_count())
 
     def record_message(self, call_no, caller):
         """
@@ -126,7 +135,7 @@ class VoiceMail:
             # Return the messageID on success
             return msg_no
         else:
-            self.reset_message_indicator()
+            self.reset_message_indicator(self.messages.get_unplayed_count())
             # Return failure
             return None
 
@@ -137,8 +146,7 @@ class VoiceMail:
         # Remove  message and file (message.delete will update the indicator)
         return self.messages.delete(msg_no)
 
-    def reset_message_indicator(self):
-        unplayed_count = self.messages.get_unplayed_count()
+    def reset_message_indicator(self, unplayed_count):
         if unplayed_count > 0:
             self.message_indicator.pulse()
             if unplayed_count < 10:
@@ -147,7 +155,6 @@ class VoiceMail:
             else:
                 self.message_count_indicator.display(9)
                 self.message_count_indicator.decimal_point = True
-
         else:
             self.message_indicator.turn_off()
             self.message_count_indicator.display(' ')
