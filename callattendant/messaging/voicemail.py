@@ -72,10 +72,11 @@ class VoiceMail:
         """
         Thread function that updates the message indicators upon a message event.
         """
-
         while 1:
             # Get the number of unread messages
-            if self.messages.message_event.wait():
+            if self.message_event.wait():
+                if self.config["DEBUG"]:
+                    print("Message Event triggered")
                 self.reset_message_indicator()
 
     def voice_messaging_menu(self, call_no, caller):
@@ -151,7 +152,9 @@ class VoiceMail:
         return self.messages.delete(msg_no)
 
     def reset_message_indicator(self):
-        unplayed_count = self.messages.unplayed_count
+        unplayed_count = self.messages.get_unplayed_count()
+        if self.config["DEBUG"]:
+            print("Resetting Message Indicator to show {} unplayed messages".format(unplayed_count))
         if unplayed_count > 0:
             self.message_indicator.pulse()
             if unplayed_count < 10:

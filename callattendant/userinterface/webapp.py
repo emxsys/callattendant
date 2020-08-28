@@ -62,7 +62,8 @@ def before_request():
     """
     Establish a database connection for the current request
     """
-    g.conn = sqlite3.connect(current_app.config.get("DB_FILE"))
+    master_config = current_app.config.get("MASTER_CONFIG")
+    g.conn = sqlite3.connect(master_config.get("DB_FILE"))
     g.conn.row_factory = sqlite3.Row
     g.cur = g.conn.cursor()
 
@@ -799,7 +800,7 @@ def messages_delete(msg_no):
     Delete the voice message associated with call number.
     """
     print("Removing message")
-    message = Message(get_db(), current_app.config)
+    message = Message(get_db(), current_app.config.get("MASTER_CONFIG"))
     success = message.delete(msg_no)
     # Redisplay the messages page
     if success:
@@ -817,7 +818,7 @@ def messages_played():
     """
     msg_no = request.form["msg_no"]
     played = request.form["status"]
-    message = Message(get_db(), current_app.config)
+    message = Message(get_db(), current_app.config.get("MASTER_CONFIG"))
     success = message.update_played(msg_no, played)
 
     # Get the number of unread messages
@@ -837,7 +838,7 @@ def settings():
     CSS: pygmentize -S colorful -f html > pygments.css
     """
     # Get the application-wide config object
-    config = current_app.config.get("APPLICATION_CONFIG")
+    config = current_app.config.get("MASTER_CONFIG")
 
     # Read the current config into a str for display
     config_contents = pformat(config)
@@ -871,8 +872,9 @@ def get_db():
     '''Get a connection to the database'''
     # Flask template for database connections
     if 'db' not in g:
+        master_config = current_app.config.get("MASTER_CONFIG")
         g.db = sqlite3.connect(
-            current_app.config.get("DB_FILE"),
+            master_config.get("DB_FILE"),
             detect_types=sqlite3.PARSE_DECLTYPES
         )
         g.db.row_factory = sqlite3.Row
@@ -941,14 +943,10 @@ def run_flask(config):
     app.secret_key = get_random_string()
     with app.app_context():
         # Application-wide config dict
-        app.config["APPLICATION_CONFIG"] = config
+        app.config["MASTER_CONFIG"] = config
         # Override Flask settings with CallAttendant config settings
         app.config["DEBUG"] = config["DEBUG"]
         app.config["TESTING"] = config["TESTING"]
-        # Add addtional settings from callattendant config
-        app.config["DB_FILE"] = config["DB_FILE"]
-        app.config["MESSAGE_INDICATOR_LED"] = config["MESSAGE_INDICATOR_LED"]
-        app.config["VOICE_MAIL_MESSAGE_FOLDER"] = config["VOICE_MAIL_MESSAGE_FOLDER"]
 
     # Turn off the HTML GET/POST logging
     if not app.config["DEBUG"]:

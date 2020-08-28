@@ -29,6 +29,9 @@ from pprint import pprint
 from datetime import datetime
 
 
+global unplayed_count
+unplayed_count = 0
+
 class Message:
 
     def __init__(self, db, config):
@@ -44,7 +47,7 @@ class Message:
 
         self.db = db
         self.config = config
-        self.unplayted_count = 0
+
         # Get the message event object set by the VoiceMail class
         self.message_event = self.config["MESSAGE_EVENT"]
 
@@ -164,12 +167,20 @@ class Message:
         self._update_unplayed_count()
         return True
 
+    def get_unplayed_count(self):
+        # Return the global
+        global unplayed_count
+        return unplayed_count
+
     def _update_unplayed_count(self):
         # Get the number of unread messages
         sql = "SELECT COUNT(*) FROM Message WHERE Played = 0"
         curs = self.db.execute(sql)
-        self.unplayed_count = curs.fetchone()[0]
+        global unplayed_count
+        unplayed_count = curs.fetchone()[0]
+
         if self.config["DEBUG"]:
-            print("Unplayed message count is {}".format(self.unplayed_count))
+            print("Unplayed message count is {}".format(unplayed_count))
+
         self.message_event.set()
         self.message_event.clear()
