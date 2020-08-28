@@ -55,7 +55,7 @@ class VoiceMail:
         self.event_thread.start()
 
         # Pulse the indicator if an unplayed msg is waiting
-        self.reset_message_indicator(self.messages.unplayed_count)
+        self.reset_message_indicator()
 
         if self.config["DEBUG"]:
             print("VoiceMail initialized")
@@ -68,9 +68,7 @@ class VoiceMail:
         while 1:
             # Get the number of unread messages
             if self.messages.message_event.wait():
-                curs = self.db.execute(sql)
-                unplayed_count = curs.fetchone()[0]
-                self.reset_message_indicator(self.messages.unplayed_count)
+                self.reset_message_indicator()
 
     def voice_messaging_menu(self, call_no, caller):
         """
@@ -106,7 +104,7 @@ class VoiceMail:
                 tries += 1
         self.modem.play_audio(goodbye_file)
         if not rec_msg:
-            self.reset_message_indicator(self.messages.unplayed_count)
+            self.reset_message_indicator()
 
     def record_message(self, call_no, caller):
         """
@@ -133,7 +131,7 @@ class VoiceMail:
             # Return the messageID on success
             return msg_no
         else:
-            self.reset_message_indicator(self.messages.unplayed_count)
+            self.reset_message_indicator()
             # Return failure
             return None
 
@@ -144,7 +142,8 @@ class VoiceMail:
         # Remove  message and file (message.delete will update the indicator)
         return self.messages.delete(msg_no)
 
-    def reset_message_indicator(self, unplayed_count):
+    def reset_message_indicator(self):
+        unplayed_count = self.messages.unplayed_count
         if unplayed_count > 0:
             self.message_indicator.pulse()
             if unplayed_count < 10:
