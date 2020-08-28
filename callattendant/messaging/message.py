@@ -31,17 +31,22 @@ from datetime import datetime
 
 class Message:
 
-    def __init__(self, db, config, message_indicator):
+    def __init__(self, db, config):
         """
         Initialize the database tables for voice messages.
+            :param db:
+                The database used within a single thread.
+            :config:
+                The applicaiton-wide config object.
         """
         if config["DEBUG"]:
             print("Initializing Message")
 
         self.db = db
         self.config = config
-        self.message_indicator = message_indicator
+        self.unplayted_count = 0
         self.message_event = threading.Event()
+
         # Create the message table if it does not exist
         if self.db:
             sql = """
@@ -52,18 +57,26 @@ class Message:
                     Filename TEXT,
                     DateTime TEXT,
                     FOREIGN KEY(CallLogID) REFERENCES CallLog(CallLogID));"""
-
             curs = self.db.cursor()
             curs.executescript(sql)
             curs.close()
+
+        self._update_unplayed_count()
 
         if config["DEBUG"]:
             print("Message initialized")
 
     def add(self, call_no, filepath):
         """
-        Adds a message to the table
+        Adds a message to the table.
+            :param call_no:
+                The unique ID of the call this message is associated with.
+            :param filepath:
+                The name and path for the message .wav file that was recorded.
+            :return:
+                The unique ID of the new row
         """
+
         sql = """
             INSERT INTO Message(
                 CallLogID,
@@ -86,9 +99,8 @@ class Message:
         msg_no = curs.fetchone()[0]
         curs.close()
 
-        self.message_event.set()
-        self.message_event.clear()
-        # ~ self.reset_message_indicator()
+        self._update_unplayed_count()
+
         return msg_no
 
     def delete(self, msg_no):
@@ -130,9 +142,7 @@ class Message:
                     print("Message entry removed")
                     pprint(arguments)
 
-            self.message_event.set()
-            self.message_event.clear()
-            # ~ self.reset_message_indicator()
+            self._update_unplayed_count()
 
         return success
 
@@ -150,22 +160,15 @@ class Message:
             pprint(e)
             return False
 
-        self.message_event.set()
-        self.message_event.clear()
-        # ~ self.reset_message_indicator()
+        self._update_unplayed_count()
         return True
 
-    def get_unplayed_count(self):
+    def _update_unplayed_count(self):
         # Get the number of unread messages
         sql = "SELECT COUNT(*) FROM Message WHERE Played = 0"
         curs = self.db.execute(sql)
-        unplayed_count = curs.fetchone()[0]
+        self.unplayed_count = curs.fetchone()[0]
         if self.config["DEBUG"]:
-            print("Unplayed message count is {}".format(unplayed_count))
-        return unplayed_count
-
-    def reset_message_indicator(self):
-        if self.get_unplayed_count() > 0:
-            self.message_indicator.pulse()
-        else:
-            self.message_indicator.turn_off()
+            print("Unplayed message count is {}".format(self.unplayed_count))
+        self.message_event.set()
+        self.message_event.clear()

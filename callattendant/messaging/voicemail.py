@@ -30,6 +30,7 @@ from messaging.message import Message
 from hardware.indicators import MessageIndicator, MessageCountIndicator, \
         GPIO_MESSAGE, GPIO_MESSAGE_COUNT_PINS, GPIO_MESSAGE_COUNT_KWARGS
 
+
 class VoiceMail:
 
     def __init__(self, db, config, modem):
@@ -48,31 +49,26 @@ class VoiceMail:
         kwargs = config.get("GPIO_LED_MESSAGE_COUNT_KWARGS", GPIO_MESSAGE_COUNT_KWARGS)
         self.message_count_indicator = MessageCountIndicator(*pins, **kwargs)
 
-        self.messages = Message(db, config, self.message_indicator)
+        self.messages = Message(db, config)
         self.event_thread = threading.Thread(target=self._event_handler)
         self.event_thread.name = "voice_mail_event_handler"
         self.event_thread.start()
 
         # Pulse the indicator if an unplayed msg is waiting
-        self.reset_message_indicator(self.messages.get_unplayed_count())
+        self.reset_message_indicator()
 
         if self.config["DEBUG"]:
             print("VoiceMail initialized")
 
-
     def _event_handler(self):
         """
-        Thread function
+        Thread function that updates the message indicators upon a message event.
         """
-        db = sqlite3.connect(self.config['DB_FILE'])
-        sql = "SELECT COUNT(*) FROM Message WHERE Played = 0"
 
         while 1:
-        # Get the number of unread messages
+            # Get the number of unread messages
             if self.messages.message_event.wait():
-                curs = self.db.execute(sql)
-                unplayed_count = curs.fetchone()[0]
-                self.reset_message_indicator(unplayed_count)
+                self.reset_message_indicator()
 
     def voice_messaging_menu(self, call_no, caller):
         """
@@ -108,7 +104,7 @@ class VoiceMail:
                 tries += 1
         self.modem.play_audio(goodbye_file)
         if not rec_msg:
-            self.reset_message_indicator(self.messages.get_unplayed_count())
+            self.reset_message_indicator()
 
     def record_message(self, call_no, caller):
         """
@@ -135,7 +131,7 @@ class VoiceMail:
             # Return the messageID on success
             return msg_no
         else:
-            self.reset_message_indicator(self.messages.get_unplayed_count())
+            self.reset_message_indicator()
             # Return failure
             return None
 
@@ -146,7 +142,8 @@ class VoiceMail:
         # Remove  message and file (message.delete will update the indicator)
         return self.messages.delete(msg_no)
 
-    def reset_message_indicator(self, unplayed_count):
+    def reset_message_indicator(self):
+        unplayed_count = self.messages.unplayed_count
         if unplayed_count > 0:
             self.message_indicator.pulse()
             if unplayed_count < 10:
