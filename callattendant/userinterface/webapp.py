@@ -799,7 +799,7 @@ def messages_delete(msg_no):
     Delete the voice message associated with call number.
     """
     print("Removing message")
-    message = Message(get_db(), current_app.config, get_message_indicator())
+    message = Message(get_db(), current_app.config)
     success = message.delete(msg_no)
     # Redisplay the messages page
     if success:
@@ -817,7 +817,7 @@ def messages_played():
     """
     msg_no = request.form["msg_no"]
     played = request.form["status"]
-    message = Message(get_db(), current_app.config, get_message_indicator())
+    message = Message(get_db(), current_app.config)
     success = message.update_played(msg_no, played)
 
     # Get the number of unread messages
@@ -887,10 +887,6 @@ def close_db(e=None):
 
     if db is not None:
         db.close()
-
-
-def get_message_indicator():
-    return current_app.config.get("MESSAGE_INDICATOR_LED")
 
 
 def get_row_count(table_name):

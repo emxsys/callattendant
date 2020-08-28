@@ -73,8 +73,6 @@ class CallAttendant(object):
 
         # Messaging subsystem
         self.voice_mail = VoiceMail(self.db, self.config, self.modem)
-        # The message indicator is a singleton and is shared with the webapp
-        self.config["MESSAGE_INDICATOR_LED"] = self.voice_mail.message_indicator
 
         # Start the User Interface subsystem (Flask)
         # Skip if we're running functional tests, because when testing

@@ -45,7 +45,8 @@ class Message:
         self.db = db
         self.config = config
         self.unplayted_count = 0
-        self.message_event = threading.Event()
+        # Get the message event object set by the VoiceMail class
+        self.message_event = self.config["MESSAGE_EVENT"]
 
         # Create the message table if it does not exist
         if self.db:

@@ -43,13 +43,21 @@ class VoiceMail:
         self.db = db
         self.config = config
         self.modem = modem
-        self.message_indicator = MessageIndicator(config.get("GPIO_LED_MESSAGE", GPIO_MESSAGE))
 
+        # Create a message event shared with the Message class used to monitor changes
+        self.message_event = threading.Event()
+        self.config["MESSAGE_EVENT"] = self.message_event
+
+        # Initialize the message indicators (LEDs)
+        self.message_indicator = MessageIndicator(config.get("GPIO_LED_MESSAGE", GPIO_MESSAGE))
         pins = config.get("GPIO_LED_MESSAGE_COUNT_PINS", GPIO_MESSAGE_COUNT_PINS)
         kwargs = config.get("GPIO_LED_MESSAGE_COUNT_KWARGS", GPIO_MESSAGE_COUNT_KWARGS)
         self.message_count_indicator = MessageCountIndicator(*pins, **kwargs)
 
+        # Create the Message object used to interface with the DB
         self.messages = Message(db, config)
+
+        # Start the thread that monitors the message events and updates the indicators
         self.event_thread = threading.Thread(target=self._event_handler)
         self.event_thread.name = "voice_mail_event_handler"
         self.event_thread.start()
