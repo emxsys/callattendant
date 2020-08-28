@@ -160,7 +160,7 @@ class Modem(object):
         if dev_mode:
             print("Saving raw modem data to modem.log")
             filename = os.path.join(self.config["DATA_PATH"], "modem.log")
-            logfile = open(filename, 'wb')
+            logfile = open(filename, 'ab')
 
         # Handle incoming calls
         try:
