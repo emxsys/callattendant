@@ -24,6 +24,7 @@
 #  SOFTWARE.
 
 import os
+import threading
 from pprint import pprint
 from datetime import datetime
 
@@ -40,7 +41,7 @@ class Message:
         self.db = db
         self.config = config
         self.message_indicator = message_indicator
-
+        self.message_event = threading.Event()
         # Create the message table if it does not exist
         if self.db:
             sql = """
@@ -85,7 +86,9 @@ class Message:
         msg_no = curs.fetchone()[0]
         curs.close()
 
-        self.reset_message_indicator()
+        self.message_event.set()
+        self.message_event.clear()
+        # ~ self.reset_message_indicator()
         return msg_no
 
     def delete(self, msg_no):
@@ -127,7 +130,9 @@ class Message:
                     print("Message entry removed")
                     pprint(arguments)
 
-            self.reset_message_indicator()
+            self.message_event.set()
+            self.message_event.clear()
+            # ~ self.reset_message_indicator()
 
         return success
 
@@ -145,7 +150,9 @@ class Message:
             pprint(e)
             return False
 
-        self.reset_message_indicator()
+        self.message_event.set()
+        self.message_event.clear()
+        # ~ self.reset_message_indicator()
         return True
 
     def get_unplayed_count(self):

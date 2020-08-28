@@ -24,9 +24,11 @@
 #  SOFTWARE.
 
 import os
+import threading
 from datetime import datetime
 from messaging.message import Message
-from hardware.indicators import MessageIndicator
+from hardware.indicators import MessageIndicator, MessageCountIndicator, \
+        GPIO_MESSAGE, GPIO_MESSAGE_COUNT_PINS, GPIO_MESSAGE_COUNT_KWARGS
 
 class VoiceMail:
 
@@ -40,14 +42,28 @@ class VoiceMail:
         self.db = db
         self.config = config
         self.modem = modem
-        self.message_indicator = MessageIndicator()
+        self.message_indicator = MessageIndicator(config.get("GPIO_LED_MESSAGE", GPIO_MESSAGE))
+
+        pins = config.get("GPIO_LED_MESSAGE_COUNT_PINS", GPIO_MESSAGE_COUNT_PINS)
+        kwargs = config.get("GPIO_LED_MESSAGE_COUNT_KWARGS", GPIO_MESSAGE_COUNT_KWARGS)
+        self.message_count_indicator = MessageCountIndicator(*pins, **kwargs)
+
         self.messages = Message(db, config, self.message_indicator)
+        self.event_thread = threading.Thread(target=self._event_handler)
+        self.event_thread.name = "modem_call_handler"
+        self.event_thread.start()
 
         # Pulse the indicator if an unplayed msg is waiting
         self.reset_message_indicator()
 
         if self.config["DEBUG"]:
             print("VoiceMail initialized")
+
+
+    def _event_handler(self):
+        while 1:
+            if self.messages.message_event.wait():
+                self.reset_message_indicator()
 
     def voice_messaging_menu(self, call_no, caller):
         """
@@ -122,7 +138,17 @@ class VoiceMail:
         return self.messages.delete(msg_no)
 
     def reset_message_indicator(self):
-        if self.messages.get_unplayed_count() > 0:
+        unplayed_count = self.messages.get_unplayed_count()
+        if unplayed_count > 0:
             self.message_indicator.pulse()
+            if unplayed_count < 10:
+                self.message_count_indicator.display(unplayed_count)
+                self.message_count_indicator.decimal_point = False
+            else:
+                self.message_count_indicator.display(9)
+                self.message_count_indicator.decimal_point = True
+
         else:
             self.message_indicator.turn_off()
+            self.message_count_indicator.display(' ')
+            self.message_count_indicator.decimal_point = False

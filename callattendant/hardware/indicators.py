@@ -291,6 +291,6 @@ class MessageCountIndicator(SevenSegmentDisplay):
 
     def __init__(self, *pins, **kwargs):
         if len(pins) > 0:
-            super().__init__(pins, kwargs)
+            super().__init__(*pins, **kwargs)
         else:
             super().__init__(*GPIO_MESSAGE_COUNT_PINS, **GPIO_MESSAGE_COUNT_KWARGS)
