@@ -28,7 +28,7 @@
         {% for item in whitelist %}
         <tr>
           <td class="manage-caller">
-            <b>{{ item.Phone_Number }}</b> -
+            <a href="/calls?search={{ item.Phone_Number }}&submit=phone"><b>{{ item.Phone_Number }}</b></a> -
             <span class="d-md-none"><br></span>
             <i>{{ item.Name }}</i>
           </td>
