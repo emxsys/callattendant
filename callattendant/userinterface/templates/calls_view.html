@@ -53,6 +53,7 @@
             Your browser does not support the audio element.
           </audio>
         </p>
+        <button id="play-button" type="button" class="btn btn-primary">Play</button>
         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-delete-message">Delete</button>
       </div>
     </div>
@@ -94,7 +95,17 @@ $('#back-button').on('click', function (event) {
     history.back()
 });
 
-// Open the Messages page
+
+// Play the message
+$('#play-button').on('click', function (event) {
+  // It doesn't work with $("#audio").play() like you would expect. The official reason is that
+  // incorporating it into jQuery would add a play() to every element. So instead you have to refer
+  // to it by its position in the array of DOM elements
+  // https://stackoverflow.com/a/38547039/4797523
+  $("#audio")[0].play()
+});
+
+// Delete the messages
 $('#delete-message').on('click', function (event) {
   window.location.href = "/messages/delete/{{ caller.msg_no }}"
 });
