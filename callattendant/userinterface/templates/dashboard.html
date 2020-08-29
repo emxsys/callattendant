@@ -127,7 +127,7 @@
             <tbody>
             {% for item in top_permitted %}
                 <td>
-                  <b>{{ item.phone_no }}</b> -
+                  <a href="/calls?search={{ item.phone_no }}&submit=phone"><b>{{ item.phone_no }}</b></a> -
                   <span class="d-sm-none"><br></span>
                   <i>{{ item.name }}</i>
                 </td>
@@ -155,7 +155,7 @@
             <tbody>
             {% for item in top_blocked %}
                 <td>
-                  <b>{{ item.phone_no }}</b> -
+                  <a href="/calls?search={{ item.phone_no }}&submit=phone"><b>{{ item.phone_no }}</b></a> -
                   <span class="d-sm-none"><br></span>
                   <i>{{ item.name }}</i>
                 </td>
