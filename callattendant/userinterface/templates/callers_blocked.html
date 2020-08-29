@@ -24,7 +24,7 @@
         {% for row in blacklist %}
         <tr>
           <td class="manage-caller">
-            <b>{{ row.Phone_Number }}</b> -
+            <a href="/calls?search={{ row.Phone_Number }}&submit=phone"><b>{{ row.Phone_Number }}</b></a> -
             <span class="d-lg-none"><br></span>
             <i>{{ row.Name }}</i>
           </td>
