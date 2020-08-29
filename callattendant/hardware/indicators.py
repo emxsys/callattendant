@@ -30,11 +30,11 @@ import time
 from pprint import pprint
 from gpiozero import LED, PWMLED, LEDBoard, OutputDeviceError, LEDCollection
 
-GPIO_RING = 12
-GPIO_APPROVED = 6
-GPIO_BLOCKED = 5
-GPIO_MESSAGE = 27
-GPIO_MESSAGE_COUNT_PINS = (10, 9, 8, 7, 4, 23, 11, 17)
+GPIO_RING = 14
+GPIO_APPROVED = 15
+GPIO_BLOCKED = 17
+GPIO_MESSAGE = 4
+GPIO_MESSAGE_COUNT_PINS = (11, 8, 25, 5, 18, 9, 7, 27)
 GPIO_MESSAGE_COUNT_KWARGS = {"active_high": False}
 
 
