@@ -66,12 +66,18 @@
     {{ pagination.links }}
     {% endif %}
   </div>
+  <button id="back-button" type="button" class="btn btn-secondary">Back</button>
 </div>
 {% include 'modal_play_message.html' %}
 {% endblock %}
 
 {% block js %}
 <script>
+  // Go back to the original referrer
+  $('#back-button').on('click', function (event) {
+      history.back()
+  });
+
   // Cancel call-log history display and revert to full log
   $('#cancel-search').on('click', function (event) {
     window.location.href = "/calls"
