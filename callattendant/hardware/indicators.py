@@ -38,47 +38,6 @@ GPIO_MESSAGE_COUNT_PINS = (11, 8, 25, 5, 18, 9, 7, 27)
 GPIO_MESSAGE_COUNT_KWARGS = {"active_high": False}
 
 
-class LEDIndicator(object):
-    def turn_on(self):
-        self.led.on()
-
-    def blink(self, max_times=10):
-        # blink in a separate thread
-        self.led.blink(0.5, 0.2, max_times)
-
-    def turn_off(self):
-        self.led.off()
-
-    def close(self):
-        self.led.close()
-
-    def __init__(self, gpio_pin):
-        self.led = LED(gpio_pin)
-
-
-class PWMLEDIndicator(object):
-
-    def __init__(self, gpio_pin):
-        self.led = PWMLED(gpio_pin)
-
-    def turn_on(self):
-        self.led.on()
-
-    def turn_off(self):
-        self.led.off()
-
-    def blink(self, max_times=10):
-        # blink in a separate thread
-        self.led.blink(0.5, 0.2, n=max_times)
-
-    def pulse(self, max_times=10):
-        # pulse in a separate thread
-        self.led.pulse(n=max_times)
-
-    def close(self):
-        self.led.close()
-
-
 class SevenSegmentDisplay(LEDBoard):
     """
     Extends :class:`LEDBoard` for a 7 segment LED display
@@ -243,10 +202,66 @@ class SevenSegmentDisplay(LEDBoard):
         self._layouts[char] = layout
 
 
-class RingIndicator(PWMLEDIndicator):
+class LEDIndicator(object):
+    def turn_on(self):
+        self.led.on()
 
-    def __init__(self, gpio_pin=GPIO_RING):
-        super().__init__(gpio_pin)
+    def blink(self, max_times=10):
+        # blink in a separate thread
+        self.led.blink(0.5, 0.2, max_times)
+
+    def turn_off(self):
+        self.led.off()
+
+    def close(self):
+        self.led.close()
+
+    def __init__(self, gpio_pin):
+        self.led = LED(gpio_pin)
+
+
+class PWMLEDIndicator(object):
+    """
+    A pulse-width modulated LED.
+    """
+
+    def __init__(self, gpio_pin, brightness=100):
+        """
+        Constructor of a PWM LED.
+            :param gpio_pin:
+                GPIO pin assignment (not the header pin number)
+            :param brightness:
+                Brightness percentage. Defaults to 100%.
+        """
+        self.led = PWMLED(gpio_pin)
+        self.brightness = brightness / 100.0  # brightness value is from 0 to 1.0
+
+    def turn_on(self):
+        # ~ self.led.on()
+        self.led.value = self.brightness
+
+    def turn_off(self):
+        # ~ self.led.off()
+        self.led.value = 0
+
+    def blink(self, max_times=10):
+        # blink in a separate thread
+        self.led.blink(0.5, 0.2, n=max_times)
+
+    def pulse(self, max_times=10):
+        # pulse in a separate thread
+        self.led.pulse(n=max_times)
+
+    def close(self):
+        self.led.close()
+
+
+class RingIndicator(PWMLEDIndicator):
+    """
+    The ring indicator, activated when an incoming call is being received.
+    """
+    def __init__(self, gpio_pin=GPIO_RING, brightness=100):
+        super().__init__(gpio_pin, brightness)
 
     def ring(self):
         self.blink()
@@ -254,21 +269,29 @@ class RingIndicator(PWMLEDIndicator):
 
 
 class ApprovedIndicator(PWMLEDIndicator):
-
-    def __init__(self, gpio_pin=GPIO_APPROVED):
-        super().__init__(gpio_pin)
+    """
+    The approved indicator activated when a call from a permitted number is received.
+    """
+    def __init__(self, gpio_pin=GPIO_APPROVED, brightness=100):
+        super().__init__(gpio_pin, brightness)
 
 
 class BlockedIndicator(PWMLEDIndicator):
+    """
+    The blocked indicator activated when a call from a blocked number is received.
+    """
 
-    def __init__(self, gpio_pin=GPIO_BLOCKED):
-        super().__init__(gpio_pin)
+    def __init__(self, gpio_pin=GPIO_BLOCKED, brightness=100):
+        super().__init__(gpio_pin, brightness)
 
 
 class MessageIndicator(PWMLEDIndicator):
+    """
+    The message indicator activated when the voice messaging features are used.
+    """
 
-    def __init__(self, gpio_pin=GPIO_MESSAGE):
-        super().__init__(gpio_pin)
+    def __init__(self, gpio_pin=GPIO_MESSAGE, brightness=100):
+        super().__init__(gpio_pin, brightness)
 
     def turn_off(self):
         print("{MSG LED OFF}")
@@ -288,6 +311,9 @@ class MessageIndicator(PWMLEDIndicator):
 
 
 class MessageCountIndicator(SevenSegmentDisplay):
+    """
+    The message count indicator displays the number of unplayed messages in the system.
+    """
 
     def __init__(self, *pins, **kwargs):
         if len(pins) > 0:
