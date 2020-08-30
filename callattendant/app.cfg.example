@@ -128,9 +128,9 @@ VOICE_MAIL_MENU_FILE = "resources/voice_mail_menu.wav"
 #   This should not be changed/overridden except during development/testing
 #VOICE_MAIL_MESSAGE_FOLDER = "messages"
 
-GPIO_LED_RING = 12
-GPIO_LED_APPROVED = 6
-GPIO_LED_BLOCKED = 5
-GPIO_LED_MESSAGE = 27
-GPIO_LED_MESSAGE_COUNT_PINS = (10, 9, 8, 7, 4, 23, 11, 17)
+GPIO_LED_RING = 4
+GPIO_LED_APPROVED = 15
+GPIO_LED_BLOCKED = 17
+GPIO_LED_MESSAGE = 14
+GPIO_LED_MESSAGE_COUNT_PINS = (11, 8, 25, 5, 18, 9, 7, 27)
 GPIO_LED_MESSAGE_COUNT_KWARGS = {active_high="False"}

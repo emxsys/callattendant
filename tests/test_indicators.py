@@ -48,12 +48,13 @@ def test_multiple():
     # ~ pins_tuple = config["GPIO_LED_MESSAGE_COUNT_PINS"]
     # ~ kwargs_dict = config["GPIO_LED_MESSAGE_COUNT_KWARGS"]
     # ~ message_count = MessageCountIndicator(*pins_tuple, **kwargs_dict)
+
     ringer = RingIndicator()
     approved = ApprovedIndicator()
     blocked = BlockedIndicator()
     message = MessageIndicator()
     message_count = MessageCountIndicator()
-    
+
     for i in range(0, 16):
         message_count.display_hex(i)
         time.sleep(1)

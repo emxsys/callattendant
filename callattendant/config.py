@@ -47,6 +47,13 @@ default_config = {
     "VOICE_MAIL_LEAVE_MESSAGE_FILE": "resources/please_leave_message.wav",
     "VOICE_MAIL_MENU_FILE": "resources/voice_mail_menu.wav",
     "VOICE_MAIL_MESSAGE_FOLDER": "messages",
+
+    "GPIO_LED_RING": 14,
+    "GPIO_LED_APPROVED": 15,
+    "GPIO_LED_BLOCKED":17,
+    "GPIO_LED_MESSAGE": 4,
+    "GPIO_LED_MESSAGE_COUNT_PINS": (11, 8, 25, 5, 18, 9, 7, 27),
+    "GPIO_LED_MESSAGE_COUNT_KWARGS": {"active_high": False},
 }
 
 
