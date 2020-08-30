@@ -19,9 +19,12 @@ from werkzeug.utils import import_string
 # and screened callers through to the home phone.
 #
 default_config = {
+    "VERSION": '1.0.0',
+
     "ENV": 'production',
     "DEBUG": False,
     "TESTING": False,
+
     "DATABASE": "callattendant.db",
     "SCREENING_MODE": ("whitelist", "blacklist"),
 
