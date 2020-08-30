@@ -13,8 +13,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="callattendant", # Add user name for upload to TestPyPI
-    version="0.5.0",
+    name="callattendant",   # Add user name when uploading to TestPyPI
+    version="1.0.0",        # Ensure this is in-sync with VERSION in config.py
     author="Bruce Schubert",
     author_email="bruce@emxsys.com",
     description="An automated call attendant and call blocker using a Raspberry Pi and USR-5637 modem",
