@@ -19,9 +19,12 @@ from werkzeug.utils import import_string
 # and screened callers through to the home phone.
 #
 default_config = {
+    "VERSION": '1.0.0',
+
     "ENV": 'production',
     "DEBUG": False,
     "TESTING": False,
+
     "DATABASE": "callattendant.db",
     "SCREENING_MODE": ("whitelist", "blacklist"),
 
@@ -48,10 +51,14 @@ default_config = {
     "VOICE_MAIL_MENU_FILE": "resources/voice_mail_menu.wav",
     "VOICE_MAIL_MESSAGE_FOLDER": "messages",
 
-    "GPIO_LED_RING": 14,
-    "GPIO_LED_APPROVED": 15,
-    "GPIO_LED_BLOCKED":17,
-    "GPIO_LED_MESSAGE": 4,
+    "GPIO_LED_RING_PIN": 14,
+    "GPIO_LED_RING_BRIGHTNESS": 100,
+    "GPIO_LED_APPROVED_PIN": 15,
+    "GPIO_LED_APPROVED_BRIGHTNESS": 100,
+    "GPIO_LED_BLOCKED_PIN":17,
+    "GPIO_LED_BLOCKED_BRIGHTNESS":100,
+    "GPIO_LED_MESSAGE_PIN": 4,
+    "GPIO_LED_MESSAGE_BRIGHTNESS": 100,
     "GPIO_LED_MESSAGE_COUNT_PINS": (11, 8, 25, 5, 18, 9, 7, 27),
     "GPIO_LED_MESSAGE_COUNT_KWARGS": {"active_high": False},
 }

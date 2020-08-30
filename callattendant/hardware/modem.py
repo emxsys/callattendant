@@ -123,7 +123,9 @@ class Modem(object):
         self._lock = threading.RLock()
 
         # Ring notifications
-        self.ring_indicator = RingIndicator()
+        self.ring_indicator = RingIndicator(
+            self.config.get("GPIO_LED_RING_PIN"),
+            self.config.get("GPIO_LED_RING_BRIGHTNESS", 100))
         self.ring_event = threading.Event()
 
         # Setup and open the serial port
@@ -672,4 +674,3 @@ class Modem(object):
 def decode(bytestr):
     string = bytestr.decode("utf-8").strip(' \t\n\r' + DLE_CODE)
     return string
-

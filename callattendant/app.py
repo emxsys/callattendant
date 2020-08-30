@@ -60,8 +60,12 @@ class CallAttendant(object):
         self._caller_queue = queue.Queue()
 
         #  Initialize the visual indicators (LEDs)
-        self.approved_indicator = ApprovedIndicator()
-        self.blocked_indicator = BlockedIndicator()
+        self.approved_indicator = ApprovedIndicator(
+                self.config.get("GPIO_LED_APPROVED_PIN"),
+                self.config.get("GPIO_LED_APPROVED_BRIGHTNESS", 100))
+        self.blocked_indicator = BlockedIndicator(
+                self.config.get("GPIO_LED_BLOCKED_PIN"),
+                self.config.get("GPIO_LED_BLOCKED_BRIGHTNESS", 100))
 
         # Screening subsystem
         self.logger = CallLogger(self.db, self.config)

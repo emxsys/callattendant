@@ -128,9 +128,23 @@ VOICE_MAIL_MENU_FILE = "resources/voice_mail_menu.wav"
 #   This should not be changed/overridden except during development/testing
 #VOICE_MAIL_MESSAGE_FOLDER = "messages"
 
-GPIO_LED_RING = 4
-GPIO_LED_APPROVED = 15
-GPIO_LED_BLOCKED = 17
-GPIO_LED_MESSAGE = 14
+# GPIO_LED_..._PIN: These values are the GPIO pin numbers attached to the LED indicators
+# GPIO_LED_..._BRIGHTNESS: These values are a percentage of brightness for the LED indicators when on.
+GPIO_LED_RING_PIN = 4
+GPIO_LED_RING_BRIGHTNESS = 100
+
+GPIO_LED_APPROVED_PIN = 15
+GPIO_LED_APPROVED_BRIGHTNESS = 100
+
+GPIO_LED_BLOCKED_PIN = 17
+GPIO_LED_BLOCKED_BRIGHTNESS = 100
+
+GPIO_LED_MESSAGE_PIN = 14
+GPIO_LED_MESSAGE_BRIGHTNESS = 100
+
+# GPIO_LED_MESSAGE_COUNT_PINS: This is a tuple containing the GPIO pins for the 7-segment LED
+#   ordered by segment as thus: (a, b, c, d, e, f, g, dp)
 GPIO_LED_MESSAGE_COUNT_PINS = (11, 8, 25, 5, 18, 9, 7, 27)
-GPIO_LED_MESSAGE_COUNT_KWARGS = {active_high="False"}
+
+# GPIO_LED_MESSAGE_COUNT_KWARGS: This is a dictionary of optional arguments (used by GPIOZero LEDBoard)
+GPIO_LED_MESSAGE_COUNT_KWARGS = {"active_high": False}
