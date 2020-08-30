@@ -4,7 +4,12 @@
 
 {% block content %}
 <div class="container">
-  <h2>Call Log <img src="../static/telephone-inbound.svg" alt="" width="32" height="32"></h2>
+  <h2>Call Log
+    <img src="../static/telephone-inbound.svg" alt="" width="32" height="32">
+    <a href="https://github.com/emxsys/callattendant/wiki/User-Guide#viewing-call-history">
+      <img class="float-right" src="../static/info-circle.svg" alt="" width="32" height="32">
+    </a>
+  </h2>
   {% if search_criteria %}
       <strong>Search: {{ search_criteria }}&nbsp;&nbsp;</strong>
       <button id="cancel-search" type="button" class="btn btn-secondary btn-sm" aria-label="Cancel">Cancel</button>
