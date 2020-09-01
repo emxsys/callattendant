@@ -36,10 +36,6 @@ from callattendant.hardware.modem import Modem
 from callattendant.screening.calllogger import CallLogger
 from callattendant.messaging.voicemail import VoiceMail
 
-# Dummy call back function for modem
-def dummy_handle_caller(caller):
-    pass
-
 # Test data
 caller = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
 
@@ -71,7 +67,7 @@ def logger(db, config):
 @pytest.fixture(scope='module')
 def modem(db, config):
 
-    modem = Modem(config, dummy_handle_caller)
+    modem = Modem(config)
     modem.open_serial_port()
     yield modem
     modem.ring_indicator.close()

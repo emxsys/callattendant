@@ -47,11 +47,6 @@ from callattendant.hardware.modem import Modem, RESET, \
 pytestmark = pytest.mark.skipif(os.getenv("CI")=="true", reason="Hardware not installed")
 
 
-# Dummy callback function
-def dummy_handle_caller(caller):
-    pass
-
-
 @pytest.fixture(scope='module')
 def modem():
 
@@ -61,7 +56,7 @@ def modem():
     config['TESTING'] = True
     config['VOICE_MAIL_MESSAGE_FOLDER'] = gettempdir()
 
-    modem = Modem(config, dummy_handle_caller)
+    modem = Modem(config)
     modem.open_serial_port()
 
     yield modem

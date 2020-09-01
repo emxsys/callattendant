@@ -120,16 +120,13 @@ class Modem(object):
     Raspberry Pi and a voice/data/fax modem.
     """
 
-    def __init__(self, config, handle_caller):
+    def __init__(self, config):
         """
         Constructs a modem object for serial communications.
             :param config:
                 application configuration dict
-            :param handle_caller:
-                callback function that takes a caller dict
         """
         self.config = config
-        self.handle_caller = handle_caller
         self.model = None
 
         # Thread synchronization object
@@ -191,19 +188,27 @@ class Modem(object):
             print(e)
             print("Error: Unable to close the Serial Port.")
             sys.exit()
-    def handle_calls(self):
+
+
+    def handle_calls(self, handle_caller):
         """
         Starts the thread that processes incoming data.
+            :param handle_caller:
+                A callback function that takes a caller dict object.
         """
-        # TODO Pass in call handler here instead of ctor
         self._init_modem()
-        self.event_thread = threading.Thread(target=self._call_handler)
+
+        self.event_thread = threading.Thread(
+                target=self._call_handler,
+                kwargs={'handle_caller': handle_caller})
         self.event_thread.name = "modem_call_handler"
         self.event_thread.start()
 
-    def _call_handler(self):
+    def _call_handler(self, handle_caller):
         """
         Thread function that processes the incoming modem data.
+            :param handle_caller:
+                A callback function that takes a caller dict object.
         """
         # Common constants
         RING = "RING".encode("utf-8")
@@ -276,7 +281,7 @@ class Modem(object):
                     if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
                         # Queue caller for screening
                         print("> Queueing call {} for processing".format(call_record["NMBR"]))
-                        self.handle_caller(call_record)
+                        handle_caller(call_record)
                         call_record = {}
 
         finally:
