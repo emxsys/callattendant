@@ -23,6 +23,9 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
+
+global SET_VOICE_COMPRESSION
+
 import os
 import sys
 import tempfile
@@ -32,10 +35,11 @@ from tempfile import gettempdir
 import pytest
 
 from callattendant.config import Config
-from callattendant.hardware.modem import Modem, FACTORY_RESET, RESET, DISPLAY_MODEM_SETTINGS, \
-    ENTER_VOICE_MODE, SET_VOICE_COMPRESSION_8BIT_SAMPLING_8K, ENTER_TELEPHONE_ANSWERING_DEVICE_OFF_HOOK, \
+from callattendant.hardware.modem import Modem, RESET, GET_MODEM_PRODUCT_CODE, \
+    GET_MODEM_SETTINGS, ENTER_VOICE_MODE, ENTER_TAD_OFF_HOOK, SET_VOICE_COMPRESSION, \
     ENTER_VOICE_TRANSMIT_DATA_STATE, DTE_END_VOICE_DATA_TX, ENTER_VOICE_RECIEVE_DATA_STATE, \
-    DTE_END_RECIEVE_DATA_STATE, TERMINATE_CALL, ETX_CODE
+    DTE_END_RECIEVE_DATA_STATE, TERMINATE_CALL, ETX_CODE, DLE_CODE, \
+    SET_VOICE_COMPRESSION_USR, SET_VOICE_COMPRESSION_ZOOM
 
 # Skip the test when running under continous integraion
 pytestmark = pytest.mark.skipif(os.getenv("CI")=="true", reason="Hardware not installed")
@@ -63,16 +67,12 @@ def modem():
     modem.ring_indicator.close()
 
 
-def test_factory_reset(modem):
-    assert modem._send(FACTORY_RESET)
-
-
 def test_profile_reset(modem):
     assert modem._send(RESET)
 
 
 def test_display_modem_settings(modem):
-    assert modem._send(DISPLAY_MODEM_SETTINGS)
+    assert modem._send(GET_MODEM_SETTINGS)
 
 
 def test_put_modem_into_voice_mode(modem):
@@ -80,11 +80,13 @@ def test_put_modem_into_voice_mode(modem):
 
 
 def test_set_compression_method_and_sampling_rate_specifications(modem):
-    assert modem._send(SET_VOICE_COMPRESSION_8BIT_SAMPLING_8K)
-
+    if modem.model == "ZOOM":
+        assert modem._send(SET_VOICE_COMPRESSION_ZOOM)
+    elif modem.model == "USR":
+        assert modem._send(SET_VOICE_COMPRESSION_USR)
 
 def test_put_modem_into_TAD_mode(modem):
-    assert modem._send(ENTER_TELEPHONE_ANSWERING_DEVICE_OFF_HOOK)
+    assert modem._send(ENTER_TAD_OFF_HOOK)
 
 
 def test_put_modem_into_voice_transmit_data_state(modem):
@@ -99,9 +101,13 @@ def test_put_modem_into_voice_recieve_data_state(modem):
     assert modem._send(ENTER_VOICE_RECIEVE_DATA_STATE, "CONNECT")
 
 
-def test_cancel_data_transmit_state(modem):
-    assert modem._send(DTE_END_RECIEVE_DATA_STATE, ETX_CODE)
-
+def test_cancel_data_receive_state(modem):
+    response = ""
+    if modem.model == "ZOOM":
+        response = "OK"
+    elif modem.model == "USR":
+        response = ETX_CODE
+    assert modem._send(DTE_END_RECIEVE_DATA_STATE, response)
 
 def test_terminate_call(modem):
     assert modem._send(TERMINATE_CALL)
