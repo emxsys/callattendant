@@ -108,9 +108,10 @@ REC_VM_MAX_DURATION = 120  # Time in Seconds
 
 TEST_DATA = [
     b"RING", b"DATE=0801", b"TIME=1801", b"NMBR=8055554567", b"NAME=Test1 - Permitted", b"RING", b"RING", b"RING", b"RING",
-    b"RING", b"DATE=0801", b"TIME=1800", b"NMBR=5551234567", b"NAME=Test2 - Spammer",
-    b"RING", b"DATE=0801", b"TIME=1802", b"NMBR=3605554567", b"NAME=Test3 - Blocked",
-    b"RING", b"DATE=0801", b"TIME=1802", b"NMBR=8005554567", b"NAME=V123456789012345",
+    b"RING", b"DATE=0802", b"TIME=1802", b"NMBR=5551234567", b"NAME=Test2 - Spammer",
+    b"RING", b"DATE=0803", b"TIME=1803", b"NMBR=3605554567", b"NAME=Test3 - Blocked",
+    b"RING", b"DATE=0804", b"TIME=1804", b"NMBR=8005554567", b"NAME=V123456789012345",
+    b"RING", b"DATE = 0805", b"TIME = 1805", b"NMBR = 8055554567", b"NAME = Test5 - Permitted",
 ]
 
 
@@ -267,15 +268,20 @@ class Modem(object):
                         self.ring_event.clear()
                         # Visual notification (LED)
                         self.ring_indicator.ring()
+
                     # Extract caller info
                     if DATE in modem_data:
-                        call_record['DATE'] = decode(modem_data[5:])
-                    if TIME in modem_data:
-                        call_record['TIME'] = decode(modem_data[5:])
-                    if NAME in modem_data:
-                        call_record['NAME'] = decode(modem_data[5:])
-                    if NMBR in modem_data:
-                        call_record['NMBR'] = decode(modem_data[5:])
+                        items = decode(modem_data).split('=')
+                        call_record['DATE'] = items[1].strip()
+                    elif TIME in modem_data:
+                        items = decode(modem_data).split('=')
+                        call_record['TIME'] = items[1].strip()
+                    elif NAME in modem_data:
+                        items = decode(modem_data).split('=')
+                        call_record['NAME'] = items[1].strip()
+                    elif NMBR in modem_data:
+                        items = decode(modem_data).split('=')
+                        call_record['NMBR'] = items[1].strip()
 
                     # https://stackoverflow.com/questions/1285911/how-do-i-check-that-multiple-keys-are-in-a-dict-in-a-single-pass
                     if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
