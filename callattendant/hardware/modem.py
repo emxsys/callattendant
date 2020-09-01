@@ -93,12 +93,12 @@ DCE_SILENCE_DETECTED = (chr(16) + chr(115)).encode()    # <DLE>-s
 DCE_TX_BUFFER_UNDERRUN = (chr(16) + chr(117)).encode()  # <DLE>-u
 DCE_END_VOICE_DATA_TX = (chr(16) + chr(3)).encode()     # <DLE><ETX>
 
-# System DLE shielded codes (single DLE) - DTE to DCE commands
+# System DLE shielded codes (single DLE) - DTE to DCE commands (used by USR 5637 modem)
 DTE_RAISE_VOLUME = (chr(16) + chr(117))           # <DLE>-u
 DTE_LOWER_VOLUME = (chr(16) + chr(100))           # <DLE>-d
+DTE_END_VOICE_DATA_RX = (chr(16) + chr(33))       # <DLE>-!
 DTE_END_VOICE_DATA_TX = (chr(16) + chr(3))        # <DLE><ETX>
 DTE_CLEAR_TRASMIT_BUFFER = (chr(16) + chr(24))    # <DLE><CAN>
-DTE_END_RECIEVE_DATA_STATE = (chr(16) + chr(33))  # <DLE>-!
 
 # Return codes
 CRLF = (chr(13) + chr(10)).encode()
@@ -144,6 +144,53 @@ class Modem(object):
         # Setup and open the serial port
         self._serial = serial.Serial()
 
+
+    def open_serial_port(self):
+        """Detects and opens the serial port attached to the modem."""
+        # List all the Serial COM Ports on Raspberry Pi
+        proc = subprocess.Popen(['ls /dev/tty[A-Za-z]*'], shell=True, stdout=subprocess.PIPE)
+        com_ports = proc.communicate()[0]
+        # In order to split, need to pass a bytes-like object
+        com_ports_list = com_ports.split(b'\n')
+
+        # Find the right port associated with the Voice Modem
+        found = False
+        for com_port in com_ports_list:
+            if b'tty' in com_port:
+                # Try to open the COM Port and execute AT Command
+                try:
+                    # Initialize the serial port and attempt to open
+                    self._init_serial_port(com_port.decode("utf-8"))
+                    self._serial.open()
+                except Exception as e:
+                    print(e)
+                    print("Unable to open COM Port: " + str(com_port.decode("utf-8")))
+                    pass
+                else:
+                    # Detect the modem model
+                    if not self._detect_modem():
+                        print("Error: Failed to detect a compatible modem.")
+                        if self._serial.isOpen():
+                            self._serial.close()
+                    else:
+                        # Found a compatible modem on the COM Port - exit the loop
+                        print("Modem COM Port is: " + com_port.decode("utf-8"))
+                        self._serial.flushInput()
+                        self._serial.flushOutput()
+                        return True
+        return False
+
+    def close_serial_port(self):
+        """Closes the serial port attached to the modem."""
+        print("Closing Serial Port")
+        try:
+            if self._serial.isOpen():
+                self._serial.close()
+                print("Serial Port closed...")
+        except Exception as e:
+            print(e)
+            print("Error: Unable to close the Serial Port.")
+            sys.exit()
     def handle_calls(self):
         """
         Starts the thread that processes incoming data.
@@ -444,14 +491,10 @@ class Modem(object):
             self._serial.reset_input_buffer()
 
             # Send End of Recieve Data state by passing "<DLE>!"
-            response = ""
-            if self.model == "ZOOM":
-                response = "OK"
-            elif self.model == "USR":
-                # Note: the command returns <DLE><ETX>, but the  DLE is stripped
-                # from the response during the test, so we only test for the ETX.
-                response = ETX_CODE
-            if not self._send(DTE_END_RECIEVE_DATA_STATE, response):
+            # USR-5637 note: The command returns <DLE><ETX>, but the DLE is stripped
+            # from the response during the test, so we only test for the ETX.
+            response = lambda model : "OK" if model == "ZOOM" else ETX_CODE
+            if not self._send(DTE_END_VOICE_DATA_RX, response(self.model)):
                 print("* Error: Unable to signal end of data receive state")
 
         return True
@@ -609,6 +652,57 @@ class Modem(object):
             print(e)
             return (False, None)
 
+    def _init_serial_port(self, com_port):
+        """Initializes the given COM port for communications with the modem."""
+        self._serial.port = com_port
+        self._serial.baudrate = 57600                   # 9600
+        self._serial.bytesize = serial.EIGHTBITS        # number of bits per bytes
+        self._serial.parity = serial.PARITY_NONE        # set parity check: no parity
+        self._serial.stopbits = serial.STOPBITS_ONE     # number of stop bits
+        self._serial.timeout = 3                        # non-block read
+        self._serial.writeTimeout = 3                   # timeout for write
+        self._serial.xonxoff = False                    # disable software flow control
+        self._serial.rtscts = False                     # disable hardware (RTS/CTS) flow control
+        self._serial.dsrdtr = False                     # disable hardware (DSR/DTR) flow control
+
+    def _detect_modem(self):
+
+        global SET_VOICE_COMPRESSION, ENABLE_SILENCE_DETECTION_5_SECS, \
+                DTE_RAISE_VOLUME, DTE_LOWER_VOLUME, DTE_END_VOICE_DATA_TX, \
+                DTE_END_VOICE_DATA_RX, DTE_CLEAR_TRASMIT_BUFFER
+
+        # Attempt to identify the modem
+        success, result = self._send_and_read(GET_MODEM_PRODUCT_CODE)
+        if success:
+            if ZOOM_3905_PRODUCT_CODE in result:
+                print("******* Zoom Model 3905 Detected **********")
+                self.model = "ZOOM"
+                # Define the compression settings
+                SET_VOICE_COMPRESSION = SET_VOICE_COMPRESSION_ZOOM
+                # System DLE shielded codes (double DLE) - DTE to DCE commands
+                DTE_RAISE_VOLUME = (chr(16) + chr(16) + chr(117))               # <DLE><DLE>-u
+                DTE_LOWER_VOLUME = (chr(16) + chr(16) + chr(100))               # <DLE><DLE>-d
+                DTE_END_VOICE_DATA_RX = (chr(16) + chr(16) + chr(16) + chr(33)) # <DLE><DLE><DLE>-!
+                DTE_END_VOICE_DATA_TX = (chr(16) + chr(16) + chr(16) + chr(3))  # <DLE><DLE><DLE><ETX>
+                DTE_CLEAR_TRASMIT_BUFFER = (chr(16) + chr(16) + chr(16) + chr(24)) # <DLE><DLE><DLE><CAN>
+            elif USR_5637_PRODUCT_CODE in result:
+                print("******* US Robotics Model 5637 detected **********")
+                self.model = "USR"
+                # Define the compression settings
+                SET_VOICE_COMPRESSION = SET_VOICE_COMPRESSION_USR
+            else:
+                print("******* Unknown modem detected **********")
+                # We'll try to use it with the defined AT commands if it supports VOICE mode
+                # Validate modem selection by trying to put it in Voice Mode
+                if self._send(ENTER_VOICE_MODE):
+                    self.model = "UNKNOWN"
+                    # Use the default settings (used by the USR 5637 modem)
+                    SET_VOICE_COMPRESSION = SET_VOICE_COMPRESSION_USR
+                else:
+                    print("Error: Failed to put modem into voice mode.")
+                    success = False
+        return success
+
     def _init_modem(self):
         """Auto-detects and initializes the modem."""
         # Detect and open the Modem Serial COM Port
@@ -628,7 +722,7 @@ class Modem(object):
             # Test Modem connection, using basic AT command.
             if not self._send("AT"):
                 print("Error: Unable to access the Modem")
-            if not self._send(FACTORY_RESET):
+            if not self._send(RESET):
                 print("Error: Unable reset to factory default")
             if not self._send(ENABLE_VERBOSE_CODES):
                 print("Error: Unable set response in verbose form")
@@ -641,7 +735,7 @@ class Modem(object):
             if not self._send("AT&W0"):
                 print("Error: Failed to store profile.")
 
-            self._send(DISPLAY_MODEM_SETTINGS)
+            self._send(GET_MODEM_SETTINGS)
 
             # Flush any existing input outout data from the buffers
             self._serial.flushInput()
@@ -655,107 +749,6 @@ class Modem(object):
             print("Error: unable to Initialize the Modem")
             sys.exit()
 
-    def _init_serial_port(self, com_port):
-        """Initializes the given COM port for communications with the modem."""
-        self._serial.port = com_port
-        self._serial.baudrate = 57600                   # 9600
-        self._serial.bytesize = serial.EIGHTBITS        # number of bits per bytes
-        self._serial.parity = serial.PARITY_NONE        # set parity check: no parity
-        self._serial.stopbits = serial.STOPBITS_ONE     # number of stop bits
-        self._serial.timeout = 3                        # non-block read
-        self._serial.writeTimeout = 3                   # timeout for write
-        self._serial.xonxoff = False                    # disable software flow control
-        self._serial.rtscts = False                     # disable hardware (RTS/CTS) flow control
-        self._serial.dsrdtr = False                     # disable hardware (DSR/DTR) flow control
-
-    def _detect_modem(self):
-
-        global SET_VOICE_COMPRESSION, ENABLE_SILENCE_DETECTION_5_SECS, \
-                DTE_RAISE_VOLUME, DTE_LOWER_VOLUME, DTE_END_VOICE_DATA_TX, \
-                DTE_END_RECIEVE_DATA_STATE, DTE_CLEAR_TRASMIT_BUFFER
-
-        # Attempt to identify the modem
-        success, result = self._send_and_read(GET_MODEM_PRODUCT_CODE)
-        if success:
-            if ZOOM_3905_PRODUCT_CODE in result:
-                print("******* Zoom Model 3905 Detected **********")
-                self.model = "ZOOM"
-                # Define the compression settings
-                SET_VOICE_COMPRESSION = SET_VOICE_COMPRESSION_ZOOM
-                # ~ ENABLE_SILENCE_DETECTION_5_SECS = "AT+VSD=0,50"
-                # System DLE shielded codes (double DLE) - DTE to DCE commands
-                DTE_RAISE_VOLUME = (chr(16) + chr(16) + chr(117))               # <DLE><DLE>-u
-                DTE_LOWER_VOLUME = (chr(16) + chr(16) + chr(100))               # <DLE><DLE>-d
-                DTE_END_VOICE_DATA_TX = (chr(16) + chr(16) + chr(16) + chr(3))  # <DLE><DLE><DLE><ETX>
-                DTE_END_RECIEVE_DATA_STATE = (chr(16) + chr(16) + chr(16) + chr(33))  # <DLE><DLE><DLE>-!
-                DTE_CLEAR_TRASMIT_BUFFER = (chr(16) + chr(16) + chr(24)) # <DLE><DLE><CAN>
-            elif USR_5637_PRODUCT_CODE in result:
-                print("******* US Robotics Model 5637 detected **********")
-                self.model = "USR"
-                # Define the compression settings
-                SET_VOICE_COMPRESSION = SET_VOICE_COMPRESSION_USR
-                # System DLE shielded codes (single DLE) - DTE to DCE commands
-                DTE_RAISE_VOLUME = (chr(16) + chr(117))           # <DLE>-u
-                DTE_LOWER_VOLUME = (chr(16) + chr(100))           # <DLE>-d
-                DTE_END_VOICE_DATA_TX = (chr(16) + chr(3))        # <DLE><ETX>
-                DTE_END_RECIEVE_DATA_STATE = (chr(16) + chr(33))  # <DLE>-!
-            else:
-                print("******* Unknown modem detected **********")
-                # We'll try to use it with the defined AT commands if it supports VOICE mode
-                # Validate modem selection by trying to put it in Voice Mode
-                if self._send(ENTER_VOICE_MODE):
-                    self.model = "UNKNOWN"
-                else:
-                    print("Error: Failed to put modem into voice mode.")
-                    success = False
-        return success
-
-    def open_serial_port(self):
-        """Detects and opens the serial port attached to the modem."""
-        # List all the Serial COM Ports on Raspberry Pi
-        proc = subprocess.Popen(['ls /dev/tty[A-Za-z]*'], shell=True, stdout=subprocess.PIPE)
-        com_ports = proc.communicate()[0]
-        # In order to split, need to pass a bytes-like object
-        com_ports_list = com_ports.split(b'\n')
-
-        # Find the right port associated with the Voice Modem
-        found = False
-        for com_port in com_ports_list:
-            if b'tty' in com_port:
-                # Try to open the COM Port and execute AT Command
-                try:
-                    # Initialize the serial port and attempt to open
-                    self._init_serial_port(com_port.decode("utf-8"))
-                    self._serial.open()
-                except Exception as e:
-                    print(e)
-                    print("Unable to open COM Port: " + str(com_port.decode("utf-8")))
-                    pass
-                else:
-                    # Detect the modem model
-                    if not self._detect_modem():
-                        print("Error: Failed to detect a compatible modem.")
-                        if self._serial.isOpen():
-                            self._serial.close()
-                    else:
-                        # Found a compatible modem on the COM Port - exit the loop
-                        print("Modem COM Port is: " + com_port.decode("utf-8"))
-                        self._serial.flushInput()
-                        self._serial.flushOutput()
-                        return True
-        return False
-
-    def close_serial_port(self):
-        """Closes the serial port attached to the modem."""
-        print("Closing Serial Port")
-        try:
-            if self._serial.isOpen():
-                self._serial.close()
-                print("Serial Port closed...")
-        except Exception as e:
-            print(e)
-            print("Error: Unable to close the Serial Port.")
-            sys.exit()
 
 def decode(bytestr):
     # Remove non-printable chars before decoding.
