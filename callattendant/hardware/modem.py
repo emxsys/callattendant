@@ -70,6 +70,7 @@ ENTER_VOICE_MODE = "AT+FCLASS=8"
 ENTER_VOICE_RECIEVE_DATA_STATE = "AT+VRX"
 ENTER_VOICE_TRANSMIT_DATA_STATE = "AT+VTX"
 ENTER_TAD_OFF_HOOK = "AT+VLS=1"  # Telephone Answering Device (TAD) off-hook, connected to telco
+SEND_VOICE_TONE_BEEP = "AT+VTS=[933,900,120]"   # 1.2 second beep
 GET_VOICE_COMPRESSION_SETTING = "AT+VSM?"
 GET_VOICE_COMPRESSION_OPTIONS = "AT+VSM=?"
 SET_VOICE_COMPRESSION = ""  # Set by modem detection function
@@ -341,19 +342,8 @@ class Modem(object):
                     self._serial.write(data)
                     data = wavefile.readframes(chunk)
                     # ~ time.sleep(sleep_interval)
-            self._send("+++")
-            print("DTE_CLEAR_TRASMIT_BUFFER")
-            # ~ self._send(DTE_CLEAR_TRASMIT_BUFFER)
-            self._send((chr(16) + chr(16) + chr(24)), "OK", 15)
 
-            # ~ self._serial.flushOutput()
-            # ~ self._serial.flushInput()
-
-            print("DTE_END_VOICE_DATA_TX")
-            self._send((chr(16) + chr(16) + chr(3)), "OK", 15)
-            self._send(RESET)
-            # ~ self._send(DTE_END_VOICE_DATA_TX, "OK", 15)
-
+                self._send(DTE_END_VOICE_DATA_TX)
 
         return True
 
@@ -378,7 +368,6 @@ class Modem(object):
                 if not self._send("AT+VGT=128"):
                     raise RuntimeError("Failed to set speaker volume to normal.")
 
-
                 if not self._send(SET_VOICE_COMPRESSION):
                     raise RuntimeError("Failed to set compression method and sampling rate specifications.")
 
@@ -389,7 +378,7 @@ class Modem(object):
                     raise RuntimeError("Unable put modem into telephone answering device mode.")
 
                 # Play 1.2 beep
-                if not self._send("AT+VTS=[933,900,120]"):
+                if not self._send(SEND_VOICE_TONE_BEEP):
                     raise RuntimeError("Failed to play 1.2 second beep.")
 
                 if not self._send(ENABLE_SILENCE_DETECTION_5_SECS):
@@ -681,8 +670,9 @@ class Modem(object):
 
     def _detect_modem(self):
 
-        global SET_VOICE_COMPRESSION, DTE_RAISE_VOLUME, DTE_LOWER_VOLUME, \
-                DTE_END_VOICE_DATA_TX, DTE_END_RECIEVE_DATA_STATE, DTE_CLEAR_TRASMIT_BUFFER
+        global SET_VOICE_COMPRESSION, ENABLE_SILENCE_DETECTION_5_SECS, \
+                DTE_RAISE_VOLUME, DTE_LOWER_VOLUME, DTE_END_VOICE_DATA_TX, \
+                DTE_END_RECIEVE_DATA_STATE, DTE_CLEAR_TRASMIT_BUFFER
 
         # Attempt to identify the modem
         success, result = self._send_and_read(GET_MODEM_PRODUCT_CODE)
@@ -692,12 +682,13 @@ class Modem(object):
                 self.model = "ZOOM"
                 # Define the compression settings
                 SET_VOICE_COMPRESSION = SET_VOICE_COMPRESSION_ZOOM
+                # ~ ENABLE_SILENCE_DETECTION_5_SECS = "AT+VSD=0,50"
                 # System DLE shielded codes (double DLE) - DTE to DCE commands
-                DTE_RAISE_VOLUME = (chr(16) + chr(16) + chr(117))           # <DLE>-u
-                DTE_LOWER_VOLUME = (chr(16) + chr(16) + chr(100))           # <DLE>-d
-                DTE_END_VOICE_DATA_TX = (chr(16) + chr(16) + chr(3))        # <DLE><ETX>
-                DTE_END_RECIEVE_DATA_STATE = (chr(16) + chr(16) + chr(33))  # <DLE>-!
-                DTE_CLEAR_TRASMIT_BUFFER = (chr(16) + chr(16) + chr(24))    # <DLE><CAN>
+                DTE_RAISE_VOLUME = (chr(16) + chr(16) + chr(117))               # <DLE><DLE>-u
+                DTE_LOWER_VOLUME = (chr(16) + chr(16) + chr(100))               # <DLE><DLE>-d
+                DTE_END_VOICE_DATA_TX = (chr(16) + chr(16) + chr(16) + chr(3))  # <DLE><DLE><DLE><ETX>
+                DTE_END_RECIEVE_DATA_STATE = (chr(16) + chr(16) + chr(16) + chr(33))  # <DLE><DLE><DLE>-!
+                DTE_CLEAR_TRASMIT_BUFFER = (chr(16) + chr(16) + chr(24)) # <DLE><DLE><CAN>
             elif USR_5637_PRODUCT_CODE in result:
                 print("******* US Robotics Model 5637 detected **********")
                 self.model = "USR"
