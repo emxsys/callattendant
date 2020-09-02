@@ -20,7 +20,7 @@ setuptools.setup(
     description="An automated call attendant and call blocker using a Raspberry Pi and USR-5637 modem",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/emxsys/callattendant",
+    url="https://emxsys.github.io/callattendant/",
     packages=setuptools.find_packages(exclude=["tests"]),
     include_package_data=True,      # Includes files from MANIFEST.in
     install_requires=[
