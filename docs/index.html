@@ -17,6 +17,13 @@
    <meta name="theme-color" content="#563d7c">
 
     <style>
+      /* Offset the body from the nav-bar that is fixed to the top */
+      body {
+        min-height: 75rem;
+        padding-top: 4.5rem;
+      }
+
+<!--
       .bd-placeholder-img {
         font-size: 1.125rem;
         text-anchor: middle;
@@ -30,6 +37,13 @@
         .bd-placeholder-img-lg {
           font-size: 3.5rem;
         }
+      }
+-->
+
+      .jumbotron-bg-image {
+        background-image: url("background1.jpg");
+        background-repeat: no-repeat;
+        background-position: center center;
       }
     </style>
 
@@ -64,9 +78,9 @@
           For Developers:
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="https://github.com/emxsys/callattendant/wiki/Developer-Guide">Developer Guide</a>
-          <a class="dropdown-item" href="https://github.com/emxsys/callattendant/issues">Issue Tracker</a>
           <a class="dropdown-item" href="https://github.com/emxsys/callattendant">Source Code</a>
+          <a class="dropdown-item" href="https://github.com/emxsys/callattendant/issues">Issue Tracker</a>
+          <a class="dropdown-item" href="https://github.com/emxsys/callattendant/wiki/Developer-Guide">Developer Guide</a>
           <a class="dropdown-item" href="design/index_withoutmenu.html">Software Architecture</a>
         </div>
       </li>
@@ -77,13 +91,13 @@
 <main role="main">
 
   <!-- Main jumbotron for a primary marketing message or call to action -->
-  <div class="jumbotron">
+  <div class="jumbotron jumbotron-bg-image bg-danger text-white">
     <div class="container">
       <h1 class="display-3">Call Attendant</h1>
-      <p>The Call Attendant is a free auto attendant with call blocking and voice messaging features
+      <h3><b>The Call Attendant is a free auto attendant with call blocking and voice messaging features
       that runs on a low cost Raspberry Pi. It stops annoying robocalls and spammers from interrupting
       your life. Let the Call Attendant intercept and block robocallers and telemarketers before the
-      first ring on your landline.</p>
+      first ring on your landline.</b></h3>
       <p><a class="btn btn-primary btn-lg" href="https://github.com/emxsys/callattendant/wiki" role="button">Learn more &raquo;</a></p>
     </div>
   </div>
@@ -104,7 +118,8 @@
               <li><b>Blocked</b> callers, defined by the <i>Blocked Numbers</i> list, are blocked
                 immediately, often before the first ring.
               <li><b>Screened</b> callers are all others, they're checked against
-                blocked name and number patterns and an online database.</li>
+                blocked name and number patterns and an online database and then
+                either allowed or denied.</li>
             </ol>
             <p class="card-text">Incoming calls can be routed to voice mail.</p>
           </div>
