@@ -64,7 +64,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: POSIX :: Linux",
         "Environment :: Other Environment",
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Framework :: Flask",
         "Topic :: Communications :: Telephony",
         "Topic :: Home Automation",
