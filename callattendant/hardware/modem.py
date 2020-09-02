@@ -203,13 +203,17 @@ class Modem(object):
                         self.ring_indicator.ring()
                     # Extract caller info
                     if DATE in modem_data:
-                        call_record['DATE'] = decode(modem_data[5:])
-                    if TIME in modem_data:
-                        call_record['TIME'] = decode(modem_data[5:])
-                    if NAME in modem_data:
-                        call_record['NAME'] = decode(modem_data[5:])
-                    if NMBR in modem_data:
-                        call_record['NMBR'] = decode(modem_data[5:])
+                        items = decode(modem_data).split('=')
+                        call_record['DATE'] = items[1].strip()
+                    elif TIME in modem_data:
+                        items = decode(modem_data).split('=')
+                        call_record['TIME'] = items[1].strip()
+                    elif NAME in modem_data:
+                        items = decode(modem_data).split('=')
+                        call_record['NAME'] = items[1].strip()
+                    elif NMBR in modem_data:
+                        items = decode(modem_data).split('=')
+                        call_record['NMBR'] = items[1].strip()
 
                     # https://stackoverflow.com/questions/1285911/how-do-i-check-that-multiple-keys-are-in-a-dict-in-a-single-pass
                     if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
@@ -672,5 +676,6 @@ class Modem(object):
 
 
 def decode(bytestr):
-    string = bytestr.decode("utf-8").strip(' \t\n\r' + DLE_CODE)
+    # Remove non-printable chars before decoding.
+    string = re.sub(b'[^\x00-\x7f]', b'', bytestr).decode("utf-8").strip(' \t\n\r' + DLE_CODE)
     return string
