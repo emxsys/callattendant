@@ -4,8 +4,8 @@
 #### `pip install callattendant`
 
 The Call Attendant (__callattendant__) is an auto attendant with call blocking and voice
-messaging features running on a Raspberry Pi. It stops annoying robocalls and spammers from 
-interruing your life. Let the Call Attendant intercept and block robocallers and telemarketers 
+messaging features running on a Raspberry Pi. It stops annoying robocalls and spammers from
+interrupting your life. Let the Call Attendant intercept and block robocallers and telemarketers
 before the first ring on your landline.
 
 _If you're at all interested in this project, please provide some feedback by giving it a
@@ -111,7 +111,7 @@ Python 3.7.3
 ```
 Later, when you install the __callattendant__ software, it will be placed within the virtual environment
 folder (under `lib/python3.x/site-packages` to be exact). The virtual environment, when activated, alters
-your _PATH_ so that the system looks for python and its packages within this folder hierarchy. 
+your _PATH_ so that the system looks for python and its packages within this folder hierarchy.
 
 #### Install the Software
 The software is available on [PyPI](https://pypi.org/project/callattendant/). Install and update using `pip`:
@@ -229,4 +229,3 @@ See the [Configuration](https://github.com/emxsys/callattendant/wiki/Home#config
 section in the project's wiki for more information.
 
 ---
-
