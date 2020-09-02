@@ -1,17 +1,270 @@
-<html>
-<head>
-	<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
-	<link rel="stylesheet" type="text/css"/>
-	<title>callattendent</title>
-	<script type="text/javascript" src="content/report.js"></script>
-</head>
-<frameset rows="*" cols="23%,77%" onload="loadUrl();">
-	<frameset rows="40%, *" cols="*">
-		<frame scrolling="auto" src="content/diagram_navigator.html" name="_navigator_pane" />
-		<frame scrolling="auto" src="content/blank_menu.html" name="_menu_pane" />
-	</frameset>
-	<frame scrolling="auto" src="content/PackageDiagram_fJAxmJKGAqACrElM.html" name="_content_pane" />
-</frameset>
-<body>
-</body>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="CallAttendant landing page">
+    <meta name="author" content="Bruce Schubert">
+    <title>Call Attendant · Emxsys</title>
+
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+
+   <!-- Favicons -->
+   <link rel="shortcut icon" href="assets/favicon.png">
+   <meta name="msapplication-config" content="/docs/4.5/assets/img/favicons/browserconfig.xml">
+   <meta name="theme-color" content="#563d7c">
+    
+   <meta name="google-site-verification" content="bqyuaEvUIj3e3PJbi7RJexqZHdgu9YiMIkvI8q-Chh4" />
+    
+    <style>
+      /* Offset the body from the nav-bar that is fixed to the top */
+      body {
+        min-height: 75rem;
+        padding-top: 4.5rem;
+      }
+
+<!--
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+-->
+
+      .jumbotron-bg-image {
+        background-image: url("background1.jpg");
+        background-repeat: no-repeat;
+        background-position: center center;
+      }
+    </style>
+
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-md fixed-top navbar-light bg-light">
+      <a class="navbar-brand" href="/">
+        <span class="text-success">
+          <svg width="32" height="32" viewBox="0 0 16 16" class="bi bi-telephone" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M3.925 1.745a.636.636 0 0 0-.951-.059l-.97.97c-.453.453-.62 1.095-.421 1.658A16.47 16.47 0 0 0 5.49 10.51a16.471 16.471 0 0 0 6.196 3.907c.563.198 1.205.032 1.658-.421l.97-.97a.636.636 0 0 0-.06-.951l-2.162-1.682a.636.636 0 0 0-.544-.115l-2.052.513a1.636 1.636 0 0 1-1.554-.43L5.64 8.058a1.636 1.636 0 0 1-.43-1.554l.513-2.052a.636.636 0 0 0-.115-.544L3.925 1.745zM2.267.98a1.636 1.636 0 0 1 2.448.153l1.681 2.162c.309.396.418.913.296 1.4l-.513 2.053a.636.636 0 0 0 .167.604L8.65 9.654a.636.636 0 0 0 .604.167l2.052-.513a1.636 1.636 0 0 1 1.401.296l2.162 1.681c.777.604.849 1.753.153 2.448l-.97.97c-.693.693-1.73.998-2.697.658a17.47 17.47 0 0 1-6.571-4.144A17.47 17.47 0 0 1 .639 4.646c-.34-.967-.035-2.004.658-2.698l.97-.969z"/>
+          </svg>
+        </span>
+        Call Attendant
+      </a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse text-success" id="navbarsExampleDefault">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="https://github.com/emxsys/callattendant/wiki">Home</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="https://github.com/emxsys/callattendant/wiki/User-Guide">User Guide</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="https://github.com/emxsys/callattendant/wiki/Advanced">Advanced Setup</a>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          For Developers:
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <a class="dropdown-item" href="https://github.com/emxsys/callattendant">Source Code</a>
+          <a class="dropdown-item" href="https://github.com/emxsys/callattendant/issues">Issue Tracker</a>
+          <a class="dropdown-item" href="https://github.com/emxsys/callattendant/wiki/Developer-Guide">Developer Guide</a>
+          <a class="dropdown-item" href="design/index_withoutmenu.html">Software Architecture</a>
+        </div>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<main role="main">
+
+  <!-- Main jumbotron for a primary marketing message or call to action -->
+  <div class="jumbotron jumbotron-bg-image bg-danger text-white">
+    <div class="container">
+      <h1 class="display-3">Call Attendant</h1>
+      <h3><b>The Call Attendant is a free auto attendant with call blocking and voice messaging features
+      that runs on a low cost Raspberry Pi. It stops annoying robocalls and spammers from interrupting
+      your life. Let the Call Attendant intercept and block robocallers and telemarketers before the
+      first ring on your landline.</b></h3>
+      <p><a class="btn btn-primary btn-lg" href="https://github.com/emxsys/callattendant/wiki" role="button">Learn more &raquo;</a></p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="card-deck">
+        <div class="card">
+          <span class="bg-primary">
+            <img class="card-img-top" src="assets/telephone-inbound.svg" alt="Card image" height="100" style="opacity: 0.2;">
+          </span>
+          <div class="card-body">
+            <h2 class="card-title">Screen Callers</h2>
+            <p class="card-text">Typical setup:</p>
+            <ol>
+              <li><b>Permitted</b> callers, defined by your <i>Permitted Numbers</i> list, ring though
+                to your home phone without interruption</li>
+              <li><b>Blocked</b> callers, defined by the <i>Blocked Numbers</i> list, are blocked
+                immediately, often before the first ring.
+              <li><b>Screened</b> callers are all others, they're checked against
+                blocked name and number patterns and an online database and then
+                either allowed or denied.</li>
+            </ol>
+            <p class="card-text">Incoming calls can be routed to voice mail.</p>
+          </div>
+          <div class="card-footer">
+<!--
+            <a class="btn btn-secondary" href="#" role="button">View details &raquo;</a>
+-->
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="bg-danger">
+            <img class="card-img-top" src="assets/telephone-x.svg" alt="Card image" height="100" style="opacity: 0.2;">
+          </span>
+          <div class="card-body">
+            <h2 class="card-title">Block Calls</h2>
+            <p class="card-text">Any caller that is not in your <i>Permitted Numbers</i> undergoes
+              the following checks:</p>
+              <ol>
+                <li>The number is checked against your <i>Blocked Numbers</i> list.</li>
+                <li>The name and number are checked against blocked <i>name and number patterns</i>.</li>
+                <li>The number is checked against an online database of robocallers and scammers</li>
+              </ol>
+              <p class="card-text"> If any of these checks fail, the call is blocked. Blocked calls
+                can go to voice mail or simply be disconnected.</p>
+          </div>
+          <div class="card-footer">
+<!--
+            <a class="btn btn-secondary" href="#" role="button">View details &raquo;</a>
+-->
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="bg-success">
+            <img class="card-img-top" src="assets/bar-chart.svg" alt="Card image" height="100" style="opacity: 0.2;">
+          </span>
+          <div class="card-body">
+            <h2 class="card-title">Web Interface</h2>
+            <p class="card-text">The web interface provides access caller info and history and is available
+              from any phone or computer on your network:</p>
+            <ul>
+              <li>A <i>dashboard</i> with overall system metrics and convenient access to the last 10 calls</li>
+              <li>Seachable call history</li>
+              <li>Call Details</li>
+              <li>Permitted Numbers</li>
+              <li>Blocked Numbers</li>
+              <li>Voice messages</li>
+            </ul>
+            <p class="card-text">Voice messages can be listened to from any phone or computer connected to your home network.</p>
+          </div>
+          <div class="card-footer">
+<!--
+            <a class="btn btn-secondary" href="#" role="button">View details &raquo;</a>
+-->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="row">
+      <div class="card-deck">
+
+        <div class="card">
+          <span class="bg-info">
+            <img class="card-img-top" src="assets/card-checklist.svg" alt="Card image" height="100" style="opacity: 0.2;">
+          </span>
+          <div class="card-body">
+            <h2 class="card-title">Requirements</h2>
+            <ul>
+              <li>A Raspberry Pi Model 3 (or better)</li>
+              <li>A U.S. Robotics 5637 Modem (or similar)</li>
+              <li>An internet connection for the Raspberry Pi (wired or wireless)</li>
+              <li>Caller ID enabled for your phone line</li>
+            </ul>
+          </div>
+          <div class="card-footer">
+            <a class="btn btn-secondary" href="https://github.com/emxsys/callattendant/raw/master/docs/raspberry_pi-modem.jpg" role="button">View details &raquo;</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="bg-info">
+            <img class="card-img-top" src="assets/cpu.svg" alt="Card image" height="100" style="opacity: 0.2;">
+          </span>
+          <div class="card-body">
+            <h2 class="card-title">Hardware Setup</h2>
+            <ul>
+              <li>Connect your USB modem to the Raspberry Pi</li>
+              <li>Connect the modem to the phone system using telephone cable to:
+              <ul>
+                <li>an empty phone outlet, or</li>
+                <li>a splitter connected to a phone outlet and shared with a phone</li>
+              </ul>
+              <li>Connect your Raspberry Pi to your home network via wireless or a wired connection</li>
+              <li>Connect power to the Raspberry Pi</li>
+              <li>HDMI display and USB keyboard mouse are optional after setup</li>
+            </ul>
+          </div>
+          <div class="card-footer">
+            <a class="btn btn-secondary" href="https://github.com/emxsys/callattendant/wiki#installation" role="button">View details &raquo;</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="bg-info">
+            <img class="card-img-top" src="assets/download.svg" alt="Card image" height="100" style="opacity: 0.2;">
+          </span>
+          <div class="card-body">
+            <h2 class="card-title">Software Install</h2>
+            <h5><code>pip install callattendant</code></h5>
+            <p>Install a virtual environment and the software in the current directory:</p>
+            <pre><code>
+# Install - if necessary
+sudo apt install virtualenv
+
+# Create the virtual environment
+virtualenv venv --python=python3
+
+# Activate it
+source venv/bin/activate
+
+# Use "pip" to install the software
+pip install callattendant
+            </code></pre>
+          </div>
+          <div class="card-footer">
+            <a class="btn btn-secondary" href="https://github.com/emxsys/callattendant/wiki#software" role="button">View details &raquo;</a>
+          </div>
+        </div>
+      </div> <!-- /card-deck -->
+    </div> <!-- /row -->
+  </div> <!-- /container -->
+
+</main>
+
+<footer class="container">
+  <p>&copy; Bruce Schubert 2018-2020</p>
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
 </html>
