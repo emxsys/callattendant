@@ -59,8 +59,8 @@ default_config = {
     "GPIO_LED_BLOCKED_BRIGHTNESS":100,
     "GPIO_LED_MESSAGE_PIN": 4,
     "GPIO_LED_MESSAGE_BRIGHTNESS": 100,
-    "GPIO_LED_MESSAGE_COUNT_PINS": (11, 8, 25, 5, 18, 9, 7, 27),
-    "GPIO_LED_MESSAGE_COUNT_KWARGS": {"active_high": False},
+    "GPIO_LED_MESSAGE_COUNT_PINS": (8, 7, 27, 23, 10, 11, 9, 18),
+    "GPIO_LED_MESSAGE_COUNT_KWARGS": {"active_high": True},
 }
 
 
