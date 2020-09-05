@@ -146,7 +146,6 @@ class Modem(object):
         # Setup and open the serial port
         self._serial = serial.Serial()
 
-
     def open_serial_port(self):
         """Detects and opens the serial port attached to the modem."""
         # List all the Serial COM Ports on Raspberry Pi
@@ -193,7 +192,6 @@ class Modem(object):
             print(e)
             print("Error: Unable to close the Serial Port.")
             sys.exit()
-
 
     def handle_calls(self, handle_caller):
         """
@@ -513,7 +511,7 @@ class Modem(object):
             # Send End of Recieve Data state by passing "<DLE>!"
             # USR-5637 note: The command returns <DLE><ETX>, but the DLE is stripped
             # from the response during the test, so we only test for the ETX.
-            response = lambda model : "OK" if model == "ZOOM" else ETX_CODE
+            response = lambda model: "OK" if model == "ZOOM" else ETX_CODE
             if not self._send(DTE_END_VOICE_DATA_RX, response(self.model)):
                 print("* Error: Unable to signal end of data receive state")
 
@@ -620,7 +618,7 @@ class Modem(object):
                 self._serial.write((command + '\r').encode())
                 self._serial.flush()
                 # Get the execution status plus any preceeding result(s) from the modem
-                success, result =  self._read_response(expected_response, response_timeout)
+                success, result = self._read_response(expected_response, response_timeout)
                 return (success, result)
             except Exception as e:
                 print(e)
@@ -651,7 +649,7 @@ class Modem(object):
                     pprint(modem_data)
                 response = decode(modem_data)  # strips DLE_CODE
 
-                if expected_response == None:
+                if expected_response is None:
                     return (True, None)
 
                 elif expected_response == response:
@@ -693,8 +691,15 @@ class Modem(object):
 
         # Attempt to identify the modem
         success, result = self._send_and_read(GET_MODEM_PRODUCT_CODE)
+
         if success:
-            if ZOOM_3905_PRODUCT_CODE in result:
+            if USR_5637_PRODUCT_CODE in result:
+                print("******* US Robotics Model 5637 detected **********")
+                self.model = "USR"
+                # Define the compression settings
+                SET_VOICE_COMPRESSION = SET_VOICE_COMPRESSION_USR
+
+            elif ZOOM_3905_PRODUCT_CODE in result:
                 print("******* Zoom Model 3905 Detected **********")
                 self.model = "ZOOM"
                 # Define the compression settings
@@ -705,15 +710,10 @@ class Modem(object):
                 DTE_END_VOICE_DATA_RX = (chr(16) + chr(16) + chr(16) + chr(33)) # <DLE><DLE><DLE>-!
                 DTE_END_VOICE_DATA_TX = (chr(16) + chr(16) + chr(16) + chr(3))  # <DLE><DLE><DLE><ETX>
                 DTE_CLEAR_TRANSMIT_BUFFER = (chr(16) + chr(16) + chr(16) + chr(24)) # <DLE><DLE><DLE><CAN>
-            elif USR_5637_PRODUCT_CODE in result:
-                print("******* US Robotics Model 5637 detected **********")
-                self.model = "USR"
-                # Define the compression settings
-                SET_VOICE_COMPRESSION = SET_VOICE_COMPRESSION_USR
+
             else:
                 print("******* Unknown modem detected **********")
-                # We'll try to use it with the defined AT commands if it supports VOICE mode
-                # Validate modem selection by trying to put it in Voice Mode
+                # We'll try to use it with the predefined AT commands if it supports VOICE mode.
                 if self._send(ENTER_VOICE_MODE):
                     self.model = "UNKNOWN"
                     # Use the default settings (used by the USR 5637 modem)
@@ -721,6 +721,7 @@ class Modem(object):
                 else:
                     print("Error: Failed to put modem into voice mode.")
                     success = False
+
         return success
 
     def _init_modem(self):
