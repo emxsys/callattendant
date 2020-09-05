@@ -72,8 +72,8 @@ class CallAttendant(object):
         self.screener = CallScreener(self.db, self.config)
 
         #  Hardware subsystem
-        #  Create (and starts) the modem with callback functions
-        self.modem = Modem(self.config, self.handle_caller)
+        #  Create (and open) the modem
+        self.modem = Modem(self.config)
 
         # Messaging subsystem
         self.voice_mail = VoiceMail(self.db, self.config, self.modem)
@@ -98,7 +98,7 @@ class CallAttendant(object):
             pprint(caller)
         self._caller_queue.put(caller)
 
-    def run(self):
+    def process_calls(self):
         """
         Processes incoming callers by logging, screening, blocking
         and/or recording messages.
@@ -113,7 +113,7 @@ class CallAttendant(object):
         permitted_greeting_file = permitted['greeting_file']
 
         # Instruct the modem to start feeding calls into the caller queue
-        self.modem.handle_calls()
+        self.modem.handle_calls(self.handle_caller)
 
         # Process incoming calls
         while 1:
@@ -385,7 +385,7 @@ def main(argv):
 
     # Create and start the application
     app = CallAttendant(config)
-    app.run()
+    app.process_calls()
     return 0
 
 

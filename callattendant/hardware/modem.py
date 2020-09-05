@@ -50,11 +50,15 @@ ETX_CODE = chr(3)       # End Transmission (ETX) code
 CR_CODE = chr(13)       # Carraige return
 LF_CODE = chr(10)       # Line feed
 
+# Supported modem product codes returned by ATI0
+USR_5637_PRODUCT_CODE = b'5601'
+ZOOM_3905_PRODUCT_CODE = b'56000'
+
 #  Modem AT commands:
 #  See http://support.usr.com/support/5637/5637-ug/ref_data.html
-
 RESET = "ATZ"
 FACTORY_RESET = "ATZ3"
+GET_MODEM_PRODUCT_CODE = "ATI0"
 DISPLAY_MODEM_SETTINGS = "ATI4"
 ENABLE_ECHO_COMMANDS = "ATE1"
 DISABLE_ECHO_COMMANDS = "ATE0"
@@ -107,17 +111,17 @@ TEST_DATA = [
 class Modem(object):
     """
     This class is responsible for serial communications between the
-    Raspberry Pi and a US Robotics 5637 modem.
+    Raspberry Pi and a voice/data/fax modem.
     """
 
-    def __init__(self, config, handle_caller):
+    def __init__(self, config):
         """
         Constructs a modem object for serial communications.
-            :param config: application configuration dict
-            :param handle_caller: callback function that takes a caller dict
+            :param config:
+                application configuration dict
         """
         self.config = config
-        self.handle_caller = handle_caller
+        self.model = None
 
         # Thread synchronization object
         self._lock = threading.RLock()
@@ -131,18 +135,72 @@ class Modem(object):
         # Setup and open the serial port
         self._serial = serial.Serial()
 
-    def handle_calls(self):
+    def open_serial_port(self):
+        """Detects and opens the serial port attached to the modem."""
+        # List all the Serial COM Ports on Raspberry Pi
+        proc = subprocess.Popen(['ls /dev/tty[A-Za-z]*'], shell=True, stdout=subprocess.PIPE)
+        com_ports = proc.communicate()[0]
+        # In order to split, need to pass a bytes-like object
+        com_ports_list = com_ports.split(b'\n')
+
+        # Find the right port associated with the Voice Modem
+        found = False
+        for com_port in com_ports_list:
+            if b'tty' in com_port:
+                # Try to open the COM Port and execute AT Command
+                try:
+                    # Initialize the serial port and attempt to open
+                    self._init_serial_port(com_port.decode("utf-8"))
+                    self._serial.open()
+                except Exception as e:
+                    print(e)
+                    print("Unable to open COM Port: " + str(com_port.decode("utf-8")))
+                    pass
+                else:
+                    # Detect the modem model
+                    if not self._detect_modem():
+                        print("Error: Failed to detect a compatible modem.")
+                        if self._serial.isOpen():
+                            self._serial.close()
+                    else:
+                        # Found a compatible modem on the COM Port - exit the loop
+                        print("Modem COM Port is: " + com_port.decode("utf-8"))
+                        self._serial.flushInput()
+                        self._serial.flushOutput()
+                        return True
+        return False
+
+    def close_serial_port(self):
+        """Closes the serial port attached to the modem."""
+        print("Closing Serial Port")
+        try:
+            if self._serial.isOpen():
+                self._serial.close()
+                print("Serial Port closed...")
+        except Exception as e:
+            print(e)
+            print("Error: Unable to close the Serial Port.")
+            sys.exit()
+
+    def handle_calls(self, handle_caller):
         """
         Starts the thread that processes incoming data.
+            :param handle_caller:
+                A callback function that takes a caller dict object.
         """
         self._init_modem()
-        self.event_thread = threading.Thread(target=self._call_handler)
+
+        self.event_thread = threading.Thread(
+                target=self._call_handler,
+                kwargs={'handle_caller': handle_caller})
         self.event_thread.name = "modem_call_handler"
         self.event_thread.start()
 
-    def _call_handler(self):
+    def _call_handler(self, handle_caller):
         """
         Thread function that processes the incoming modem data.
+            :param handle_caller:
+                A callback function that takes a caller dict object.
         """
         # Common constants
         RING = "RING".encode("utf-8")
@@ -201,6 +259,7 @@ class Modem(object):
                         self.ring_event.clear()
                         # Visual notification (LED)
                         self.ring_indicator.ring()
+
                     # Extract caller info
                     if DATE in modem_data:
                         items = decode(modem_data).split('=')
@@ -219,7 +278,7 @@ class Modem(object):
                     if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
                         # Queue caller for screening
                         print("> Queueing call {} for processing".format(call_record["NMBR"]))
-                        self.handle_caller(call_record)
+                        handle_caller(call_record)
                         call_record = {}
 
         finally:
@@ -510,11 +569,30 @@ class Modem(object):
     def _send(self, command, expected_response="OK", response_timeout=5):
         """
         Sends a command string (e.g., AT command) to the modem.
-            :param command: the command string to send
-            :param expected response: the expected response to the command, e.g. "OK"
-            :param response_timeout: number of seconds to wait for the command to respond
+            :param command:
+                the command string to send
+            :param expected_response:
+                the expected response to the command, e.g. "OK"
+            :param response_timeout:
+                number of seconds to wait for the command to respond
+            :return:
+                True: if the command response matches the expected_response;
+        """
+        success, result = self._send_and_read(command, expected_response, response_timeout)
+        return success
 
-            :return: True if the command response matches the expected_response
+    def _send_and_read(self, command, expected_response="OK", response_timeout=5):
+        """
+        Sends a command string (e.g., AT command) to the modem and reads the result
+            :param command:
+                the command string to send
+            :param expected_response:
+                the expected response to the command, e.g. "OK"
+            :param response_timeout:
+                number of seconds to wait for the command to respond
+            :return:
+                True: if the command response matches the expected_response;
+                plus the result preceeding the command response, if any.
         """
         with self._lock:
             try:
@@ -523,51 +601,82 @@ class Modem(object):
 
                 self._serial.write((command + '\r').encode())
                 self._serial.flush()
-
-                if expected_response is None:
-                    return True
-                else:
-                    execution_status = self._read_response(expected_response, response_timeout)
-                    return execution_status
+                # Get the execution status plus any preceeding result(s) from the modem
+                success, result =  self._read_response(expected_response, response_timeout)
+                return (success, result)
             except Exception as e:
                 print(e)
                 print("Error: Failed to execute the command: {}".format(command))
-                return False
+                return False, None
 
     def _read_response(self, expected_response, response_timeout_secs):
         """
         Handles the command response code from the modem.
-
-        Called by _send(); operates within the _send method's lock context.
-            :param expected response: the expected response, e.g. "OK"
-            :param response_timeout_secs: number of seconds to wait for
-                the command to respond
-
-            :return: True if the response matches the expected_response;
-                False if ERROR is returned or if it times out
+        Called by _send() and operates within the _send method's lock context.
+            :param expected response:
+                the expected response, e.g. "OK"
+            :param response_timeout_secs:
+                number of seconds to wait for the command to respond
+            :return: (boolean, result)
+                True if the response matches the expected_response or False
+                if ERROR is returned or if it times out; followed by any preceeding
+                value(s) returned by the modem.
         """
         start_time = datetime.now()
         try:
+            result = b''
+            self._serial.flushInput()
             while 1:
                 modem_data = self._serial.readline()
+                result += modem_data
                 if self.config["DEBUG"]:
                     pprint(modem_data)
                 response = decode(modem_data)  # strips DLE_CODE
-                if expected_response == response:
-                    return True
+
+                if expected_response == None:
+                    return (True, None)
+
+                elif expected_response == response:
+                    return (True, result)
+
                 elif "ERROR" in response:
                     if self.config["DEBUG"]:
                         print(">>> _read_response returned ERROR")
-                    return False
+                    return (False, result)
+
                 elif (datetime.now() - start_time).seconds > response_timeout_secs:
                     if self.config["DEBUG"]:
                         print(">>> _read_response timed out")
-                    return False
+                    return (False, result)
 
         except Exception as e:
             print("Error in read_response function...")
             print(e)
-            return False
+            return (False, None)
+
+    def _detect_modem(self):
+
+        global SET_VOICE_COMPRESSION, ENABLE_SILENCE_DETECTION_5_SECS, \
+                DTE_RAISE_VOLUME, DTE_LOWER_VOLUME, DTE_END_VOICE_DATA_TX, \
+                DTE_END_VOICE_DATA_RX, DTE_CLEAR_TRASMIT_BUFFER
+
+        # Attempt to identify the modem
+        success, result = self._send_and_read(GET_MODEM_PRODUCT_CODE)
+        if success:
+            if USR_5637_PRODUCT_CODE in result:
+                print("******* US Robotics Model 5637 detected **********")
+                self.model = "USR"
+
+            else:
+                print("******* Unknown modem detected **********")
+                # We'll try to use it with the defined AT commands if it supports VOICE mode
+                # Validate modem selection by trying to put it in Voice Mode
+                if self._send(ENTER_VOICE_MODE):
+                    self.model = "UNKNOWN"
+                else:
+                    print("Error: Failed to put modem into voice mode.")
+                    success = False
+        return success
 
     def _init_modem(self):
         """Auto-detects and initializes the modem."""
@@ -615,40 +724,6 @@ class Modem(object):
             print("Error: unable to Initialize the Modem")
             sys.exit()
 
-    def open_serial_port(self):
-        """Detects and opens the serial port attached to the modem."""
-        # List all the Serial COM Ports on Raspberry Pi
-        proc = subprocess.Popen(['ls /dev/tty[A-Za-z]*'], shell=True, stdout=subprocess.PIPE)
-        com_ports = proc.communicate()[0]
-        # In order to split, need to pass a bytes-like object
-        com_ports_list = com_ports.split(b'\n')
-
-        # Find the right port associated with the Voice Modem
-        for com_port in com_ports_list:
-            if b'tty' in com_port:
-                # Try to open the COM Port and execute AT Command
-                try:
-                    # Initialize the serial port and attempt to open
-                    self._init_serial_port(com_port.decode("utf-8"))
-                    self._serial.open()
-                except Exception as e:
-                    print(e)
-                    print("Unable to open COM Port: " + str(com_port.decode("utf-8")))
-                    pass
-                else:
-                    # Validate modem selection by trying to put it in Voice Mode
-                    if not self._send(ENTER_VOICE_MODE):
-                        print("Error: Failed to put modem into voice mode.")
-                        if self._serial.isOpen():
-                            self._serial.close()
-                    else:
-                        # Found the COM Port exit the loop
-                        print("Modem COM Port is: " + com_port.decode("utf-8"))
-                        self._serial.flushInput()
-                        self._serial.flushOutput()
-                        return True
-        return False
-
     def _init_serial_port(self, com_port):
         """Initializes the given COM port for communications with the modem."""
         self._serial.port = com_port
@@ -661,18 +736,6 @@ class Modem(object):
         self._serial.xonxoff = False                    # disable software flow control
         self._serial.rtscts = False                     # disable hardware (RTS/CTS) flow control
         self._serial.dsrdtr = False                     # disable hardware (DSR/DTR) flow control
-
-    def close_serial_port(self):
-        """Closes the serial port attached to the modem."""
-        print("Closing Serial Port")
-        try:
-            if self._serial.isOpen():
-                self._serial.close()
-                print("Serial Port closed...")
-        except Exception as e:
-            print(e)
-            print("Error: Unable to close the Serial Port.")
-            sys.exit()
 
 
 def decode(bytestr):
