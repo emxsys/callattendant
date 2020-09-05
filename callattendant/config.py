@@ -19,7 +19,7 @@ from werkzeug.utils import import_string
 # and screened callers through to the home phone.
 #
 default_config = {
-    "VERSION": '1.0.0',
+    "VERSION": '1.1.0a',
 
     "ENV": 'production',
     "DEBUG": False,
