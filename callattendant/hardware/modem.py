@@ -3,7 +3,7 @@
 #
 # file: modem.py
 #
-# Copyright 2018 Bruce Schubert <bruce@emxsys.com>
+# Copyright 2018-2020 Bruce Schubert <bruce@emxsys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -86,8 +86,11 @@ DCE_BUSY_TONE = (chr(16) + chr(98)).encode()            # <DLE>-b
 DCE_FAX_CALLING_TONE = (chr(16) + chr(99)).encode()     # <DLE>-c
 DCE_DIAL_TONE = (chr(16) + chr(100)).encode()           # <DLE>-d
 DCE_DATA_CALLING_TONE = (chr(16) + chr(101)).encode()   # <DLE>-e
+DCE_LINE_REVERSAL = (chr(16) + chr(108)).encode()       # <DLE>-l
 DCE_PHONE_ON_HOOK = (chr(16) + chr(104)).encode()       # <DLE>-h
 DCE_PHONE_OFF_HOOK = (chr(16) + chr(72)).encode()       # <DLE>-H
+DCE_PHONE_OFF_HOOK2 = (chr(16) + chr(80)).encode()      # <DLE>-P Zoom
+DCE_QUIET_DETECTED = (chr(16) + chr(113)).encode()      # <DLE>-q Zoom
 DCE_RING = (chr(16) + chr(82)).encode()                 # <DLE>-R
 DCE_SILENCE_DETECTED = (chr(16) + chr(115)).encode()    # <DLE>-s
 DCE_TX_BUFFER_UNDERRUN = (chr(16) + chr(117)).encode()  # <DLE>-u
@@ -97,8 +100,9 @@ DCE_END_VOICE_DATA_TX = (chr(16) + chr(3)).encode()     # <DLE><ETX>
 DTE_RAISE_VOLUME = (chr(16) + chr(117))           # <DLE>-u
 DTE_LOWER_VOLUME = (chr(16) + chr(100))           # <DLE>-d
 DTE_END_VOICE_DATA_RX = (chr(16) + chr(33))       # <DLE>-!
+DTE_END_VOICE_DATA_RX2 = (chr(16) + chr(94))      # <DLE>-^ Zoom
 DTE_END_VOICE_DATA_TX = (chr(16) + chr(3))        # <DLE><ETX>
-DTE_CLEAR_TRASMIT_BUFFER = (chr(16) + chr(24))    # <DLE><CAN>
+DTE_CLEAR_TRANSMIT_BUFFER = (chr(16) + chr(24))   # <DLE><CAN>
 
 # Return codes
 CRLF = (chr(13) + chr(10)).encode()
@@ -458,29 +462,34 @@ class Modem(object):
 
                 audio_data = self._serial.read(CHUNK)
 
-                if (DCE_PHONE_OFF_HOOK in audio_data):
-                    print(">> Local phone off hook... Stop recording")
-                    break
-
-                if (DCE_RING in audio_data):
-                    print(">> Ring detected... Stop recording; new call coming in")
-                    break
-
-                # Check if <DLE>b is in the stream
-                if (DCE_BUSY_TONE in audio_data):
-                    print(">> Busy Tone... Stop recording.")
-                    break
-
-                # Check if <DLE>s is in the stream
-                if (DCE_SILENCE_DETECTED in audio_data):
-                    print(">> Silence Detected... Stop recording.")
-                    break
-
                 # Check if <DLE><ETX> is in the stream
                 if (DCE_END_VOICE_DATA_TX in audio_data):
                     print(">> <DLE><ETX> Char Recieved... Stop recording.")
                     break
-
+                # Check if <DLE>s is in the stream
+                if (DCE_SILENCE_DETECTED in audio_data):
+                    print(">> Silence Detected... Stop recording.")
+                    break
+                # Check if <DLE>q is in the stream
+                if (DCE_QUIET_DETECTED in audio_data):
+                    print(">> Silence Detected... Stop recording.")
+                    break
+                # Check if <DLE>H is in the stream
+                if (DCE_PHONE_OFF_HOOK in audio_data):
+                    print(">> Local phone off hook... Stop recording")
+                    break
+                # Check if <DLE>P is in the stream
+                if (DCE_PHONE_OFF_HOOK2 in audio_data):
+                    print(">> Local extension off hook... Stop recording")
+                    break
+                # Check if <DLE>l is in the stream
+                if (DCE_LINE_REVERSAL in audio_data):
+                    print(">> Local phone off hook... Stop recording")
+                    break
+                # Check if <DLE>b is in the stream
+                if (DCE_BUSY_TONE in audio_data):
+                    print(">> Busy Tone... Stop recording.")
+                    break
                 # Timeout
                 if ((datetime.now() - start_time).seconds) > REC_VM_MAX_DURATION:
                     print(">> Stop recording: max time limit reached.")
@@ -680,7 +689,7 @@ class Modem(object):
 
         global SET_VOICE_COMPRESSION, ENABLE_SILENCE_DETECTION_5_SECS, \
                 DTE_RAISE_VOLUME, DTE_LOWER_VOLUME, DTE_END_VOICE_DATA_TX, \
-                DTE_END_VOICE_DATA_RX, DTE_CLEAR_TRASMIT_BUFFER
+                DTE_END_VOICE_DATA_RX, DTE_CLEAR_TRANSMIT_BUFFER
 
         # Attempt to identify the modem
         success, result = self._send_and_read(GET_MODEM_PRODUCT_CODE)
@@ -695,7 +704,7 @@ class Modem(object):
                 DTE_LOWER_VOLUME = (chr(16) + chr(16) + chr(100))               # <DLE><DLE>-d
                 DTE_END_VOICE_DATA_RX = (chr(16) + chr(16) + chr(16) + chr(33)) # <DLE><DLE><DLE>-!
                 DTE_END_VOICE_DATA_TX = (chr(16) + chr(16) + chr(16) + chr(3))  # <DLE><DLE><DLE><ETX>
-                DTE_CLEAR_TRASMIT_BUFFER = (chr(16) + chr(16) + chr(16) + chr(24)) # <DLE><DLE><DLE><CAN>
+                DTE_CLEAR_TRANSMIT_BUFFER = (chr(16) + chr(16) + chr(16) + chr(24)) # <DLE><DLE><DLE><CAN>
             elif USR_5637_PRODUCT_CODE in result:
                 print("******* US Robotics Model 5637 detected **********")
                 self.model = "USR"
