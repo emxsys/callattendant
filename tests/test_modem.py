@@ -41,7 +41,7 @@ from callattendant.hardware.modem import Modem, RESET, \
     ENTER_VOICE_TRANSMIT_DATA_STATE, DTE_END_VOICE_DATA_TX, \
     ENTER_VOICE_RECIEVE_DATA_STATE, DTE_END_VOICE_DATA_RX, \
     TERMINATE_CALL, ETX_CODE, DLE_CODE, \
-    SET_VOICE_COMPRESSION, SET_VOICE_COMPRESSION_USR, SET_VOICE_COMPRESSION_ZOOM
+    SET_VOICE_COMPRESSION, SET_VOICE_COMPRESSION_ZOOM
 
 # Skip the test when running under continous integraion
 pytestmark = pytest.mark.skipif(os.getenv("CI")=="true", reason="Hardware not installed")
@@ -78,7 +78,7 @@ def test_put_modem_into_voice_mode(modem):
 
 def test_set_compression_method_and_sampling_rate_specifications(modem):
     assert modem._send(
-        SET_VOICE_COMPRESSION_ZOOM if modem.model == "ZOOM" else SET_VOICE_COMPRESSION_USR
+        SET_VOICE_COMPRESSION_ZOOM if modem.model == "ZOOM" else SET_VOICE_COMPRESSION
     )
 
 
