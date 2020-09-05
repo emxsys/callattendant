@@ -37,7 +37,7 @@ import pytest
 from callattendant.config import Config
 from callattendant.hardware.modem import Modem, RESET, \
     GET_MODEM_PRODUCT_CODE, GET_MODEM_SETTINGS, \
-    ENTER_VOICE_MODE, ENTER_TAD_OFF_HOOK, \
+    ENTER_VOICE_MODE, TELEPHONE_ANSWERING_DEVICE_OFF_HOOK, \
     ENTER_VOICE_TRANSMIT_DATA_STATE, DTE_END_VOICE_DATA_TX, \
     ENTER_VOICE_RECIEVE_DATA_STATE, DTE_END_VOICE_DATA_RX, \
     TERMINATE_CALL, ETX_CODE, DLE_CODE, \
@@ -77,14 +77,13 @@ def test_put_modem_into_voice_mode(modem):
 
 
 def test_set_compression_method_and_sampling_rate_specifications(modem):
-    if modem.model == "ZOOM":
-        assert modem._send(SET_VOICE_COMPRESSION_ZOOM)
-    elif modem.model == "USR":
-        assert modem._send(SET_VOICE_COMPRESSION_USR)
+    assert modem._send(
+        SET_VOICE_COMPRESSION_ZOOM if modem.model == "ZOOM" else SET_VOICE_COMPRESSION_USR
+    )
 
 
 def test_put_modem_into_TAD_mode(modem):
-    assert modem._send(ENTER_TAD_OFF_HOOK)
+    assert modem._send(TELEPHONE_ANSWERING_DEVICE_OFF_HOOK)
 
 
 def test_put_modem_into_voice_transmit_data_state(modem):
@@ -100,7 +99,7 @@ def test_put_modem_into_voice_recieve_data_state(modem):
 
 
 def test_cancel_data_receive_state(modem):
-    response = lambda model : "OK" if model == "ZOOM" else ETX_CODE
+    response = lambda model: "OK" if model == "ZOOM" else ETX_CODE
     assert modem._send(DTE_END_VOICE_DATA_RX, response(modem.model))
 
 

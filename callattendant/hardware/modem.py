@@ -69,13 +69,14 @@ ENABLE_SILENCE_DETECTION_10_SECS = "AT+VSD=128,100"
 ENTER_VOICE_MODE = "AT+FCLASS=8"
 ENTER_VOICE_RECIEVE_DATA_STATE = "AT+VRX"
 ENTER_VOICE_TRANSMIT_DATA_STATE = "AT+VTX"
-ENTER_TAD_OFF_HOOK = "AT+VLS=1"  # Telephone Answering Device (TAD) off-hook, connected to telco
 SEND_VOICE_TONE_BEEP = "AT+VTS=[933,900,120]"   # 1.2 second beep
 GET_VOICE_COMPRESSION_SETTING = "AT+VSM?"
 GET_VOICE_COMPRESSION_OPTIONS = "AT+VSM=?"
 SET_VOICE_COMPRESSION = ""  # Set by modem detection function
 SET_VOICE_COMPRESSION_USR = "AT+VSM=128,8000"     # USR 5637: 128 = 8-bit linear, 8.0 kHz
 SET_VOICE_COMPRESSION_ZOOM = "AT+VSM=1,8000,0,0"  # Zoom 3095:  1 = 8-bit unsigned pcm, 8.0 kHz
+TELEPHONE_ANSWERING_DEVICE_OFF_HOOK = "AT+VLS=1"  # TAD (DCE) off-hook, connected to telco
+TELEPHONE_ANSWERING_DEVICE_ON_HOOK = "AT+VLS=1"   # TAD (DCE) on-hook
 GO_OFF_HOOK = "ATH1"
 GO_ON_HOOK = "ATH0"
 TERMINATE_CALL = "ATH"
@@ -317,7 +318,7 @@ class Modem(object):
             if not self._send(DISABLE_SILENCE_DETECTION):
                 raise RuntimeError("Failed to disable silence detection.")
 
-            if not self._send(ENTER_TAD_OFF_HOOK):
+            if not self._send(TELEPHONE_ANSWERING_DEVICE_OFF_HOOK):
                 raise RuntimeError("Unable put modem into telephone answering device mode.")
 
             # Flush any existing input outout data from the buffers
@@ -386,7 +387,7 @@ class Modem(object):
             if not self._send(SET_VOICE_COMPRESSION):
                 print("* Error: Failed to set compression method and sampling rate specifications.")
                 return False
-            if not self._send(ENTER_TAD_OFF_HOOK):
+            if not self._send(TELEPHONE_ANSWERING_DEVICE_OFF_HOOK):
                 print("* Error: Unable put modem into telephone answering device mode.")
                 return False
             if not self._send(ENTER_VOICE_TRANSMIT_DATA_STATE, "CONNECT"):
@@ -425,24 +426,17 @@ class Modem(object):
                 if not self._send(ENTER_VOICE_MODE):
                     raise RuntimeError("Failed to put modem into voice mode.")
 
-                if not self._send("AT+VGT=128"):
-                    raise RuntimeError("Failed to set speaker volume to normal.")
-
                 if not self._send(SET_VOICE_COMPRESSION):
                     raise RuntimeError("Failed to set compression method and sampling rate specifications.")
 
-                if not self._send(DISABLE_SILENCE_DETECTION):
-                    raise RuntimeError("Failed to disable silence detection.")
-
-                if not self._send(ENTER_TAD_OFF_HOOK):
-                    raise RuntimeError("Unable put modem into telephone answering device mode.")
-
-                # Play 1.2 beep
-                if not self._send(SEND_VOICE_TONE_BEEP):
-                    raise RuntimeError("Failed to play 1.2 second beep.")
-
                 if not self._send(ENABLE_SILENCE_DETECTION_5_SECS):
                     raise RuntimeError("Failed to enable silence detection.")
+
+                if not self._send(TELEPHONE_ANSWERING_DEVICE_OFF_HOOK):
+                    raise RuntimeError("Unable put modem (TAD) off hook.")
+
+                if not self._send(SEND_VOICE_TONE_BEEP):
+                    raise RuntimeError("Failed to play 1.2 second beep.")
 
                 if not self._send(ENTER_VOICE_RECIEVE_DATA_STATE, "CONNECT"):
                     raise RuntimeError("Error: Unable put modem into voice receive mode.")
@@ -502,6 +496,7 @@ class Modem(object):
                 wf.setsampwidth(1)
                 wf.setframerate(8000)
                 wf.writeframes(b''.join(audio_frames))
+
             print(">> Recording stopped after {} seconds".format((datetime.now() - start_time).seconds))
 
             # Clear input buffer before sending commands else its
@@ -539,7 +534,7 @@ class Modem(object):
                 if not self._send(ENABLE_SILENCE_DETECTION_10_SECS):
                     raise RuntimeError("Failed to enable silence detection.")
 
-                if not self._send(ENTER_TAD_OFF_HOOK):
+                if not self._send(TELEPHONE_ANSWERING_DEVICE_OFF_HOOK):
                     raise RuntimeError("Unable put modem into Telephone Answering Device mode.")
 
                 # Wait for keypress
