@@ -720,7 +720,6 @@ class Modem(object):
                 if self._send(ENTER_VOICE_MODE):
                     self.model = "UNKNOWN"
                     # Use the default settings (used by the USR 5637 modem)
-                    SET_VOICE_COMPRESSION = SET_VOICE_COMPRESSION_USR
                 else:
                     print("Error: Failed to put modem into voice mode.")
                     success = False
