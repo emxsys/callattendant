@@ -7,6 +7,7 @@ Flask==1.1.2
 flask-paginate==0.6.0
 future==0.18.2
 gpiozero==1.5.1
+gTTS=2.11
 iso8601==0.1.12
 itsdangerous==1.1.0
 Jinja2==2.11.2
