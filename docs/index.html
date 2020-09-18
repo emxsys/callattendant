@@ -238,38 +238,21 @@
           <div class="card-body">
             <h2 class="card-title">Typical Software Install</h2>
             <h5><code>pip3 install callattendant</code></h5>
-            <p>Reboot the Pi</p>
-            <p>Commands to configure and run the __callattendant__:</p>
+            <p>Reboot the Pi after install. Use these commands to configure and run the callattendant:</p>
             <pre><code>
-# Create the default data folder and files (required 1st time)
+# Create the default data folder 
+# (required the 1st time)
 callattendant --create-folder
 
-# Using a default configuration
+# Using the default configuration
 callattendant
 
 # Customize the example configuration ...
 nano /home/pi/.callattendant/app.cfg
 
-# ...and Using the customized `app.cfg` configuration
+# ...and use the customized `app.cfg`
 callattendant --config app.cfg
             </code></pre
-            
-<!--
-            <p>Install a virtual environment and the software in the current directory:</p>
-            <pre><code>
-# Install - if necessary
-sudo apt install virtualenv
-
-# Create the virtual environment
-virtualenv venv --python=python3
-
-# Activate it
-source venv/bin/activate
-
-# Use "pip" to install the software
-pip install callattendant
-            </code></pre>
--->
           </div>
           <div class="card-footer">
             <a class="btn btn-secondary" href="https://github.com/emxsys/callattendant/wiki#software" role="button">View details &raquo;</a>
