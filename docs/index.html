@@ -122,7 +122,7 @@
                 to your home phone without interruption</li>
               <li><b>Blocked</b> callers, defined by the <i>Blocked Numbers</i> list, are blocked
                 immediately, often before the first ring.
-              <li><b>Screened</b> callers are all others, they're checked against
+              <li><b>Unknown</b> callers are all others, they're <i>screened</i> against the 
                 blocked name and number patterns and an online database and then
                 either allowed or denied.</li>
             </ol>
@@ -236,7 +236,7 @@
             <img class="card-img-top" src="assets/download.svg" alt="Card image" height="100" style="opacity: 0.2;">
           </span>
           <div class="card-body">
-            <h2 class="card-title">Typical Software Install</h2>
+            <h2 class="card-title">Typical Install</h2>
             <h5><code>pip3 install callattendant</code></h5>
             <p>Reboot the Pi after install. Use these commands to configure and run the callattendant:</p>
             <pre><code>
@@ -247,10 +247,10 @@ callattendant --create-folder
 # Using the default configuration
 callattendant
 
-# Customize the example configuration ...
+# Customize the example config ...
 nano /home/pi/.callattendant/app.cfg
 
-# ...and use the customized `app.cfg`
+# ... and use your customized config
 callattendant --config app.cfg
             </code></pre
           </div>
