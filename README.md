@@ -10,9 +10,15 @@ before the first ring on your landline.
 
 _If you're at all interested in this project, please provide some feedback by giving it a
 __[star](https://github.com/emxsys/callattendant/stargazers)__, or even better, get involved
-by filing [issues](https://github.com/emxsys/callattendant/issues) and/or
+by filing [issues](https://github.com/emxsys/callattendant/issues), joining the 
+[forum](https://groups.io/g/callattendant) and/or submitting 
 [pull requests](https://github.com/emxsys/callattendant/pulls).
 Thanks!_
+
+#### Support Links
+- [Web Page](https://emxsys.github.io/callattendant/)
+- [Wiki](https://github.com/emxsys/callattendant/wiki)
+- [Forum](https://groups.io/g/callattendant)
 
 #### Table of Contents
 - [Overview](#overview)
