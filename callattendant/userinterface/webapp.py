@@ -320,7 +320,7 @@ def calls():
     calls = []
     for row in result_set:
         number = row[2]
-        phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
+        phone_no = format_phone_no(number)
         # Flask pages use the static folder to get resources.
         # In the static folder we have created a soft-link to the
         # data/messsages folder containing the actual messages.
@@ -403,7 +403,7 @@ def calls_view(call_no):
     caller = {}
     if len(row) > 0:
         number = row[2]
-        phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
+        phone_no = format_phone_no(number)
         # Flask pages use the static folder to get resources.
         # In the static folder we have created a soft-link to the
         # data/messsages folder containing the actual messages.
@@ -503,7 +503,7 @@ def callers_manage(call_no):
         number = record[2]
         caller.update(dict(
             call_no=record[0],
-            phone_no='{}-{}-{}'.format(number[0:3], number[3:6], number[6:]),
+            phone_no=format_phone_no(number),
             name=record[1],
             whitelisted=record[3],
             blacklisted=record[4],
@@ -544,7 +544,7 @@ def callers_blocked():
     records = []
     for record in result_set:
         number = record[0]
-        phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
+        phone_no = format_phone_no(number)
         records.append(dict(
             Phone_Number=phone_no,
             Name=record[1],
@@ -636,7 +636,7 @@ def callers_permitted():
     records = []
     for record in result_set:
         number = record[0]
-        phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
+        phone_no = format_phone_no(number)
         records.append(dict(
             Phone_Number=phone_no,
             Name=record[1],
@@ -763,7 +763,7 @@ def messages():
             msg_no=row[0],
             call_no=row[1],
             name=row[2],
-            phone_no='{}-{}-{}'.format(number[0:3], number[3:6], number[6:]),
+            phone_no=format_phone_no(number),
             wav_file=filepath,
             msg_played=row[5],
             date=date_time.strftime('%d-%b-%y'),
