@@ -24,6 +24,42 @@ TESTING = False
 #   This should not be changed/overrriden except during development/testing
 #DATABASE = "callattendant.db"
 
+# PHONE_DISPLAY_SEPARATOR: Specify the character used to format phone numbers, e.g, a space, hyphen or period,
+PHONE_DISPLAY_SEPARATOR = "-"
+
+# PHONE_DISPLAY_FORMAT: Define the formatting of phone numbers in the various lists. You must use the
+# separator character defined by PHONE_DISPLAY_SEPARATOR above in the format string.
+#
+#   The phone display format handles variable length phone numbers. Excess digits not included
+#   in the format string are prepended to the number with a separator.
+#   For example, the AUS number 006173XXXYYYY would be formatted as follows:
+#       General format: 006173-XXX-YYYY
+#            AU format: 00-61-73-XXX-YYYY
+#            US format: 006-173-XXX-YYYY
+#            UK format: 00-6173-XXX-YYYY
+#            FR format: 0061-73X-XX-YY-YY
+#
+#  Example: General
+#   PHONE_DISPLAY_FORMAT = "###-####"
+#
+#  Example: US
+#   PHONE_DISPLAY_FORMAT = "###-###-####"
+#
+#  Example: UK
+#   PHONE_DISPLAY_FORMAT = "####-###-####"
+#
+#  Example: FR
+#   PHONE_DISPLAY_FORMAT = "###-##-##-##"
+#
+#  Example: AU
+#   PHONE_DISPLAY_FORMAT = "##-##-###-####"
+#
+#  Example: Raw - no formatting
+#  PHONE_DISPLAY_FORMAT = ""
+#
+PHONE_DISPLAY_FORMAT = "###-###-####"
+
+
 # SCREENING_MODE: A tuple containing: "whitelist" and/or "blacklist", or empty
 SCREENING_MODE = ("whitelist", "blacklist")
 
