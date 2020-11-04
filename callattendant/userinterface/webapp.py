@@ -448,7 +448,7 @@ def callers_manage(call_no):
 
     # Post changes to the blacklist or whitelist table before rendering
     if request.method == 'POST':
-        number = request.form['phone_no'].replace('-', '')
+        number = strip_phone_no(request.form['phone_no'])
         if request.form['action'] == 'add-permit':
             caller = {}
             caller['NMBR'] = number
@@ -564,6 +564,7 @@ def callers_blocked():
     return render_template(
         'callers_blocked.html',
         active_nav_item='blocked',
+        phone_no_format=current_app.config.get("MASTER_CONFIG").get("PHONE_DISPLAY_FORMAT"),
         blacklist=records,
         page=page,
         per_page=per_page,
@@ -577,8 +578,7 @@ def callers_blocked_add():
     Add a new blacklist entry
     """
     caller = {}
-    # TODO: Strip all none digits from phone via regex
-    number = request.form["phone"].replace('-', '')
+    number = strip_phone_no(request.form["phone"])
     caller['NMBR'] = number
     caller['NAME'] = request.form["name"]
     print("Adding " + number + " to blacklist")
@@ -596,7 +596,7 @@ def callers_blocked_update(phone_no):
     """
     Update the blacklist entry associated with the phone number.
     """
-    number = phone_no.replace('-', '')
+    number = strip_phone_no(phone_no)
     print("Updating " + number + " in blacklist")
     blacklist = Blacklist(get_db(), current_app.config)
     blacklist.update_number(number, request.form['name'], request.form['reason'])
@@ -609,7 +609,7 @@ def callers_blocked_delete(phone_no):
     """
     Delete the blacklist entry associated with the phone number.
     """
-    number = phone_no.replace('-', '')
+    number = strip_phone_no(phone_no)
 
     print("Removing " + number + " from blacklist")
     blacklist = Blacklist(get_db(), current_app.config)
@@ -655,6 +655,7 @@ def callers_permitted():
     return render_template(
         'callers_permitted.html',
         active_nav_item='permitted',
+        phone_no_format=current_app.config.get("MASTER_CONFIG").get("PHONE_DISPLAY_FORMAT"),
         whitelist=records,
         total_calls=total,
         page=page,
@@ -669,8 +670,7 @@ def callers_permitted_add():
     Add a new whitelist entry
     """
     caller = {}
-    # TODO: Strip all none digits from phone via regex
-    number = request.form['phone'].replace('-', '')
+    number = strip_phone_no(request.form['phone'])
     caller['NMBR'] = number
     caller['NAME'] = request.form['name']
     print("Adding " + number + " to whitelist")
@@ -688,7 +688,8 @@ def callers_permitted_update(phone_no):
     """
     Update the whitelist entry associated with the phone number.
     """
-    number = phone_no.replace('-', '')
+    number = strip_phone_no(phone_no)
+
     print("Updating " + number + " in whitelist")
     whitelist = Whitelist(get_db(), current_app.config)
     whitelist.update_number(number, request.form['name'], request.form['reason'])
@@ -701,7 +702,7 @@ def callers_permitted_delete(phone_no):
     """
     Delete the whitelist entry associated with the phone number.
     """
-    number = phone_no.replace('-', '')
+    number = strip_phone_no(phone_no)
 
     print("Removing " + number + " from whitelist")
     whitelist = Whitelist(get_db(), current_app.config)
@@ -865,8 +866,9 @@ def settings():
 
 
 def format_phone_no(number):
-    ''' Format the phone number based on a template.'''
-
+    '''
+    Returns a formatted the phone number based on the PHONE_DISPLAY_FORMAT configuration setting.
+    '''
     config = current_app.config.get("MASTER_CONFIG")
     template = config.get("PHONE_DISPLAY_FORMAT")
     separator = config.get("PHONE_DISPLAY_SEPARATOR")
@@ -900,9 +902,17 @@ def format_phone_no(number):
     # Return the formatted number
     return separator.join(phone_parts)
 
+def strip_phone_no(phone_no):
+    '''
+    Returns the phone no stripped of all non-alphanumeric characters.
+    '''
+    return "".join(filter(str.isalnum, phone_no))
+
 
 def get_db():
-    '''Get a connection to the database'''
+    '''
+    Get a connection to the database
+    '''
     # Flask template for database connections
     if 'db' not in g:
         master_config = current_app.config.get("MASTER_CONFIG")
@@ -916,7 +926,9 @@ def get_db():
 
 
 def close_db(e=None):
-    '''Clost the connection to the database'''
+    '''
+    Clost the connection to the database
+    '''
     # Flask template for database connections
     db = g.pop('db', None)
 
@@ -925,7 +937,9 @@ def close_db(e=None):
 
 
 def get_row_count(table_name):
-    '''Returns the row count for the given table'''
+    '''
+    Returns the row count for the given table
+    '''
     # Using the current request's db connection
     sql = 'select count(*) from {}'.format(table_name)
     g.cur.execute(sql)
