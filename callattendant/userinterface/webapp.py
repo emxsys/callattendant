@@ -273,8 +273,7 @@ def calls():
     search_criteria = ""
     if search_text:
         if search_type == "phone":
-            num_list = re.findall('[0-9]+', search_text)
-            number = "".join(num_list)  # override GET arg if we're searching
+            number = transform_number(search_text)  # override GET arg if we're searching
             search_criteria = "WHERE Number='{}'".format(number)
         else:
             search_criteria = "WHERE Caller LIKE '%{}%'".format(search_text)
@@ -448,7 +447,7 @@ def callers_manage(call_no):
 
     # Post changes to the blacklist or whitelist table before rendering
     if request.method == 'POST':
-        number = strip_phone_no(request.form['phone_no'])
+        number = transform_number(request.form['phone_no'])
         if request.form['action'] == 'add-permit':
             caller = {}
             caller['NMBR'] = number
@@ -578,7 +577,7 @@ def callers_blocked_add():
     Add a new blacklist entry
     """
     caller = {}
-    number = strip_phone_no(request.form["phone"])
+    number = transform_number(request.form["phone"])
     caller['NMBR'] = number
     caller['NAME'] = request.form["name"]
     print("Adding " + number + " to blacklist")
@@ -596,7 +595,7 @@ def callers_blocked_update(phone_no):
     """
     Update the blacklist entry associated with the phone number.
     """
-    number = strip_phone_no(phone_no)
+    number = transform_number(phone_no)
     print("Updating " + number + " in blacklist")
     blacklist = Blacklist(get_db(), current_app.config)
     blacklist.update_number(number, request.form['name'], request.form['reason'])
@@ -609,7 +608,7 @@ def callers_blocked_delete(phone_no):
     """
     Delete the blacklist entry associated with the phone number.
     """
-    number = strip_phone_no(phone_no)
+    number = transform_number(phone_no)
 
     print("Removing " + number + " from blacklist")
     blacklist = Blacklist(get_db(), current_app.config)
@@ -670,7 +669,7 @@ def callers_permitted_add():
     Add a new whitelist entry
     """
     caller = {}
-    number = strip_phone_no(request.form['phone'])
+    number = transform_number(request.form['phone'])
     caller['NMBR'] = number
     caller['NAME'] = request.form['name']
     print("Adding " + number + " to whitelist")
@@ -688,7 +687,7 @@ def callers_permitted_update(phone_no):
     """
     Update the whitelist entry associated with the phone number.
     """
-    number = strip_phone_no(phone_no)
+    number = transform_number(phone_no)
 
     print("Updating " + number + " in whitelist")
     whitelist = Whitelist(get_db(), current_app.config)
@@ -702,7 +701,7 @@ def callers_permitted_delete(phone_no):
     """
     Delete the whitelist entry associated with the phone number.
     """
-    number = strip_phone_no(phone_no)
+    number = transform_number(phone_no)
 
     print("Removing " + number + " from whitelist")
     whitelist = Whitelist(get_db(), current_app.config)
@@ -902,11 +901,11 @@ def format_phone_no(number):
     # Return the formatted number
     return separator.join(phone_parts)
 
-def strip_phone_no(phone_no):
+def transform_number(phone_no):
     '''
-    Returns the phone no stripped of all non-alphanumeric characters.
+    Returns the phone no stripped of all non-alphanumeric characters and makes uppercase.
     '''
-    return "".join(filter(str.isalnum, phone_no))
+    return "".join(filter(str.isalnum, phone_no)).upper()
 
 
 def get_db():
