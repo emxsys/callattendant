@@ -62,14 +62,15 @@ class CallScreener(object):
                         reason = block["number_patterns"][key]
                         print(reason)
                         return True, reason
-                print(">> Checking nomorobo...")
-                result = self._nomorobo.lookup_number(number)
-                if result["spam"]:
-                    reason = "{} with score {}".format(result["reason"], result["score"])
-                    if self.config["DEBUG"]:
-                        print(">>> {}".format(reason))
-                    self.blacklist_caller(callerid, reason)
-                    return True, reason
+                if block["service"].upper() == "NOMOROBO":
+                    print(">> Checking nomorobo...")
+                    result = self._nomorobo.lookup_number(number)
+                    if result["spam"]:
+                        reason = "{} with score {}".format(result["reason"], result["score"])
+                        if self.config["DEBUG"]:
+                            print(">>> {}".format(reason))
+                        self.blacklist_caller(callerid, reason)
+                        return True, reason
                 print("Caller has been screened")
                 return False, "Not found"
         finally:

@@ -74,6 +74,14 @@ BLOCK_NAME_PATTERNS = {"V[0-9]{15}": "Telemarketer Caller ID", }
 #   Example: {"P": "Private number", "O": "Out of area",}
 BLOCK_NUMBER_PATTERNS = {}
 
+# BLOCK_SERVICE: The name of the online service used to lookup robocallers and spam numbers.
+#   Currently, only NOMOROBO is supported and it is for the USA. Areas outside the USA should set
+#   to blank. When the online service is blank (disabled), only the blacklist and blocked
+#   name/number patterns are used to block numbers.
+#
+#   Example: "NOMOROBO" (USA)  or "" (disabled).
+BLOCK_SERVICE = "NOMOROBO"
+
 
 # BLOCKED_ACTIONS: A tuple containing a combination of the following actions:
 #   "greeting", "record_message", "voice_mail".
