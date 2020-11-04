@@ -50,6 +50,8 @@ def myapp():
 
         master_config = {
             "DB_FILE": db_path,
+            "PHONE_DISPLAY_FORMAT": "###-###-####",
+            "PHONE_DISPLAY_SEPARATOR": "-",
         }
 
         app.config['MASTER_CONFIG'] = master_config
