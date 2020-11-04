@@ -1,0 +1,8 @@
+[Desktop Entry]
+Comment=Edit the callattendant configuration
+Terminal=true
+Name=Configure Call Attendant
+Exec=nano ~/.callattendant/app.cfg
+Type=Application
+Icon=emblem-system
+Categories=System;

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Comment=Monitor the callattendant service logs
+Terminal=true
+Name=Monitor Call Attendant
+Exec=monitor-callattendant
+Type=Application
+Icon=leftjust
+Categories=System;
