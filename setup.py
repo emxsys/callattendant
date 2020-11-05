@@ -59,6 +59,15 @@ setuptools.setup(
         "bin/restart-callattendant",
         "bin/monitor-callattendant",
     ],
+    data_files = [
+        ('share/applications', [
+            'bin/configure-callattendant.desktop',
+            'bin/monitor-callattendant.desktop',
+            'bin/restart-callattendant.desktop',
+            'bin/stop-callattendant.desktop',
+            ]
+        ),
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
@@ -70,4 +79,5 @@ setuptools.setup(
         "Topic :: Home Automation",
     ],
     python_requires='>=3.5',
+
 )

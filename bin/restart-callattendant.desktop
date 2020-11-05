@@ -1,0 +1,8 @@
+[Desktop Entry]
+Comment=(Re)start the callattendant service
+Terminal=true
+Name=Restart Call Attendant
+Exec=restart-callattendant
+Type=Application
+Icon=call-start
+Categories=System;
