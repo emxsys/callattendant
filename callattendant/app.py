@@ -26,6 +26,7 @@ import os
 import sys
 import queue
 import sqlite3
+import time
 from pprint import pprint
 from shutil import copyfile
 
@@ -114,6 +115,10 @@ class CallAttendant(object):
 
         # Instruct the modem to start feeding calls into the caller queue
         self.modem.handle_calls(self.handle_caller)
+
+        # If testing, allow queue to be filled before processing for clean, readable logs
+        if self.config["TESTING"]:
+            time.sleep(1)
 
         # Process incoming calls
         while 1:

@@ -28,7 +28,11 @@ default_config = {
     "DATABASE": "callattendant.db",
     "SCREENING_MODE": ("whitelist", "blacklist"),
 
+    "PHONE_DISPLAY_SEPARATOR": "-",
+    "PHONE_DISPLAY_FORMAT": "###-###-####",
+
     "BLOCK_ENABLED": True,
+    "BLOCK_SERVICE": "NOMOROBO",
     "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID", },
     "BLOCK_NUMBER_PATTERNS": {},
 
