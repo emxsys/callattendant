@@ -41,7 +41,7 @@ default_config = {
     "SCREENED_RINGS_BEFORE_ANSWER": 0,
 
     "PERMIT_NAME_PATTERNS": {},
-    "PERMT_NUMBER_PATTERNS": {},
+    "PERMIT_NUMBER_PATTERNS": {},
 
     "PERMITTED_ACTIONS": (),
     "PERMITTED_GREETING_FILE": "resources/general_greeting.wav",
