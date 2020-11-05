@@ -89,7 +89,13 @@ SCREENED_GREETING_FILE = "resources/general_greeting.wav"
 #   Example: 0 to act immediately, possibly before your local phone rings.
 SCREENED_RINGS_BEFORE_ANSWER = 0
 
+# PERMIT_NAME_PATTERNS: A regex expression dict applied to the CID names
+#   Example: {".*DOE": "Family maybe", "O": "Unknown caller", }
+PERMIT_NAME_PATTERNS = {}
 
+# PERMIT_NUMBER_PATTERNS: A regx expression dict applied to the CID numbers
+#   Example: {"01628": "My area", }
+PERMIT_NUMBER_PATTERNS = {}
 
 # PERMITTED_ACTIONS:  A tuple containing a combination of the following actions:
 #   "greeting", "record_message", "voice_mail". See BLOCKED_ACTIONS for more info.

@@ -37,7 +37,30 @@ class CallScreener(object):
 
     def is_whitelisted(self, callerid):
         '''Returns true if the number is on a whitelist'''
-        return self._whitelist.check_number(callerid['NMBR'])
+        number = callerid['NMBR']
+        name = callerid["NAME"]
+        permit = self.config.get_namespace("PERMIT_")
+        try:
+            is_whitelisted, reason = self._whitelist.check_number(callerid['NMBR'])
+            if is_whitelisted:
+                return True, reason
+            else:
+                print(">> Checking permitted patterns...")
+                for key in permit["name_patterns"].keys():
+                    match = re.search(key, name)
+                    if match:
+                        reason = permit["name_patterns"][key]
+                        print(reason)
+                        return True, reason
+                for key in permit["number_patterns"].keys():
+                    match = re.search(key, number)
+                    if match:
+                        reason = permit["number_patterns"][key]
+                        print(reason)
+                        return True, reason
+                return False, "Not found"
+        finally:
+            sys.stdout.flush()
 
     def is_blacklisted(self, callerid):
         '''Returns true if the number is on a blacklist'''
