@@ -35,16 +35,19 @@ from callattendant.screening.callscreener import CallScreener
 
 
 # Create a blocked caller
-caller1 = {"NAME": "caller1", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
+caller1 = {"NAME": "CALLER1", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
 # Create a permitted caller
-caller2 = {"NAME": "caller2", "NMBR": "1111111111", "DATE": "1012", "TIME": "0600"}
-# Create a V123456789012345 Telemarketer caller
+caller2 = {"NAME": "CALLER2", "NMBR": "1111111111", "DATE": "1012", "TIME": "0600"}
+# Create a V123456789012345 Telemarketer caller (blocked name pattern match)
 caller3 = {"NAME": "V123456789012345", "NMBR": "80512345678", "DATE": "1012", "TIME": "0600"}
 # Create a robocaller
-caller4 = {"NAME": "caller4", "NMBR": "3105241189", "DATE": "1012", "TIME": "0600"}
-# Create a Private Number
-caller5 = {"NAME": "caller5", "NMBR": "P", "DATE": "1012", "TIME": "0600"}
-
+caller4 = {"NAME": "CALLER4", "NMBR": "3105241189", "DATE": "1012", "TIME": "0600"}
+# Create a Private Number (blocked number pattern match)
+caller5 = {"NAME": "CALLER5", "NMBR": "P", "DATE": "1012", "TIME": "0600"}
+# Create a John Doe name (permitted name pattern match)
+caller6 = {"NAME": "JOHN DOE", "NMBR": "0987654321", "DATE": "1012", "TIME": "0600"}
+# Create a unique number (permitted number pattern match)
+caller7 = {"NAME": "CALLER7", "NMBR": "09876543210", "DATE": "1012", "TIME": "0600"}
 
 @pytest.fixture(scope='module')
 def screener():
@@ -62,7 +65,12 @@ def screener():
     config['BLOCK_NUMBER_PATTERNS'] = {
         "P": "Private number",
     }
-
+    config['PERMIT_NAME_PATTERNS'] = {
+        ".*DOE": "Anyone",
+    }
+    config['PERMIT_NUMBER_PATTERNS'] = {
+        "987654": "Anyone",
+    }
     # Create the blacklist to be tested
     screener = CallScreener(db, config)
     # Add a record to the blacklist
@@ -106,3 +114,11 @@ def test_is_blacklisted_by_nomorobo(screener):
 def test_blocked_number_pattern(screener):
     is_blacklisted, reason = screener.is_blacklisted(caller5)
     assert is_blacklisted, "caller1 should be blocked by number pattern"
+
+def test_permitted_name_pattern(screener):
+    is_whitelisted, reason = screener.is_whitelisted(caller6)
+    assert is_whitelisted, "caller6 should be permiteed by name pattern"
+
+def test_permitted_number_pattern(screener):
+    is_whitelisted, reason = screener.is_whitelisted(caller7)
+    assert is_whitelisted, "caller7 should be permiteed by number pattern"
