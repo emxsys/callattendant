@@ -120,6 +120,7 @@ TEST_DATA = [
     b"RING", b"DATE=0803", b"TIME=1803", b"NMBR=3605554567", b"NAME=Test3 - Blocked",
     b"RING", b"DATE=0804", b"TIME=1804", b"NMBR=8005554567", b"NAME=V123456789012345",
     b"RING", b"DATE = 0805", b"TIME = 1805", b"NMBR = 8055554567", b"NAME = Test5 - Permitted",
+    b"RING", b"NMBR = 1234567890", b""
 ]
 
 
@@ -254,11 +255,22 @@ class Modem(object):
                         modem_data = TEST_DATA[test_index]
                         test_index += 1
                     else:
-                        # Wait/read a line of data from the serial port.
-                        # The verbose-form code is preceded and terminated by the
-                        # sequence <CR><LF>. The numeric-form is also terminated
-                        # by <CR>, but it has no preceding sequence.
+                        # Wait/read a line of data from the serial port with the configured timeout.
+                        # The verbose-form result codes are preceded and terminated by the
+                        # sequence <CR><LF>. The numeric-form is also terminated by <CR>,
+                        # but it has no preceding sequence.
                         modem_data = self._serial.readline()
+
+                # Some telcos do not supply all the caller info fields.
+                # If the modem timed out, look for and handle a partial set of caller info.
+                if modem_data == b'' and call_record.get('NMBR'):
+                    now = datetime.now()
+                    if not call_record.get('DATE'):
+                        call_record['DATE'] = now.strftime("%m%d")
+                    if not call_record.get('TIME'):
+                        call_record['TIME'] = now.strftime("%H%M")
+                    if not call_record.get('NAME'):
+                        call_record['NAME'] = "Unknown"
 
                 # Process the modem data
                 if modem_data != b'' and modem_data != CRLF:
@@ -274,9 +286,8 @@ class Modem(object):
                         self.ring_event.clear()
                         # Visual notification (LED)
                         self.ring_indicator.ring()
-
                     # Extract caller info
-                    if DATE in modem_data:
+                    elif DATE in modem_data:
                         items = decode(modem_data).split('=')
                         call_record['DATE'] = items[1].strip()
                     elif TIME in modem_data:
@@ -289,12 +300,12 @@ class Modem(object):
                         items = decode(modem_data).split('=')
                         call_record['NMBR'] = items[1].strip()
 
-                    # https://stackoverflow.com/questions/1285911/how-do-i-check-that-multiple-keys-are-in-a-dict-in-a-single-pass
-                    if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
-                        # Queue caller for screening
-                        print("> Queueing call {} for processing".format(call_record["NMBR"]))
-                        handle_caller(call_record)
-                        call_record = {}
+                # https://stackoverflow.com/questions/1285911/how-do-i-check-that-multiple-keys-are-in-a-dict-in-a-single-pass
+                if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
+                    # Queue caller for screening
+                    print("> Queueing call {} for processing".format(call_record["NMBR"]))
+                    handle_caller(call_record)
+                    call_record = {}
 
         finally:
             if dev_mode:
