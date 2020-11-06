@@ -85,13 +85,11 @@ def voicemail(db, config, modem):
 @pytest.mark.skipif(os.getenv("CI") == "true", reason="Hardware not installed")
 def test_multiple(voicemail, logger):
 
-        call_no = logger.log_caller(caller)
+    call_no = logger.log_caller(caller)
+    msg_no = voicemail.record_message(call_no, caller)
+    assert msg_no > 0
 
-        msg_no = voicemail.record_message(call_no, caller)
+    count = voicemail.messages.get_unplayed_count()
+    assert count == 1
 
-        assert msg_no > 0
-
-        count = voicemail.messages.get_unplayed_count()
-        assert count == 1
-
-        assert voicemail.delete_message(msg_no)
+    assert voicemail.delete_message(msg_no)

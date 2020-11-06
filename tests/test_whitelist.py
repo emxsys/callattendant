@@ -28,7 +28,6 @@ from pprint import pprint
 
 import pytest
 
-from callattendant.screening.query_db import query_db
 from callattendant.screening.whitelist import Whitelist
 
 

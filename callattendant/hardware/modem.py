@@ -431,8 +431,6 @@ class Modem(object):
         if self.config["DEBUG"]:
             print("> Recording {}...".format(audio_file_name))
 
-        debugging = self.config["DEBUG"]
-
         self._serial.cancel_read()
         with self._lock:
             try:
