@@ -23,8 +23,6 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-import os
-import sys
 import sqlite3
 from pprint import pprint
 
@@ -32,6 +30,7 @@ import pytest
 
 from callattendant.screening.query_db import query_db
 from callattendant.screening.whitelist import Whitelist
+
 
 @pytest.fixture(scope='module')
 def whitelist():
@@ -49,9 +48,10 @@ def whitelist():
 
     return whitelist
 
+
 def test_add_caller(whitelist):
     # Add a record
-    callerid = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600",}
+    callerid = {"NAME": "Bruce", "NMBR": "1234567890", "DATE": "1012", "TIME": "0600"}
     assert whitelist.add_caller(callerid, "Test")
 
 
@@ -69,6 +69,7 @@ def test_check_number(whitelist):
 
     assert not is_whitelisted
 
+
 def test_get_number(whitelist):
     number = "1234567890"
 
@@ -76,6 +77,7 @@ def test_get_number(whitelist):
     pprint(caller)
 
     assert caller[0][0] == number
+
 
 def test_multiple(whitelist):
     new_caller = {"NAME": "New Caller", "NMBR": "12312351234", "DATE": "1012", "TIME": "0600"}

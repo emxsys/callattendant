@@ -23,15 +23,13 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-import os
-import sys
-import sqlite3
 from pprint import pprint
 
 import pytest
 
 from callattendant.app import make_config
 from callattendant.screening.nomorobo import NomoroboService
+
 
 def test_lookup():
     nomorobo = NomoroboService()

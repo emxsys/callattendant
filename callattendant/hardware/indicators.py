@@ -26,8 +26,6 @@
 # See: https://gpiozero.readthedocs.io/en/stable/
 # See: https://gpiozero.readthedocs.io/en/stable/api_output.html#led
 
-import time
-from pprint import pprint
 from gpiozero import LED, PWMLED, LEDBoard, OutputDeviceError, LEDCollection
 
 GPIO_RING = 14

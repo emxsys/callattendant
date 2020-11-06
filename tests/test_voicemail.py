@@ -24,9 +24,7 @@
 #  SOFTWARE.
 
 import os
-import sys
 import sqlite3
-from pprint import pprint
 from tempfile import gettempdir
 
 import pytest
@@ -47,6 +45,7 @@ def db():
     db = sqlite3.connect(":memory:")
     return db
 
+
 @pytest.fixture(scope='module')
 def config():
 
@@ -58,11 +57,13 @@ def config():
 
     return config
 
+
 @pytest.fixture(scope='module')
 def logger(db, config):
 
     logger = CallLogger(db, config)
     return logger
+
 
 @pytest.fixture(scope='module')
 def modem(db, config):
@@ -72,14 +73,16 @@ def modem(db, config):
     yield modem
     modem.ring_indicator.close()
 
+
 @pytest.fixture(scope='module')
 def voicemail(db, config, modem):
 
     voicemail = VoiceMail(db, config, modem)
     return voicemail
 
+
 # Skip the test when running under continous integraion
-@pytest.mark.skipif(os.getenv("CI")=="true", reason="Hardware not installed")
+@pytest.mark.skipif(os.getenv("CI") == "true", reason="Hardware not installed")
 def test_multiple(voicemail, logger):
 
         call_no = logger.log_caller(caller)
