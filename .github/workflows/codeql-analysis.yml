@@ -10,7 +10,7 @@
 # supported CodeQL languages.
 # ******** NOTE ********
 
-name: "CodeQL"
+name: "callattendant-analysis"
 
 on:
   push:
