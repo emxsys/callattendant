@@ -24,7 +24,6 @@
 #  SOFTWARE.
 
 import os
-import sys
 import tempfile
 
 import pytest
@@ -74,7 +73,7 @@ def client(myapp):
 
 
 def test_dashboard(client):
-    response = client.get('/', follow_redirects = True)
+    response = client.get('/', follow_redirects=True)
     assert response.status_code == 200
     assert b"Dashboard" in response.data
     assert b"Statistics" in response.data

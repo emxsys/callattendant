@@ -160,7 +160,6 @@ class Modem(object):
         com_ports_list = com_ports.split(b'\n')
 
         # Find the right port associated with the Voice Modem
-        found = False
         for com_port in com_ports_list:
             if b'tty' in com_port:
                 # Try to open the COM Port and execute AT Command
@@ -207,8 +206,8 @@ class Modem(object):
         self._init_modem()
 
         self.event_thread = threading.Thread(
-                target=self._call_handler,
-                kwargs={'handle_caller': handle_caller})
+            target=self._call_handler,
+            kwargs={'handle_caller': handle_caller})
         self.event_thread.name = "modem_call_handler"
         self.event_thread.start()
 
@@ -432,8 +431,6 @@ class Modem(object):
         if self.config["DEBUG"]:
             print("> Recording {}...".format(audio_file_name))
 
-        debugging = self.config["DEBUG"]
-
         self._serial.cancel_read()
         with self._lock:
             try:
@@ -523,8 +520,8 @@ class Modem(object):
             # Send End of Recieve Data state by passing "<DLE>!"
             # USR-5637 note: The command returns <DLE><ETX>, but the DLE is stripped
             # from the response during the test, so we only test for the ETX.
-            response = lambda model: "OK" if model == "ZOOM" else ETX_CODE
-            if not self._send(DTE_END_VOICE_DATA_RX, response(self.model)):
+            response = "OK" if self.model == "ZOOM" else ETX_CODE
+            if not self._send(DTE_END_VOICE_DATA_RX, response):
                 print("* Error: Unable to signal end of data receive state")
 
         return True
@@ -719,11 +716,11 @@ class Modem(object):
                 ENABLE_SILENCE_DETECTION_5_SECS = ENABLE_SILENCE_DETECTION_5_SECS_ZOOM
                 ENABLE_SILENCE_DETECTION_10_SECS = ENABLE_SILENCE_DETECTION_10_SECS_ZOOM
                 # System DLE shielded codes (double DLE) - DTE to DCE commands
-                DTE_RAISE_VOLUME = (chr(16) + chr(16) + chr(117))               # <DLE><DLE>-u
-                DTE_LOWER_VOLUME = (chr(16) + chr(16) + chr(100))               # <DLE><DLE>-d
-                DTE_END_VOICE_DATA_RX = (chr(16) + chr(16) + chr(16) + chr(33)) # <DLE><DLE><DLE>-!
-                DTE_END_VOICE_DATA_TX = (chr(16) + chr(16) + chr(16) + chr(3))  # <DLE><DLE><DLE><ETX>
-                DTE_CLEAR_TRANSMIT_BUFFER = (chr(16) + chr(16) + chr(16) + chr(24)) # <DLE><DLE><DLE><CAN>
+                DTE_RAISE_VOLUME = (chr(16) + chr(16) + chr(117))                # <DLE><DLE>-u
+                DTE_LOWER_VOLUME = (chr(16) + chr(16) + chr(100))                # <DLE><DLE>-d
+                DTE_END_VOICE_DATA_RX = (chr(16) + chr(16) + chr(16) + chr(33))  # <DLE><DLE><DLE>-!
+                DTE_END_VOICE_DATA_TX = (chr(16) + chr(16) + chr(16) + chr(3))   # <DLE><DLE><DLE><ETX>
+                DTE_CLEAR_TRANSMIT_BUFFER = (chr(16) + chr(16) + chr(16) + chr(24))  # <DLE><DLE><DLE><CAN>
 
             else:
                 print("******* Unknown modem detected **********")

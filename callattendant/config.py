@@ -36,7 +36,7 @@ default_config = {
     "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID", },
     "BLOCK_NUMBER_PATTERNS": {},
 
-    "BLOCKED_ACTIONS": ("greeting", "record_message" ),
+    "BLOCKED_ACTIONS": ("greeting", "record_message"),
     "BLOCKED_RINGS_BEFORE_ANSWER": 0,
     "BLOCKED_GREETING_FILE": "resources/blocked_greeting.wav",
 
@@ -62,8 +62,8 @@ default_config = {
     "GPIO_LED_RING_BRIGHTNESS": 100,
     "GPIO_LED_APPROVED_PIN": 15,
     "GPIO_LED_APPROVED_BRIGHTNESS": 100,
-    "GPIO_LED_BLOCKED_PIN":17,
-    "GPIO_LED_BLOCKED_BRIGHTNESS":100,
+    "GPIO_LED_BLOCKED_PIN": 17,
+    "GPIO_LED_BLOCKED_BRIGHTNESS": 100,
     "GPIO_LED_MESSAGE_PIN": 4,
     "GPIO_LED_MESSAGE_BRIGHTNESS": 100,
     "GPIO_LED_MESSAGE_COUNT_PINS": (8, 7, 27, 23, 10, 11, 9, 18),

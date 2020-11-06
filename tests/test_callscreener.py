@@ -23,11 +23,7 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-import os
-import sys
 import sqlite3
-from pprint import pprint
-
 import pytest
 
 from callattendant.config import Config
@@ -48,6 +44,7 @@ caller5 = {"NAME": "CALLER5", "NMBR": "P", "DATE": "1012", "TIME": "0600"}
 caller6 = {"NAME": "JOHN DOE", "NMBR": "0987654321", "DATE": "1012", "TIME": "0600"}
 # Create a unique number (permitted number pattern match)
 caller7 = {"NAME": "CALLER7", "NMBR": "09876543210", "DATE": "1012", "TIME": "0600"}
+
 
 @pytest.fixture(scope='module')
 def screener():
@@ -115,9 +112,11 @@ def test_blocked_number_pattern(screener):
     is_blacklisted, reason = screener.is_blacklisted(caller5)
     assert is_blacklisted, "caller1 should be blocked by number pattern"
 
+
 def test_permitted_name_pattern(screener):
     is_whitelisted, reason = screener.is_whitelisted(caller6)
     assert is_whitelisted, "caller6 should be permiteed by name pattern"
+
 
 def test_permitted_number_pattern(screener):
     is_whitelisted, reason = screener.is_whitelisted(caller7)

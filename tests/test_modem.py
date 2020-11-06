@@ -24,10 +24,7 @@
 #  SOFTWARE.
 
 
-global SET_VOICE_COMPRESSION
-
 import os
-import sys
 import tempfile
 from pprint import pprint
 from tempfile import gettempdir
@@ -43,8 +40,10 @@ from callattendant.hardware.modem import Modem, RESET, \
     TERMINATE_CALL, ETX_CODE, DLE_CODE, \
     SET_VOICE_COMPRESSION, SET_VOICE_COMPRESSION_ZOOM
 
+global SET_VOICE_COMPRESSION
+
 # Skip the test when running under continous integraion
-pytestmark = pytest.mark.skipif(os.getenv("CI")=="true", reason="Hardware not installed")
+pytestmark = pytest.mark.skipif(os.getenv("CI") == "true", reason="Hardware not installed")
 
 
 @pytest.fixture(scope='module')
@@ -99,8 +98,8 @@ def test_put_modem_into_voice_recieve_data_state(modem):
 
 
 def test_cancel_data_receive_state(modem):
-    response = lambda model: "OK" if model == "ZOOM" else ETX_CODE
-    assert modem._send(DTE_END_VOICE_DATA_RX, response(modem.model))
+    response = "OK" if modem.model == "ZOOM" else ETX_CODE
+    assert modem._send(DTE_END_VOICE_DATA_RX, response)
 
 
 def test_terminate_call(modem):

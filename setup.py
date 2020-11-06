@@ -5,7 +5,6 @@
 #
 #  Copyright 2020 Bruce Schubert <bruce@emxsys.com>
 
-import os
 import setuptools
 
 # load the long_description from the README
@@ -59,14 +58,13 @@ setuptools.setup(
         "bin/restart-callattendant",
         "bin/monitor-callattendant",
     ],
-    data_files = [
+    data_files=[
         ('share/applications', [
             'bin/configure-callattendant.desktop',
             'bin/monitor-callattendant.desktop',
             'bin/restart-callattendant.desktop',
             'bin/stop-callattendant.desktop',
-            ]
-        ),
+        ]),
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

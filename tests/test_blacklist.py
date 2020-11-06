@@ -23,14 +23,11 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-import os
-import sys
 import sqlite3
 from pprint import pprint
 
 import pytest
 
-from callattendant.screening.query_db import query_db
 from callattendant.screening.blacklist import Blacklist
 
 

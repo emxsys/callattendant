@@ -32,7 +32,6 @@ from __future__ import division
 
 import logging
 import os
-import re
 import random
 import string
 import _thread
@@ -900,6 +899,7 @@ def format_phone_no(number):
         phone_parts.insert(0, number[0: number_len - total_digits])
     # Return the formatted number
     return separator.join(phone_parts)
+
 
 def transform_number(phone_no):
     '''
