@@ -129,8 +129,7 @@ class CallAttendant(object):
 
                 # An incoming call has occurred, log it
                 number = caller["NMBR"]
-                phone_no = "{}-{}-{}".format(number[0:3], number[3:6], number[6:])
-                print("Incoming call from {}".format(phone_no))
+                print("Incoming call from {}".format(number))
 
                 # Vars used in the call screening
                 caller_permitted = False
@@ -163,7 +162,7 @@ class CallAttendant(object):
 
                 # Log every call to the database (and console)
                 call_no = self.logger.log_caller(caller, action, reason)
-                print("--> {} {}: {}".format(phone_no, action, reason))
+                print("--> {} {}: {}".format(number, action, reason))
 
                 # Gather the data used to answer the call
                 if caller_permitted:
