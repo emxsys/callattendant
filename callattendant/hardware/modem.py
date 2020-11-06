@@ -416,7 +416,7 @@ class Modem(object):
                 while data != b'':
                     self._serial.write(data)
                     data = wavefile.readframes(chunk)
-                    # ~ time.sleep(sleep_interval)
+                    time.sleep(sleep_interval)
 
                 self._send(DTE_END_VOICE_DATA_TX)
 
