@@ -139,8 +139,10 @@ class Modem(object):
         self.config = config
         self.model = None
 
-        # Thread synchronization object
+        # Thread synchronization objects
+        self._stop_event = threading.Event()
         self._lock = threading.RLock()
+        self._thread = None
 
         # Ring notifications
         self.ring_indicator = RingIndicator(
@@ -152,7 +154,9 @@ class Modem(object):
         self._serial = serial.Serial()
 
     def open_serial_port(self):
-        """Detects and opens the serial port attached to the modem."""
+        """
+        Detects and opens the serial port attached to the modem.
+        """
         # List all the Serial COM Ports on Raspberry Pi
         proc = subprocess.Popen(['ls /dev/tty[A-Za-z]*'], shell=True, stdout=subprocess.PIPE)
         com_ports = proc.communicate()[0]
@@ -186,18 +190,20 @@ class Modem(object):
         return False
 
     def close_serial_port(self):
-        """Closes the serial port attached to the modem."""
-        print("Closing Serial Port")
+        """
+        Closes the serial port attached to the modem.
+        """
+        print("-> Closing Serial Port")
         try:
             if self._serial.isOpen():
                 self._serial.close()
-                print("Serial Port closed...")
+                print("-> Serial Port closed")
         except Exception as e:
             print(e)
             print("Error: Unable to close the Serial Port.")
             sys.exit()
 
-    def handle_calls(self, handle_caller):
+    def start(self, handle_caller):
         """
         Starts the thread that processes incoming data.
             :param handle_caller:
@@ -205,11 +211,20 @@ class Modem(object):
         """
         self._init_modem()
 
-        self.event_thread = threading.Thread(
+        self._thread = threading.Thread(
             target=self._call_handler,
             kwargs={'handle_caller': handle_caller})
-        self.event_thread.name = "modem_call_handler"
-        self.event_thread.start()
+        self._thread.name = "modem_call_handler"
+        self._thread.start()
+
+    def stop(self):
+        """
+        Stops the modem thread and releases hardware resources.
+        """
+        self._stop_event.set()
+        if self._thread:
+            self._thread.join()
+        self.ring_indicator.close()
 
     def _call_handler(self, handle_caller):
         """
@@ -242,7 +257,7 @@ class Modem(object):
             # This loop reads incoming data from the serial port and
             # posts the caller data to the handle_caller function
             call_record = {}
-            while 1:
+            while not self._stop_event.is_set():
                 modem_data = b''
 
                 # Read from the modem
@@ -308,7 +323,7 @@ class Modem(object):
 
         finally:
             if dev_mode:
-                print("Closing modem log file")
+                print("-> Closing modem log file")
                 logfile.close()
 
     def pick_up(self):

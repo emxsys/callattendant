@@ -27,6 +27,7 @@ import sys
 import queue
 import sqlite3
 import time
+import threading
 from pprint import pprint
 from shutil import copyfile
 
@@ -50,6 +51,9 @@ class CallAttendant(object):
         """
         # The application-wide configuration
         self.config = config
+
+        # Thread synchonization object
+        self._stop_event = threading.Event()
 
         # Open the database
         if self.config["TESTING"]:
@@ -99,10 +103,11 @@ class CallAttendant(object):
             pprint(caller)
         self._caller_queue.put(caller)
 
-    def process_calls(self):
+    def run(self):
         """
         Processes incoming callers by logging, screening, blocking
         and/or recording messages.
+            :returns: exit code 1 on error otherwise 0
         """
         # Get relevant config settings
         screening_mode = self.config['SCREENING_MODE']
@@ -114,18 +119,23 @@ class CallAttendant(object):
         permitted_greeting_file = permitted['greeting_file']
 
         # Instruct the modem to start feeding calls into the caller queue
-        self.modem.handle_calls(self.handle_caller)
+        self.modem.start(self.handle_caller)
 
         # If testing, allow queue to be filled before processing for clean, readable logs
         if self.config["TESTING"]:
             time.sleep(1)
 
         # Process incoming calls
-        while 1:
+        exit_code = 0
+        caller = {}
+        print("Waiting for call...")
+        while not self._stop_event.is_set():
             try:
                 # Wait (blocking) for a caller
-                print("Waiting for call...")
-                caller = self._caller_queue.get()
+                try:
+                    caller = self._caller_queue.get(True, 3.0)
+                except queue.Empty:
+                    continue
 
                 # An incoming call has occurred, log it
                 number = caller["NMBR"]
@@ -198,10 +208,27 @@ class CallAttendant(object):
                 if ok_to_answer and len(actions) > 0:
                     self.answer_call(actions, greeting, call_no, caller)
 
+                print("Waiting for next call...")
+
+            except KeyboardInterrupt:
+                print("** User initiated shutdown")
+                self._stop_event.set()
             except Exception as e:
                 pprint(e)
-                print("** Error running callattendant. Exiting.")
-                return 1
+                print("** Error running callattendant")
+                self._stop_event.set()
+                exit_code = 1
+        return exit_code
+
+    def shutdown(self):
+        print("Shutting down...")
+        print("-> Stopping modem")
+        self.modem.stop()
+        print("-> Stopping voice mail")
+        self.voice_mail.stop()
+        print("-> Releasing resources")
+        self.approved_indicator.close()
+        self.blocked_indicator.close()
 
     def answer_call(self, actions, greeting, call_no, caller):
         """
@@ -389,8 +416,12 @@ def main(argv):
 
     # Create and start the application
     app = CallAttendant(config)
-    app.process_calls()
-    return 0
+    exit_code = 0
+    try:
+        exit_code = app.run()
+    finally:
+        app.shutdown()
+    return exit_code
 
 
 if __name__ == '__main__':

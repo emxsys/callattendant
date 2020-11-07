@@ -60,7 +60,7 @@ def modem():
 
     yield modem
 
-    modem.ring_indicator.close()
+    modem.stop()
 
 
 def test_profile_reset(modem):

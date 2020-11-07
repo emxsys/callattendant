@@ -71,14 +71,15 @@ def modem(db, config):
     modem = Modem(config)
     modem.open_serial_port()
     yield modem
-    modem.ring_indicator.close()
+    modem.stop()
 
 
 @pytest.fixture(scope='module')
 def voicemail(db, config, modem):
 
     voicemail = VoiceMail(db, config, modem)
-    return voicemail
+    yield voicemail
+    voicemail.stop()
 
 
 # Skip the test when running under continous integraion
