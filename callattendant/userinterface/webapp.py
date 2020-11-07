@@ -984,7 +984,7 @@ def get_pagination(**kwargs):
 def run_flask(config):
     '''
     Runs the Flask webapp.
-        :param database: full path to the callattendant database file
+        :param config: the application-wide master config object
     '''
     app.secret_key = get_random_string()
     with app.app_context():
@@ -1007,6 +1007,6 @@ def run_flask(config):
 def start(config):
     '''
     Starts the Flask webapp in a separate thread.
-        :param database: full path to the callattendant database file
+        :param config: the application-wide master config object
     '''
     _thread.start_new_thread(run_flask, (config,))
