@@ -133,7 +133,7 @@ class CallAttendant(object):
             try:
                 # Wait (blocking) for a caller
                 try:
-                    caller = self._caller_queue.get(False, 3.0)
+                    caller = self._caller_queue.get(True, 3.0)
                 except queue.Empty:
                     continue
 
