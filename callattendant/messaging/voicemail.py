@@ -60,9 +60,10 @@ class VoiceMail:
         self.messages = Message(db, config)
 
         # Start the thread that monitors the message events and updates the indicators
-        self.event_thread = threading.Thread(target=self._event_handler)
-        self.event_thread.name = "voice_mail_event_handler"
-        self.event_thread.start()
+        self._stop_event = threading.Event()
+        self._thread = threading.Thread(target=self._event_handler)
+        self._thread.name = "voice_mail_event_handler"
+        self._thread.start()
 
         # Pulse the indicator if an unplayed msg is waiting
         self.reset_message_indicator()
@@ -70,13 +71,22 @@ class VoiceMail:
         if self.config["DEBUG"]:
             print("VoiceMail initialized")
 
+    def stop(self):
+        """
+        Stops the voice mail thread and releases hardware resources.
+        """
+        self._stop_event.set()
+        self._thread.join()
+        self.message_indicator.close()
+        self.message_count_indicator.close()
+
     def _event_handler(self):
         """
         Thread function that updates the message indicators upon a message event.
         """
-        while 1:
+        while not self._stop_event.is_set():
             # Get the number of unread messages
-            if self.message_event.wait():
+            if self.message_event.wait(2.0):
                 if self.config["DEBUG"]:
                     print("Message Event triggered")
                 self.reset_message_indicator()

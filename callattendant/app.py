@@ -107,6 +107,7 @@ class CallAttendant(object):
         """
         Processes incoming callers by logging, screening, blocking
         and/or recording messages.
+            :returns: exit code 1 on error otherwise 0
         """
         # Get relevant config settings
         screening_mode = self.config['SCREENING_MODE']
@@ -126,11 +127,15 @@ class CallAttendant(object):
 
         # Process incoming calls
         exit_code = 0
-        while not self._stop_event.isSet():
+        caller = {}
+        print("Waiting for call...")
+        while not self._stop_event.is_set():
             try:
                 # Wait (blocking) for a caller
-                print("Waiting for call...")
-                caller = self._caller_queue.get()
+                try:
+                    caller = self._caller_queue.get(False, 3.0)
+                except queue.Empty:
+                    continue
 
                 # An incoming call has occurred, log it
                 number = caller["NMBR"]
@@ -202,16 +207,28 @@ class CallAttendant(object):
                 # Answer the call!
                 if ok_to_answer and len(actions) > 0:
                     self.answer_call(actions, greeting, call_no, caller)
+
+                print("Waiting for next call...")
+
             except KeyboardInterrupt:
-                print("User requested shutdown")
+                print("** User initiated shutdown")
                 self._stop_event.set()
             except Exception as e:
                 pprint(e)
-                print("** Error running callattendant.")
+                print("** Error running callattendant")
                 self._stop_event.set()
                 exit_code = 1
-        print("Exiting")
         return exit_code
+
+    def shutdown(self):
+        print("Shutting down...")
+        print("-> Stopping modem")
+        self.modem.stop()
+        print("-> Stopping voice mail")
+        self.voice_mail.stop()
+        print("-> Releasing resources")
+        self.approved_indicator.close()
+        self.blocked_indicator.close()
 
     def answer_call(self, actions, greeting, call_no, caller):
         """
@@ -403,9 +420,7 @@ def main(argv):
     try:
         exit_code = app.run()
     finally:
-        print("Stopping modem")
-        app.modem.stop()
-    print("Bye!")
+        app.shutdown()
     return exit_code
 
 
