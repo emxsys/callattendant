@@ -27,6 +27,7 @@ import sys
 import queue
 import sqlite3
 import time
+import threading
 from pprint import pprint
 from shutil import copyfile
 
@@ -50,6 +51,9 @@ class CallAttendant(object):
         """
         # The application-wide configuration
         self.config = config
+
+        # Thread synchonization object
+        self._stop_event = threading.Event()
 
         # Open the database
         if self.config["TESTING"]:
@@ -99,7 +103,7 @@ class CallAttendant(object):
             pprint(caller)
         self._caller_queue.put(caller)
 
-    def process_calls(self):
+    def run(self):
         """
         Processes incoming callers by logging, screening, blocking
         and/or recording messages.
@@ -114,14 +118,15 @@ class CallAttendant(object):
         permitted_greeting_file = permitted['greeting_file']
 
         # Instruct the modem to start feeding calls into the caller queue
-        self.modem.handle_calls(self.handle_caller)
+        self.modem.start(self.handle_caller)
 
         # If testing, allow queue to be filled before processing for clean, readable logs
         if self.config["TESTING"]:
             time.sleep(1)
 
         # Process incoming calls
-        while 1:
+        exit_code = 0
+        while not self._stop_event.isSet():
             try:
                 # Wait (blocking) for a caller
                 print("Waiting for call...")
@@ -197,11 +202,16 @@ class CallAttendant(object):
                 # Answer the call!
                 if ok_to_answer and len(actions) > 0:
                     self.answer_call(actions, greeting, call_no, caller)
-
+            except KeyboardInterrupt:
+                print("User requested shutdown")
+                self._stop_event.set()
             except Exception as e:
                 pprint(e)
-                print("** Error running callattendant. Exiting.")
-                return 1
+                print("** Error running callattendant.")
+                self._stop_event.set()
+                exit_code = 1
+        print("Exiting")
+        return exit_code
 
     def answer_call(self, actions, greeting, call_no, caller):
         """
@@ -389,8 +399,14 @@ def main(argv):
 
     # Create and start the application
     app = CallAttendant(config)
-    app.process_calls()
-    return 0
+    exit_code = 0
+    try:
+        exit_code = app.run()
+    finally:
+        print("Stopping modem")
+        app.modem.stop()
+    print("Bye!")
+    return exit_code
 
 
 if __name__ == '__main__':

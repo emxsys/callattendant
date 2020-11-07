@@ -139,8 +139,10 @@ class Modem(object):
         self.config = config
         self.model = None
 
-        # Thread synchronization object
+        # Thread synchronization objects
+        self._stop_event = threading.Event()
         self._lock = threading.RLock()
+        self._thread = None
 
         # Ring notifications
         self.ring_indicator = RingIndicator(
@@ -197,7 +199,7 @@ class Modem(object):
             print("Error: Unable to close the Serial Port.")
             sys.exit()
 
-    def handle_calls(self, handle_caller):
+    def start(self, handle_caller):
         """
         Starts the thread that processes incoming data.
             :param handle_caller:
@@ -205,11 +207,18 @@ class Modem(object):
         """
         self._init_modem()
 
-        self.event_thread = threading.Thread(
+        self._thread = threading.Thread(
             target=self._call_handler,
             kwargs={'handle_caller': handle_caller})
-        self.event_thread.name = "modem_call_handler"
-        self.event_thread.start()
+        self._thread.name = "modem_call_handler"
+        self._thread.start()
+
+    def stop(self):
+        """
+        Stops the modem thread. Called by the app.
+        """
+        self._stop_event.set()
+        self._thread.join()
 
     def _call_handler(self, handle_caller):
         """
@@ -242,7 +251,7 @@ class Modem(object):
             # This loop reads incoming data from the serial port and
             # posts the caller data to the handle_caller function
             call_record = {}
-            while 1:
+            while not self._stop_event.isSet():
                 modem_data = b''
 
                 # Read from the modem
