@@ -112,7 +112,7 @@ DTE_CLEAR_TRANSMIT_BUFFER = (chr(16) + chr(24))   # <DLE><CAN>
 CRLF = (chr(13) + chr(10)).encode()
 
 # Record Voice Mail variables
-REC_VM_MAX_DURATION = 120  # Time in Seconds
+REC_VM_MAX_DURATION = 60  # Time in Seconds - TODO: make REC_VM_MAX_DURATION a config setting.
 
 TEST_DATA = [
     b"RING", b"DATE=0801", b"TIME=1801", b"NMBR=8055554567", b"NAME=Test1 - Permitted", b"RING", b"RING", b"RING", b"RING",
@@ -478,9 +478,9 @@ class Modem(object):
             start_time = datetime.now()
             CHUNK = 1024
             audio_frames = []
+            silent_frame_count = 0
             while 1:
                 # Read audio data from the Modem
-
                 audio_data = self._serial.read(CHUNK)
 
                 # Check if <DLE><ETX> is in the stream
@@ -514,10 +514,26 @@ class Modem(object):
                 # Timeout
                 if ((datetime.now() - start_time).seconds) > REC_VM_MAX_DURATION:
                     print(">> Stop recording: max time limit reached.")
+                    print("audio_frames count={}".format(len(audio_frames)))
                     break
+
+                # Test for silence on Zoom modems (Conextant). The +VSD doesnt work on these modems.
+                if self.model == "ZOOM":
+                    # Silent frames are made of a mix of \x80 and \x79 bytes, with 90% or more == \x80.
+                    count = audio_data.count(b'\x80')
+                    if count >= (CHUNK * 0.90):
+                        silent_frame_count += 1
+                    else:
+                        silent_frame_count = 0
+                    if silent_frame_count > 40: # 40 frames is ~5 secs
+                        print(">> Silent frames detected... Stop recording.")
+                        break
 
                 # Add Audio Data to Audio Buffer
                 audio_frames.append(audio_data)
+
+
+            print("Silent frame count: {}, total frames: {}".format(silent_frame_count, len(audio_frames)))
 
             # Save the Audio into a .wav file
             with wave.open(audio_file_name, 'wb') as wf:
