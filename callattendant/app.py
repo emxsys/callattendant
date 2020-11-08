@@ -221,6 +221,9 @@ class CallAttendant(object):
         return exit_code
 
     def shutdown(self):
+        """
+        Shuts down threads and releases resources.
+        """
         print("Shutting down...")
         print("-> Stopping modem")
         self.modem.stop()
