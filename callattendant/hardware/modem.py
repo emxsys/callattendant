@@ -277,7 +277,7 @@ class Modem(object):
 
                 # Some telcos do not supply all the caller info fields.
                 # If the modem timed out, look for and handle a partial set of caller info.
-                if modem_data == b'' and call_record.get('NMBR'):
+                if (modem_data == b'' or RING in modem_data) and call_record.get('NMBR'):
                     now = datetime.now()
                     if not call_record.get('DATE'):
                         call_record['DATE'] = now.strftime("%m%d")
@@ -308,8 +308,10 @@ class Modem(object):
                         items = decode(modem_data).split('=')
                         call_record['TIME'] = items[1].strip()
                     elif NAME in modem_data:
-                        items = decode(modem_data).split('=')
-                        call_record['NAME'] = items[1].strip()
+                        if not dev_mode:
+                            # Suppress/ignore the NAME in development mode to test partial cid
+                            items = decode(modem_data).split('=')
+                            call_record['NAME'] = items[1].strip()
                     elif NMBR in modem_data:
                         items = decode(modem_data).split('=')
                         call_record['NMBR'] = items[1].strip()
