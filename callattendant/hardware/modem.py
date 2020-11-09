@@ -39,6 +39,9 @@ import threading
 import time
 import wave
 
+# NumPy install: https://numpy.org/devdocs/user/troubleshooting-importerror.html#raspberry-pi
+import numpy as np # Requires: sudo apt-get install libatlas-base-dev
+
 from functools import reduce
 import operator
 
@@ -431,8 +434,8 @@ class Modem(object):
             with wave.open(audio_file_name, 'rb') as wavefile:
                 # sleep_interval = .12  # 120ms; You may need to change to smooth-out audio
                 if self.model == "USR":
-                    sleep_interval = .120 
-                else: 
+                    sleep_interval = .120
+                else:
                     sleep_interval = .030
                 chunk = 1024
                 data = wavefile.readframes(chunk)
@@ -487,6 +490,7 @@ class Modem(object):
             start_time = datetime.now()
             CHUNK = 1024
             audio_frames = []
+            silent_frame_count = 0
             while 1:
                 # Read audio data from the Modem
                 audio_data = self._serial.read(CHUNK)
@@ -509,12 +513,52 @@ class Modem(object):
                     break
                 # Test for silence on Conexant-based modems (Zoom 3095). +VSD doesnt work on these
                 if self.model == "CONEXANT":
+
                     # In the 8-bit audio data, 0db amplitude is \0x80
+                    # Count number of 0 amplitude bytes
+                    scan_start = datetime.now()
                     count = audio_data.count(b'\x80')
                     if count >= (CHUNK * 0.50): # Arbitrary threshold; adjust as necessary
                         silent_frame_count += 1
                     else:
                         silent_frame_count = 0
+                    print("Count scan time: {:f} secs".format((datetime.now() - scan_start).total_seconds()))
+
+                    # Count number of ~0 amplitude bytes with filter (performance on par with NumPy histogram)
+                    scan_start = datetime.now()
+                    minDb = 127
+                    maxDb = 128
+                    count = len(list(filter(lambda val: minDb <= val <= maxDb, audio_data)))
+                    if count == CHUNK:
+                        silent_frame_count += 1
+                    else:
+                        silent_frame_count = 0
+                    print("Filter scan time: {:f} secs".format((datetime.now() - scan_start).total_seconds()))
+
+
+                    # Count number of ~0 amplitude bytes with sum
+                    scan_start = datetime.now()
+                    minA = 127
+                    maxA = 128
+                    count = sum(1 for x in audio_data if minA <= x <= maxA)
+                    if count == CHUNK:
+                        silent_frame_count += 1
+                    else:
+                        silent_frame_count = 0
+                    print("Sum scan time: {:f} secs".format((datetime.now() - scan_start).total_seconds()))
+
+
+                    # ~ # NumPy analysis
+                    scan_start = datetime.now()
+                    data = np.frombuffer(audio_data, dtype=np.uint8)
+                    (hist, bins) = np.histogram(data, bins = [0, 127, 129, 255])
+                    if hist[0] < hist[1] and hist[1] > hist[2]:
+                        silent_frame_count += 1
+                    else:
+                        silent_frame_count = 0
+                    print("NumPy scan time: {:f} secs".format((datetime.now() - scan_start).total_seconds()))
+
+
                     # At 8KHz sample rate, 5 secs is ~40K bytes
                     if silent_frame_count > 40: # 40 frames is ~5 secs
                         print(">> Silent frames detected... Stop recording.")
