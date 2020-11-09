@@ -37,7 +37,6 @@ setuptools.setup(
         "Jinja2>=2.11.2",
         "lxml>=4.5.2",
         "MarkupSafe>=1.1.1",
-        "numpy=>1.19.4",
         "pigpio>=1.46",
         "pygments",
         "pyserial>=3.4",

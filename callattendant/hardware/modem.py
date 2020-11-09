@@ -39,12 +39,6 @@ import threading
 import time
 import wave
 
-# NumPy install: https://numpy.org/devdocs/user/troubleshooting-importerror.html#raspberry-pi
-import numpy as np # Requires: sudo apt-get install libatlas-base-dev
-
-from functools import reduce
-import operator
-
 from datetime import datetime
 from pprint import pprint
 
@@ -490,6 +484,11 @@ class Modem(object):
             start_time = datetime.now()
             CHUNK = 1024
             audio_frames = []
+            # Define the range of amplitude values that are to be considered silence.
+            # In the 8-bit audio data, silence is \0x7f or \0x80 (127.5 rounded up or down)
+            threshold = 1
+            min_silence = 127 - threshold
+            max_silence = 128 + threshold
             silent_frame_count = 0
             while 1:
                 # Read audio data from the Modem
@@ -513,54 +512,16 @@ class Modem(object):
                     break
                 # Test for silence on Conexant-based modems (Zoom 3095). +VSD doesnt work on these
                 if self.model == "CONEXANT":
-
-                    # In the 8-bit audio data, 0db amplitude is \0x80
-                    # Count number of 0 amplitude bytes
-                    scan_start = datetime.now()
-                    count = audio_data.count(b'\x80')
-                    if count >= (CHUNK * 0.50): # Arbitrary threshold; adjust as necessary
+                    # Count number of bytes that are within range of silence (127 or 128)
+                    count = sum(1 for sample in audio_data if min_silence <= sample <= max_silence)
+                    if count == len(audio_data):
+                        # Increment number of contiguous silent frames
                         silent_frame_count += 1
                     else:
                         silent_frame_count = 0
-                    print("Count scan time: {:f} secs".format((datetime.now() - scan_start).total_seconds()))
-
-                    # Count number of ~0 amplitude bytes with filter (performance on par with NumPy histogram)
-                    scan_start = datetime.now()
-                    minDb = 127
-                    maxDb = 128
-                    count = len(list(filter(lambda val: minDb <= val <= maxDb, audio_data)))
-                    if count == CHUNK:
-                        silent_frame_count += 1
-                    else:
-                        silent_frame_count = 0
-                    print("Filter scan time: {:f} secs".format((datetime.now() - scan_start).total_seconds()))
-
-
-                    # Count number of ~0 amplitude bytes with sum
-                    scan_start = datetime.now()
-                    minA = 127
-                    maxA = 128
-                    count = sum(1 for x in audio_data if minA <= x <= maxA)
-                    if count == CHUNK:
-                        silent_frame_count += 1
-                    else:
-                        silent_frame_count = 0
-                    print("Sum scan time: {:f} secs".format((datetime.now() - scan_start).total_seconds()))
-
-
-                    # ~ # NumPy analysis
-                    scan_start = datetime.now()
-                    data = np.frombuffer(audio_data, dtype=np.uint8)
-                    (hist, bins) = np.histogram(data, bins = [0, 127, 129, 255])
-                    if hist[0] < hist[1] and hist[1] > hist[2]:
-                        silent_frame_count += 1
-                    else:
-                        silent_frame_count = 0
-                    print("NumPy scan time: {:f} secs".format((datetime.now() - scan_start).total_seconds()))
-
-
                     # At 8KHz sample rate, 5 secs is ~40K bytes
                     if silent_frame_count > 40: # 40 frames is ~5 secs
+                        # TODO: Consider trimming silent tail from audio data.
                         print(">> Silent frames detected... Stop recording.")
                         break
                 # Timeout
@@ -571,17 +532,19 @@ class Modem(object):
                 # Add Audio Data to Audio Buffer
                 audio_frames.append(audio_data)
 
+            # Save the file if we have over 1 sec of audio (1 frame of audio is ~1/8 sec)
+            if len(audio_frames) - silent_frame_count > 8:
+                # Save the Audio into a .wav file
+                print(">> Saving audio file.")
+                with wave.open(audio_file_name, 'wb') as wf:
+                    wf.setnchannels(1)
+                    wf.setsampwidth(1)
+                    wf.setframerate(8000)
+                    wf.writeframes(b''.join(audio_frames))
+            else:
+                print(">> Skipped saving silent audio.")
 
-            print("Silent frame count: {}, total frames: {}".format(silent_frame_count, len(audio_frames)))
-
-            # Save the Audio into a .wav file
-            with wave.open(audio_file_name, 'wb') as wf:
-                wf.setnchannels(1)
-                wf.setsampwidth(1)
-                wf.setframerate(8000)
-                wf.writeframes(b''.join(audio_frames))
-
-            print(">> Recording stopped after {} seconds".format((datetime.now() - start_time).seconds))
+            print(">> Recording stopped after {} seconds.".format((datetime.now() - start_time).seconds))
 
             # Clear input buffer before sending commands else its
             # contents may interpreted as the cmd's return code
