@@ -39,6 +39,9 @@ import threading
 import time
 import wave
 
+from functools import reduce
+import operator
+
 from datetime import datetime
 from pprint import pprint
 
@@ -73,7 +76,7 @@ ENABLE_SILENCE_DETECTION_10_SECS_CONEXANT = "AT+VSD=0,100"
 ENTER_VOICE_MODE = "AT+FCLASS=8"
 ENTER_VOICE_RECIEVE_DATA_STATE = "AT+VRX"
 ENTER_VOICE_TRANSMIT_DATA_STATE = "AT+VTX"
-SEND_VOICE_TONE_BEEP = "AT+VTS=[933,900,120]"   # 1.2 second beep
+SEND_VOICE_TONE_BEEP = "AT+VTS=[900,900,120]"   # 1.2 second beep
 GET_VOICE_COMPRESSION_SETTING = "AT+VSM?"
 GET_VOICE_COMPRESSION_OPTIONS = "AT+VSM=?"
 SET_VOICE_COMPRESSION = "AT+VSM=128,8000"             # USR 5637: 128 = 8-bit linear, 8.0 kHz
@@ -426,7 +429,11 @@ class Modem(object):
 
             # Play Audio File
             with wave.open(audio_file_name, 'rb') as wavefile:
-                sleep_interval = .12  # 120ms; You may need to change to smooth-out audio
+                # sleep_interval = .12  # 120ms; You may need to change to smooth-out audio
+                if self.model == "USR":
+                    sleep_interval = .120 
+                else: 
+                    sleep_interval = .030
                 chunk = 1024
                 data = wavefile.readframes(chunk)
                 while data != b'':
@@ -480,7 +487,6 @@ class Modem(object):
             start_time = datetime.now()
             CHUNK = 1024
             audio_frames = []
-            silent_frame_count = 0
             while 1:
                 # Read audio data from the Modem
                 audio_data = self._serial.read(CHUNK)
