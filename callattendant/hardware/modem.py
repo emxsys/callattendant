@@ -52,7 +52,7 @@ LF_CODE = chr(10)       # Line feed
 
 # Supported modem product codes returned by ATI0
 USR_5637_PRODUCT_CODE = b'5601'
-ZOOM_3905_PRODUCT_CODE = b'56000'
+CONEXANT_PROODUCT_CODE = b'56000'
 
 #  Modem AT commands:
 #  See http://support.usr.com/support/5637/5637-ug/ref_data.html
@@ -65,19 +65,19 @@ ENABLE_ECHO_COMMANDS = "ATE1"
 ENABLE_FORMATTED_CID = "AT+VCID=1"
 ENABLE_VERBOSE_CODES = "ATV1"
 DISABLE_SILENCE_DETECTION = "AT+VSD=128,0"
-DISABLE_SILENCE_DETECTION_ZOOM = "AT+VSD=0,0"
+DISABLE_SILENCE_DETECTION_CONEXANT = "AT+VSD=0,0"
 ENABLE_SILENCE_DETECTION_5_SECS = "AT+VSD=128,50"
-ENABLE_SILENCE_DETECTION_5_SECS_ZOOM = "AT+VSD=0,50"
+ENABLE_SILENCE_DETECTION_5_SECS_CONEXANT = "AT+VSD=0,50"
 ENABLE_SILENCE_DETECTION_10_SECS = "AT+VSD=128,100"
-ENABLE_SILENCE_DETECTION_10_SECS_ZOOM = "AT+VSD=0,100"
+ENABLE_SILENCE_DETECTION_10_SECS_CONEXANT = "AT+VSD=0,100"
 ENTER_VOICE_MODE = "AT+FCLASS=8"
 ENTER_VOICE_RECIEVE_DATA_STATE = "AT+VRX"
 ENTER_VOICE_TRANSMIT_DATA_STATE = "AT+VTX"
 SEND_VOICE_TONE_BEEP = "AT+VTS=[933,900,120]"   # 1.2 second beep
 GET_VOICE_COMPRESSION_SETTING = "AT+VSM?"
 GET_VOICE_COMPRESSION_OPTIONS = "AT+VSM=?"
-SET_VOICE_COMPRESSION = "AT+VSM=128,8000"         # USR 5637: 128 = 8-bit linear, 8.0 kHz
-SET_VOICE_COMPRESSION_ZOOM = "AT+VSM=1,8000,0,0"  # Zoom 3095:  1 = 8-bit unsigned pcm, 8.0 kHz
+SET_VOICE_COMPRESSION = "AT+VSM=128,8000"             # USR 5637: 128 = 8-bit linear, 8.0 kHz
+SET_VOICE_COMPRESSION_CONEXANT = "AT+VSM=1,8000,0,0"  # Zoom 3095:  1 = 8-bit unsigned pcm, 8.0 kHz
 TELEPHONE_ANSWERING_DEVICE_OFF_HOOK = "AT+VLS=1"  # TAD (DCE) off-hook, connected to telco
 TELEPHONE_ANSWERING_DEVICE_ON_HOOK = "AT+VLS=0"   # TAD (DCE) on-hook
 GO_OFF_HOOK = "ATH1"
@@ -93,8 +93,8 @@ DCE_DATA_CALLING_TONE = (chr(16) + chr(101)).encode()   # <DLE>-e
 DCE_LINE_REVERSAL = (chr(16) + chr(108)).encode()       # <DLE>-l
 DCE_PHONE_ON_HOOK = (chr(16) + chr(104)).encode()       # <DLE>-h
 DCE_PHONE_OFF_HOOK = (chr(16) + chr(72)).encode()       # <DLE>-H
-DCE_PHONE_OFF_HOOK2 = (chr(16) + chr(80)).encode()      # <DLE>-P Zoom
-DCE_QUIET_DETECTED = (chr(16) + chr(113)).encode()      # <DLE>-q Zoom
+DCE_PHONE_OFF_HOOK2 = (chr(16) + chr(80)).encode()      # <DLE>-P (Conexant)
+DCE_QUIET_DETECTED = (chr(16) + chr(113)).encode()      # <DLE>-q (Conexant)
 DCE_RING = (chr(16) + chr(82)).encode()                 # <DLE>-R
 DCE_SILENCE_DETECTED = (chr(16) + chr(115)).encode()    # <DLE>-s
 DCE_TX_BUFFER_UNDERRUN = (chr(16) + chr(117)).encode()  # <DLE>-u
@@ -112,7 +112,7 @@ DTE_CLEAR_TRANSMIT_BUFFER = (chr(16) + chr(24))   # <DLE><CAN>
 CRLF = (chr(13) + chr(10)).encode()
 
 # Record Voice Mail variables
-REC_VM_MAX_DURATION = 60  # Time in Seconds - TODO: make REC_VM_MAX_DURATION a config setting.
+REC_VM_MAX_DURATION = 120  # Time in Seconds - TODO: make REC_VM_MAX_DURATION a config setting.
 
 TEST_DATA = [
     b"RING", b"DATE=0801", b"TIME=1801", b"NMBR=8055554567", b"NAME=Test1 - Permitted", b"RING", b"RING", b"RING", b"RING",
@@ -137,6 +137,8 @@ class Modem(object):
                 application configuration dict
         """
         self.config = config
+
+        # Model is set to USR, CONEXANT or UNKNOW by _detect_modem
         self.model = None
 
         # Thread synchronization objects
@@ -483,51 +485,38 @@ class Modem(object):
                 # Read audio data from the Modem
                 audio_data = self._serial.read(CHUNK)
 
-                # Check if <DLE><ETX> is in the stream
+                # Scan the audio data for DLE codes from modem
+                if (DCE_SILENCE_DETECTED in audio_data):
+                    # <DLE>s is in the stream
+                    print(">> Silence Detected... Stop recording.")
+                    break
                 if (DCE_END_VOICE_DATA_TX in audio_data):
+                    # <DLE><ETX> is in the stream
                     print(">> <DLE><ETX> Char Recieved... Stop recording.")
                     break
-                # Check if <DLE>s is in the stream
-                if (DCE_SILENCE_DETECTED in audio_data):
-                    print(">> Silence Detected... Stop recording.")
-                    break
-                # Check if <DLE>q is in the stream
-                if (DCE_QUIET_DETECTED in audio_data):
-                    print(">> Silence Detected... Stop recording.")
-                    break
-                # Check if <DLE>H is in the stream
                 if (DCE_PHONE_OFF_HOOK in audio_data):
+                    # <DLE>H is in the stream
                     print(">> Local phone off hook... Stop recording")
                     break
-                # ~ # Check if <DLE>P is in the stream
-                # ~ if (DCE_PHONE_OFF_HOOK2 in audio_data):
-                    # ~ print(">> Local extension off hook... Stop recording")
-                    # ~ break
-                # ~ # Check if <DLE>l is in the stream
-                # ~ if (DCE_LINE_REVERSAL in audio_data):
-                    # ~ print(">> Local phone off hook... Stop recording")
-                    # ~ break
-                # Check if <DLE>b is in the stream
                 if (DCE_BUSY_TONE in audio_data):
                     print(">> Busy Tone... Stop recording.")
                     break
-                # Timeout
-                if ((datetime.now() - start_time).seconds) > REC_VM_MAX_DURATION:
-                    print(">> Stop recording: max time limit reached.")
-                    print("audio_frames count={}".format(len(audio_frames)))
-                    break
-
-                # Test for silence on Zoom modems (Conextant). The +VSD doesnt work on these modems.
-                if self.model == "ZOOM":
-                    # Silent frames are made of a mix of \x80 and \x79 bytes, with 90% or more == \x80.
+                # Test for silence on Conexant-based modems (Zoom 3095). +VSD doesnt work on these
+                if self.model == "CONEXANT":
+                    # In the 8-bit audio data, 0db amplitude is \0x80
                     count = audio_data.count(b'\x80')
-                    if count >= (CHUNK * 0.90):
+                    if count >= (CHUNK * 0.50): # Arbitrary threshold; adjust as necessary
                         silent_frame_count += 1
                     else:
                         silent_frame_count = 0
+                    # At 8KHz sample rate, 5 secs is ~40K bytes
                     if silent_frame_count > 40: # 40 frames is ~5 secs
                         print(">> Silent frames detected... Stop recording.")
                         break
+                # Timeout
+                if ((datetime.now() - start_time).seconds) > REC_VM_MAX_DURATION:
+                    print(">> Stop recording: max time limit reached.")
+                    break
 
                 # Add Audio Data to Audio Buffer
                 audio_frames.append(audio_data)
@@ -551,7 +540,7 @@ class Modem(object):
             # Send End of Recieve Data state by passing "<DLE>!"
             # USR-5637 note: The command returns <DLE><ETX>, but the DLE is stripped
             # from the response during the test, so we only test for the ETX.
-            response = "OK" if self.model == "ZOOM" else ETX_CODE
+            response = "OK" if self.model == "CONEXANT" else ETX_CODE
             if not self._send(DTE_END_VOICE_DATA_RX, response):
                 print("* Error: Unable to signal end of data receive state")
 
@@ -738,14 +727,14 @@ class Modem(object):
                 print("******* US Robotics Model 5637 detected **********")
                 self.model = "USR"
 
-            elif ZOOM_3905_PRODUCT_CODE in result:
-                print("******* Zoom Model 3905 Detected **********")
-                self.model = "ZOOM"
+            elif CONEXANT_PROODUCT_CODE in result:
+                print("******* Conextant-based modem detected **********")
+                self.model = "CONEXANT"
                 # Define the settings for the Zoom3905 where they differ from the USR5637
-                SET_VOICE_COMPRESSION = SET_VOICE_COMPRESSION_ZOOM
-                DISABLE_SILENCE_DETECTION = DISABLE_SILENCE_DETECTION_ZOOM
-                ENABLE_SILENCE_DETECTION_5_SECS = ENABLE_SILENCE_DETECTION_5_SECS_ZOOM
-                ENABLE_SILENCE_DETECTION_10_SECS = ENABLE_SILENCE_DETECTION_10_SECS_ZOOM
+                SET_VOICE_COMPRESSION = SET_VOICE_COMPRESSION_CONEXANT
+                DISABLE_SILENCE_DETECTION = DISABLE_SILENCE_DETECTION_CONEXANT
+                ENABLE_SILENCE_DETECTION_5_SECS = ENABLE_SILENCE_DETECTION_5_SECS_CONEXANT
+                ENABLE_SILENCE_DETECTION_10_SECS = ENABLE_SILENCE_DETECTION_10_SECS_CONEXANT
                 # System DLE shielded codes (double DLE) - DTE to DCE commands
                 DTE_RAISE_VOLUME = (chr(16) + chr(16) + chr(117))                # <DLE><DLE>-u
                 DTE_LOWER_VOLUME = (chr(16) + chr(16) + chr(100))                # <DLE><DLE>-d
