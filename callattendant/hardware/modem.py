@@ -426,11 +426,8 @@ class Modem(object):
 
             # Play Audio File
             with wave.open(audio_file_name, 'rb') as wavefile:
-                # sleep_interval = .12  # 120ms; You may need to change to smooth-out audio
-                if self.model == "USR":
-                    sleep_interval = .120
-                else:
-                    sleep_interval = .030
+                # Adjust sleep interval between frames as necessary to smooth audio
+                sleep_interval = .100 if self.model == "USR" else .030
                 chunk = 1024
                 data = wavefile.readframes(chunk)
                 while data != b'':
@@ -470,9 +467,6 @@ class Modem(object):
                 if not self._send(SEND_VOICE_TONE_BEEP):
                     raise RuntimeError("Failed to play 1.2 second beep.")
 
-                if not self._send(ENABLE_SILENCE_DETECTION_5_SECS):
-                    raise RuntimeError("Failed to enable silence detection.")
-
                 if not self._send(ENTER_VOICE_RECIEVE_DATA_STATE, "CONNECT"):
                     raise RuntimeError("Error: Unable put modem into voice receive mode.")
 
@@ -490,15 +484,12 @@ class Modem(object):
             min_silence = 127 - threshold
             max_silence = 128 + threshold
             silent_frame_count = 0
+            success = True
             while 1:
                 # Read audio data from the Modem
                 audio_data = self._serial.read(CHUNK)
 
                 # Scan the audio data for DLE codes from modem
-                if (DCE_SILENCE_DETECTED in audio_data):
-                    # <DLE>s is in the stream
-                    print(">> Silence Detected... Stop recording.")
-                    break
                 if (DCE_END_VOICE_DATA_TX in audio_data):
                     # <DLE><ETX> is in the stream
                     print(">> <DLE><ETX> Char Recieved... Stop recording.")
@@ -510,20 +501,19 @@ class Modem(object):
                 if (DCE_BUSY_TONE in audio_data):
                     print(">> Busy Tone... Stop recording.")
                     break
-                # Test for silence on Conexant-based modems (Zoom 3095). +VSD doesnt work on these
-                if self.model == "CONEXANT":
-                    # Count number of bytes that are within range of silence (127 or 128)
-                    count = sum(1 for sample in audio_data if min_silence <= sample <= max_silence)
-                    if count == len(audio_data):
-                        # Increment number of contiguous silent frames
-                        silent_frame_count += 1
-                    else:
-                        silent_frame_count = 0
-                    # At 8KHz sample rate, 5 secs is ~40K bytes
-                    if silent_frame_count > 40: # 40 frames is ~5 secs
-                        # TODO: Consider trimming silent tail from audio data.
-                        print(">> Silent frames detected... Stop recording.")
-                        break
+                    
+                # Test for silence
+                if len(audio_data) == sum(1 for x in audio_data if min_silence <= x <= max_silence):
+                    # Increment number of contiguous silent frames
+                    silent_frame_count += 1
+                else:
+                    silent_frame_count = 0
+                # At 8KHz sample rate, 5 secs is ~40K bytes
+                if silent_frame_count > 40: # 40 frames is ~5 secs
+                    # TODO: Consider trimming silent tail from audio data.
+                    print(">> Silent frames detected... Stop recording.")
+                    break
+                
                 # Timeout
                 if ((datetime.now() - start_time).seconds) > REC_VM_MAX_DURATION:
                     print(">> Stop recording: max time limit reached.")
@@ -532,9 +522,8 @@ class Modem(object):
                 # Add Audio Data to Audio Buffer
                 audio_frames.append(audio_data)
 
-            # Save the file if we have over 1 sec of audio (1 frame of audio is ~1/8 sec)
-            if len(audio_frames) - silent_frame_count > 8:
-                # Save the Audio into a .wav file
+            # Save the file if there is audio
+            if len(audio_frames) > silent_frame_count:
                 print(">> Saving audio file.")
                 with wave.open(audio_file_name, 'wb') as wf:
                     wf.setnchannels(1)
@@ -543,6 +532,7 @@ class Modem(object):
                     wf.writeframes(b''.join(audio_frames))
             else:
                 print(">> Skipped saving silent audio.")
+                success = False
 
             print(">> Recording stopped after {} seconds.".format((datetime.now() - start_time).seconds))
 
@@ -557,7 +547,7 @@ class Modem(object):
             if not self._send(DTE_END_VOICE_DATA_RX, response):
                 print("* Error: Unable to signal end of data receive state")
 
-        return True
+        return success
 
     def wait_for_keypress(self, wait_time_secs=15):
         """
