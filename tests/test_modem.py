@@ -38,7 +38,7 @@ from callattendant.hardware.modem import Modem, RESET, \
     ENTER_VOICE_TRANSMIT_DATA_STATE, DTE_END_VOICE_DATA_TX, \
     ENTER_VOICE_RECIEVE_DATA_STATE, DTE_END_VOICE_DATA_RX, \
     TERMINATE_CALL, ETX_CODE, DLE_CODE, \
-    SET_VOICE_COMPRESSION, SET_VOICE_COMPRESSION_ZOOM
+    SET_VOICE_COMPRESSION, SET_VOICE_COMPRESSION_CONEXANT
 
 global SET_VOICE_COMPRESSION
 
@@ -77,7 +77,7 @@ def test_put_modem_into_voice_mode(modem):
 
 def test_set_compression_method_and_sampling_rate_specifications(modem):
     assert modem._send(
-        SET_VOICE_COMPRESSION_ZOOM if modem.model == "ZOOM" else SET_VOICE_COMPRESSION
+        SET_VOICE_COMPRESSION_CONEXANT if modem.model == "CONEXANT" else SET_VOICE_COMPRESSION
     )
 
 
@@ -98,7 +98,7 @@ def test_put_modem_into_voice_recieve_data_state(modem):
 
 
 def test_cancel_data_receive_state(modem):
-    response = "OK" if modem.model == "ZOOM" else ETX_CODE
+    response = "OK" if modem.model == "CONEXANT" else ETX_CODE
     assert modem._send(DTE_END_VOICE_DATA_RX, response)
 
 
