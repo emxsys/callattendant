@@ -532,7 +532,7 @@ class Modem(object):
                 else:
                     silent_frame_count = 0
                 # At 8KHz sample rate, 5 secs is ~40K bytes
-                if silent_frame_count > 40: # 40 frames is ~5 secs
+                if silent_frame_count > 40:  # 40 frames is ~5 secs
                     # TODO: Consider trimming silent tail from audio data.
                     print(">> Silent frames detected... Stop recording.")
                     break
@@ -633,7 +633,7 @@ class Modem(object):
                         return True, digit_list[0]
 
             except RuntimeError as e:
-                print("Wait for key-press: {}".format(e))
+                print("Error in wait_for_keypress({}): {}".format(wait_time_secs, e))
 
         return False, ''
 
@@ -676,7 +676,7 @@ class Modem(object):
                 success, result = self._read_response(expected_response, response_timeout)
                 return (success, result)
             except Exception as e:
-                print("Error: _send_and_read failed to execute the command: '{}', reason: {}".format(command, e))
+                print("Error in _send_and_read('{}','{}',{}): {}".format(command, expected_response, response_timeout, e))
             return False, None
 
     def _read_response(self, expected_response, response_timeout_secs):
@@ -733,11 +733,11 @@ class Modem(object):
                 The OS com port
         """
         self._serial.port = com_port
-        self._serial.baudrate = 57600                   # 9600
+        self._serial.baudrate = 57600                   # bps
         self._serial.bytesize = serial.EIGHTBITS        # number of bits per bytes
         self._serial.parity = serial.PARITY_NONE        # set parity check: no parity
         self._serial.stopbits = serial.STOPBITS_ONE     # number of stop bits
-        self._serial.timeout = 3                        # non-block read
+        self._serial.timeout = 3                        # timeout for read
         self._serial.writeTimeout = 3                   # timeout for write
         self._serial.xonxoff = False                    # disable software flow control
         self._serial.rtscts = False                     # disable hardware (RTS/CTS) flow control

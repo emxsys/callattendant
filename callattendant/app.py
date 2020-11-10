@@ -119,12 +119,7 @@ class CallAttendant(object):
         permitted_greeting_file = permitted['greeting_file']
 
         # Instruct the modem to start feeding calls into the caller queue
-        if self.modem.start(self.handle_caller):
-            pass
-        else:
-            # TODO: set flag that webapp can detect to alert users that modem is offline
-            # TODO: if possilble aapture modem log entries to show in webapp
-            pass
+        self.modem.start(self.handle_caller):
 
         # If testing, allow queue to be filled before processing for clean, readable logs
         if self.config["TESTING"]:
