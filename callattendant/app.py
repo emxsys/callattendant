@@ -119,7 +119,7 @@ class CallAttendant(object):
         permitted_greeting_file = permitted['greeting_file']
 
         # Instruct the modem to start feeding calls into the caller queue
-        self.modem.start(self.handle_caller):
+        self.modem.start(self.handle_caller)
 
         # If testing, allow queue to be filled before processing for clean, readable logs
         if self.config["TESTING"]:
