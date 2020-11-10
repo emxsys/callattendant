@@ -180,14 +180,14 @@ class Modem(object):
                 else:
                     # Detect the modem model
                     if not self._detect_modem():
-                        print("Error: Failed to detect a compatible modem.")
+                        print("Error: Failed to detect a compatible modem on {}.".format(com_port))
                         if self._serial.isOpen():
                             self._serial.close()
                     else:
                         # Found a compatible modem on the COM Port - exit the loop
                         print("Modem COM Port is: " + com_port.decode("utf-8"))
-                        self._serial.flushInput()
-                        self._serial.flushOutput()
+                        # ~ self._serial.reset_input_buffer()
+                        # ~ self._serial.reset_output_buffer()
                         return True
         return False
 
@@ -352,8 +352,8 @@ class Modem(object):
                 raise RuntimeError("Unable put modem into telephone answering device mode.")
 
             # Flush any existing input outout data from the buffers
-            # self._serial.flushInput()
-            # self._serial.flushOutput()
+            # self._serial.reset_input_buffer()
+            # self._serial.reset_output_buffer()
 
         except Exception as e:
             pprint(e)
@@ -377,8 +377,8 @@ class Modem(object):
             self._serial.cancel_read()
 
             # Prevent any pending data from corrupting the next call
-            self._serial.flushInput()
-            self._serial.flushOutput()
+            self._serial.reset_input_buffer()
+            self._serial.reset_output_buffer()
 
             if not self._send(GO_ON_HOOK):
                 raise RuntimeError("Failed to hang up the call.")
@@ -501,7 +501,7 @@ class Modem(object):
                 if (DCE_BUSY_TONE in audio_data):
                     print(">> Busy Tone... Stop recording.")
                     break
-                    
+
                 # Test for silence
                 if len(audio_data) == sum(1 for x in audio_data if min_silence <= x <= max_silence):
                     # Increment number of contiguous silent frames
@@ -513,7 +513,7 @@ class Modem(object):
                     # TODO: Consider trimming silent tail from audio data.
                     print(">> Silent frames detected... Stop recording.")
                     break
-                
+
                 # Timeout
                 if ((datetime.now() - start_time).seconds) > REC_VM_MAX_DURATION:
                     print(">> Stop recording: max time limit reached.")
@@ -673,7 +673,7 @@ class Modem(object):
         start_time = datetime.now()
         try:
             result = b''
-            self._serial.flushInput()
+            self._serial.reset_input_buffer()
             while 1:
                 modem_data = self._serial.readline()
                 result += modem_data
@@ -703,7 +703,9 @@ class Modem(object):
         return (False, None)
 
     def _init_serial_port(self, com_port):
-        """Initializes the given COM port for communications with the modem."""
+        """
+        Initializes the given COM port for communications with a modem.
+        """
         self._serial.port = com_port
         self._serial.baudrate = 57600                   # 9600
         self._serial.bytesize = serial.EIGHTBITS        # number of bits per bytes
@@ -716,11 +718,18 @@ class Modem(object):
         self._serial.dsrdtr = False                     # disable hardware (DSR/DTR) flow control
 
     def _detect_modem(self):
-
+        """
+        Detect the existance of a modem, and it's model.
+            Sets the model property.
+        """
         global SET_VOICE_COMPRESSION, DISABLE_SILENCE_DETECTION, \
             ENABLE_SILENCE_DETECTION_5_SECS, ENABLE_SILENCE_DETECTION_10_SECS, \
             DTE_RAISE_VOLUME, DTE_LOWER_VOLUME, DTE_END_VOICE_DATA_TX, \
             DTE_END_VOICE_DATA_RX, DTE_CLEAR_TRANSMIT_BUFFER
+
+        # Test if connected to a modem using basic AT command.
+        if not self._send("AT"):
+            return False
 
         # Attempt to identify the modem
         success, result = self._send_and_read(GET_MODEM_PRODUCT_CODE)
@@ -770,12 +779,9 @@ class Modem(object):
         # Initialize the Modem
         try:
             # Flush any existing input outout data from the buffers
-            self._serial.flushInput()
-            self._serial.flushOutput()
+            # ~ self._serial.reset_input_buffer()
+            # ~ self._serial.reset_output_buffer()
 
-            # Test Modem connection, using basic AT command.
-            if not self._send("AT"):
-                print("Error: Unable to access the Modem")
             if not self._send(RESET):
                 print("Error: Unable reset to factory default")
             if not self._send(ENABLE_VERBOSE_CODES):
@@ -792,8 +798,8 @@ class Modem(object):
             self._send(GET_MODEM_SETTINGS)
 
             # Flush any existing input outout data from the buffers
-            self._serial.flushInput()
-            self._serial.flushOutput()
+            # ~ self._serial.reset_input_buffer()
+            # ~ self._serial.reset_output_buffer()
 
             # Automatically close the serial port at program termination
             atexit.register(self.close_serial_port)
