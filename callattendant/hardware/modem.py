@@ -668,7 +668,7 @@ class Modem(object):
         with self._lock:
             try:
                 if self.config["DEBUG"]:
-                    print(command)
+                    print("_send_and_read('{}','{}',{})".format(command, expected_response, response_timeout))
 
                 self._serial.write((command + '\r').encode())
                 self._serial.flush()
@@ -689,15 +689,12 @@ class Modem(object):
                 number of seconds to wait for the command to respond
             :return: (boolean, result)
                 True if the response matches the expected_response, else False if
-                an ERROR is returned or if it times out; followed by any preceeding
-                value(s) returned by the modem.
+                an ERROR is returned or if it times out; result contains any line(s)
+                preceeding the command response.
         """
         start_time = datetime.now()
         try:
             result = b''
-            # TODO: consider removing reset_input_buffer
-            self._serial.reset_input_buffer()
-
             while 1:
                 modem_data = self._serial.readline()
                 result += modem_data
@@ -718,11 +715,11 @@ class Modem(object):
 
                 elif (datetime.now() - start_time).seconds > response_timeout_secs:
                     if self.config["DEBUG"]:
-                        print(">>> _read_response timed out")
+                        print(">>> _read_response('{}',{}) timed out".format(expected_response, response_timeout_secs))
                     return (False, result)
 
         except Exception as e:
-            print("Error in _read_response({},{}): {}".format(expected_response, response_timeout_secs, e))
+            print("Error in _read_response('{}',{}): {}".format(expected_response, response_timeout_secs, e))
         return (False, None)
 
     def _init_serial_port(self, com_port):
