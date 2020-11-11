@@ -368,12 +368,8 @@ class Modem(object):
             if not self._send(TELEPHONE_ANSWERING_DEVICE_OFF_HOOK):
                 raise RuntimeError("Unable put modem into telephone answering device mode.")
 
-            # Flush any existing input outout data from the buffers
-            # self._serial.reset_input_buffer()
-            # self._serial.reset_output_buffer()
-
         except Exception as e:
-            pprint(e)
+            pprint("Error in pick_up: {}".format(e))
             # Only release the lock if we failed to go off-hook
             self._lock.release()
             print(">>> Lock released in pick-up()")
@@ -781,7 +777,7 @@ class Modem(object):
 
             else:
                 print("******* Unknown modem detected **********")
-                # We'll try to the modem with the predefined USR AT commands if it supports VOICE mode.
+                # We'll try to use the modem with the predefined USR AT commands if it supports VOICE mode.
                 if self._send(ENTER_VOICE_MODE):
                     self.model = "UNKNOWN"
                     # Use the default settings (used by the USR 5637 modem)
@@ -801,9 +797,6 @@ class Modem(object):
         if self.config["DEBUG"]:
             print("Initializing modem settings")
         try:
-            # Flush any existing input outout data from the buffers
-            # ~ self._serial.reset_input_buffer()
-            # ~ self._serial.reset_output_buffer()
             if not self._send(RESET):
                 print("Error: Unable reset to factory default")
             if not self._send(ENABLE_VERBOSE_CODES):
@@ -819,9 +812,6 @@ class Modem(object):
 
             # Output the modem settings to the log
             self._send(GET_MODEM_SETTINGS)
-            # Flush any existing input outout data from the buffers
-            # ~ self._serial.reset_input_buffer()
-            # ~ self._serial.reset_output_buffer()
 
         except Exception as e:
             print("Error: _init_modem failed: {}".format(e))
