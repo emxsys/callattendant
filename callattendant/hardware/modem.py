@@ -210,6 +210,7 @@ class Modem(object):
             if self._serial.is_open:
                 print("-> Closing modem serial port")
                 self._serial.close()
+                self.is_open = False
         except Exception as e:
             print("Error: _close_serial_port failed: {}".format(e))
             sys.exit()
