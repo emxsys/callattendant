@@ -160,61 +160,6 @@ class Modem(object):
 
         print("Modem {}".format("initialized" if self.is_open else "initialization failed!"))
 
-    def _open_serial_port(self):
-        """
-        Detects and opens the first serial port that is attached to a voice modem.
-            :return:
-                True if a modem was successfuly detected and initialized, else False
-        """
-        print("Opening serial port")
-        if self.is_open:
-            return True
-
-        # List all the Serial COM Ports on Raspberry Pi
-        proc = subprocess.Popen(['ls /dev/tty[A-Za-z]*'], shell=True, stdout=subprocess.PIPE)
-        com_ports = proc.communicate()[0]
-        com_ports_list = com_ports.split(b'\n')
-
-        # Find the right port associated with the Voice Modem
-        success = True
-        for com_port in com_ports_list:
-            if b'tty' in com_port:
-                # Try to open the COM Port and execute AT Command
-                try:
-                    # Initialize the serial port and attempt to open
-                    self._init_serial_port(com_port.decode("utf-8"))
-                    self._serial.open()
-                except Exception as e:
-                    print("Warning: _open_serial_port failed: {}, {}".format(self._serial.port, e))
-                    success = False
-                else:
-                    # Detect the modem model
-                    if self._detect_modem():
-                        print("Serial port opened on {}".format(self._serial.port))
-                        # Exit the loop after preparing the modem for use
-                        success = self._init_modem()
-                        break
-                    else:
-                        if self.config["DEBUG"]:
-                            print("Failed to detect a compatible modem on {}".format(self._serial.port))
-                        if self._serial.is_open:
-                            self._serial.close()
-                        # Loop to next com port
-        return success
-
-    def _close_serial_port(self):
-        """
-        Closes the serial port attached to the modem.
-        """
-        try:
-            if self._serial.is_open:
-                print("-> Closing modem serial port")
-                self._serial.close()
-                self.is_open = False
-        except Exception as e:
-            print("Error: _close_serial_port failed: {}".format(e))
-            sys.exit()
-
     def start(self, handle_caller):
         """
         Starts the thread that processes incoming data.
@@ -719,6 +664,61 @@ class Modem(object):
         except Exception as e:
             print("Error in _read_response('{}',{}): {}".format(expected_response, response_timeout_secs, e))
         return (False, None)
+
+    def _open_serial_port(self):
+        """
+        Detects and opens the first serial port that is attached to a voice modem.
+            :return:
+                True if a modem was successfuly detected and initialized, else False
+        """
+        print("Opening serial port")
+        if self.is_open:
+            return True
+
+        # List all the Serial COM Ports on Raspberry Pi
+        proc = subprocess.Popen(['ls /dev/tty[A-Za-z]*'], shell=True, stdout=subprocess.PIPE)
+        com_ports = proc.communicate()[0]
+        com_ports_list = com_ports.split(b'\n')
+
+        # Find the right port associated with the Voice Modem
+        success = True
+        for com_port in com_ports_list:
+            if b'tty' in com_port:
+                # Try to open the COM Port and execute AT Command
+                try:
+                    # Initialize the serial port and attempt to open
+                    self._init_serial_port(com_port.decode("utf-8"))
+                    self._serial.open()
+                except Exception as e:
+                    print("Warning: _open_serial_port failed: {}, {}".format(self._serial.port, e))
+                    success = False
+                else:
+                    # Detect the modem model
+                    if self._detect_modem():
+                        print("Serial port opened on {}".format(self._serial.port))
+                        # Exit the loop after preparing the modem for use
+                        success = self._init_modem()
+                        break
+                    else:
+                        if self.config["DEBUG"]:
+                            print("Failed to detect a compatible modem on {}".format(self._serial.port))
+                        if self._serial.is_open:
+                            self._serial.close()
+                        # Loop to next com port
+        return success
+
+    def _close_serial_port(self):
+        """
+        Closes the serial port attached to the modem.
+        """
+        try:
+            if self._serial.is_open:
+                print("-> Closing modem serial port")
+                self._serial.close()
+                self.is_open = False
+        except Exception as e:
+            print("Error: _close_serial_port failed: {}".format(e))
+            sys.exit()
 
     def _init_serial_port(self, com_port):
         """
