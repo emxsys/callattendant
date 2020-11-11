@@ -56,12 +56,13 @@ def modem():
     config['VOICE_MAIL_MESSAGE_FOLDER'] = gettempdir()
 
     modem = Modem(config)
-    modem.open_serial_port()
 
     yield modem
 
     modem.stop()
 
+def test_modem_online(modem):
+    assert modem.is_open
 
 def test_profile_reset(modem):
     assert modem._send(RESET)
@@ -121,4 +122,8 @@ def test_playing_audio(modem):
 
 def test_recording_audio(modem):
     filename = os.path.join(modem.config["DATA_PATH"], "message.wav")
-    assert modem.record_audio(filename)
+    assert modem.record_audio(filename, detect_silence=False)
+
+def test_recording_audio_detect_silence(modem):
+    filename = os.path.join(modem.config["DATA_PATH"], "message.wav")
+    assert not modem.record_audio(filename)

@@ -457,7 +457,7 @@ class Modem(object):
 
         return True
 
-    def record_audio(self, audio_file_name):
+    def record_audio(self, audio_file_name, detect_silence=True):
         """
         Records audio from the model to the given audio file.
             :param audio_file_name:
@@ -523,16 +523,17 @@ class Modem(object):
                     break
 
                 # Test for silence
-                if len(audio_data) == sum(1 for x in audio_data if min_silence <= x <= max_silence):
-                    # Increment number of contiguous silent frames
-                    silent_frame_count += 1
-                else:
-                    silent_frame_count = 0
-                # At 8KHz sample rate, 5 secs is ~40K bytes
-                if silent_frame_count > 40:  # 40 frames is ~5 secs
-                    # TODO: Consider trimming silent tail from audio data.
-                    print(">> Silent frames detected... Stop recording.")
-                    break
+                if detect_silence:
+                    if len(audio_data) == sum(1 for x in audio_data if min_silence <= x <= max_silence):
+                        # Increment number of contiguous silent frames
+                        silent_frame_count += 1
+                    else:
+                        silent_frame_count = 0
+                    # At 8KHz sample rate, 5 secs is ~40K bytes
+                    if silent_frame_count > 40:  # 40 frames is ~5 secs
+                        # TODO: Consider trimming silent tail from audio data.
+                        print(">> Silent frames detected... Stop recording.")
+                        break
 
                 # Timeout
                 if ((datetime.now() - start_time).seconds) > REC_VM_MAX_DURATION:
