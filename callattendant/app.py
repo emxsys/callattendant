@@ -205,7 +205,7 @@ class CallAttendant(object):
                         break
 
                 # Answer the call!
-                if ok_to_answer and len(actions) > 0:
+                if ok_to_answer:
                     self.answer_call(actions, greeting, call_no, caller)
 
                 print("Waiting for next call...")
@@ -266,7 +266,7 @@ class CallAttendant(object):
                     self.voice_mail.voice_messaging_menu(call_no, caller)
 
             except RuntimeError as e:
-                print("** Error handling a blocked caller: {}".format(e))
+                print("** Error answering a call: {}".format(e))
 
             finally:
                 # Go "on-hook"
