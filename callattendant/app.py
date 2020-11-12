@@ -74,7 +74,7 @@ class CallAttendant(object):
                 self.config.get("GPIO_LED_BLOCKED_BRIGHTNESS", 100))
         #  Create (and open) the modem
         self.modem = Modem(self.config)
-        self.config["MODEM_ONLINE"] = self.modem.is_open; # signal the webapp not online
+        self.config["MODEM_ONLINE"] = self.modem.is_open  # signal the webapp not online
 
         # Screening subsystem
         self.logger = CallLogger(self.db, self.config)

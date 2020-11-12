@@ -232,15 +232,21 @@ class Modem(object):
                         modem_data = TEST_DATA[test_index]
                         test_index += 1
                     else:
+                        # Using a shorter timeout here (vs 3 secs) to improve performance
+                        # with partial caller ID scenarios
+                        save_timeout = self._serial.timeout
+                        self._serial.timeout = 1
                         # Wait/read a line of data from the serial port with the configured timeout.
                         # The verbose-form result codes are preceded and terminated by the
                         # sequence <CR><LF>. The numeric-form is also terminated by <CR>,
                         # but it has no preceding sequence.
                         modem_data = self._serial.readline()
+                        self._serial.timeout = save_timeout
 
                 # Some telcos do not supply all the caller info fields.
-                # If the modem timed out, look for and handle a partial set of caller info.
-                if modem_data == b'' and call_record.get('NMBR'):
+                # If the modem timed out (empty modem data) or another RING occured,
+                # then look for and handle a partial set of caller info.
+                if (modem_data == b'' or RING in modem_data) and call_record.get('NMBR'):
                     now = datetime.now()
                     if not call_record.get('DATE'):
                         call_record['DATE'] = now.strftime("%m%d")
@@ -251,6 +257,7 @@ class Modem(object):
 
                 # Process the modem data
                 if modem_data != b'' and modem_data != CRLF:
+                    # Some debugging/dev tasks here
                     if debugging:
                         print(modem_data)
                     if dev_mode:
@@ -277,6 +284,7 @@ class Modem(object):
                         items = decode(modem_data).split('=')
                         call_record['NMBR'] = items[1].strip()
 
+                # Test for a complete set of caller ID data
                 # https://stackoverflow.com/questions/1285911/how-do-i-check-that-multiple-keys-are-in-a-dict-in-a-single-pass
                 if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
                     # Queue caller for screening
