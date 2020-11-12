@@ -64,6 +64,7 @@ class CallAttendant(object):
         # Create a synchronized queue for incoming callers from the modem
         self._caller_queue = queue.Queue()
 
+        #  Hardware subsystem
         #  Initialize the visual indicators (LEDs)
         self.approved_indicator = ApprovedIndicator(
                 self.config.get("GPIO_LED_APPROVED_PIN"),
@@ -71,14 +72,13 @@ class CallAttendant(object):
         self.blocked_indicator = BlockedIndicator(
                 self.config.get("GPIO_LED_BLOCKED_PIN"),
                 self.config.get("GPIO_LED_BLOCKED_BRIGHTNESS", 100))
+        #  Create (and open) the modem
+        self.modem = Modem(self.config)
+        self.config["MODEM_ONLINE"] = self.modem.is_open  # signal the webapp not online
 
         # Screening subsystem
         self.logger = CallLogger(self.db, self.config)
         self.screener = CallScreener(self.db, self.config)
-
-        #  Hardware subsystem
-        #  Create (and open) the modem
-        self.modem = Modem(self.config)
 
         # Messaging subsystem
         self.voice_mail = VoiceMail(self.db, self.config, self.modem)
@@ -232,6 +232,7 @@ class CallAttendant(object):
         print("-> Releasing resources")
         self.approved_indicator.close()
         self.blocked_indicator.close()
+        print("Shutdown finished")
 
     def answer_call(self, actions, greeting, call_no, caller):
         """

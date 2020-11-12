@@ -243,6 +243,8 @@ def dashboard():
             allowed=allowed_per_day.get(date_key, 0),
             screened=screened_per_day.get(date_key, 0)))
 
+    if not current_app.config.get("MASTER_CONFIG").get("MODEM_ONLINE", True):
+        flash('The modem is not online. Calls will not be screened or blocked. Check the logs and restart the CallAttendant.')
     # Render the resullts
     return render_template(
         'dashboard.html',
@@ -999,7 +1001,7 @@ def run_flask(config):
         log = logging.getLogger('werkzeug')
         log.disabled = True
 
-    print("Running Flask webapp")
+    print("Running the Flask server")
     # debug mode prevents app from running in separate thread
     app.run(host='0.0.0.0', debug=False)
 
