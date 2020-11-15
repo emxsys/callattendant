@@ -41,6 +41,7 @@ setuptools.setup(
         "pygments",
         "pyserial>=3.4",
         "pytest>=6.0.1",
+        "pytest-mock>=3.3.1"
         "PyYAML>=5.3.1",
         "RPi.GPIO>=0.7.0",
         "RPIO>=0.10.0",
