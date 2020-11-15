@@ -225,35 +225,37 @@ class Modem(object):
 
                 # Read from the modem
                 with self._lock:
-                    if testing:
-                        # Iterate thru the test data
-                        if test_index >= len(TEST_DATA):
-                            break
-                        modem_data = TEST_DATA[test_index]
-                        test_index += 1
-                    else:
-                        # Using a shorter timeout here (vs 3 secs) to improve performance
-                        # with partial caller ID scenarios
-                        save_timeout = self._serial.timeout
-                        self._serial.timeout = 1
-                        # Wait/read a line of data from the serial port with the configured timeout.
-                        # The verbose-form result codes are preceded and terminated by the
-                        # sequence <CR><LF>. The numeric-form is also terminated by <CR>,
-                        # but it has no preceding sequence.
-                        modem_data = self._serial.readline()
-                        self._serial.timeout = save_timeout
+                    # Using a shorter timeout here (vs 3 secs) to improve performance
+                    # with detecting partial caller ID scenarios
+                    save_timeout = self._serial.timeout
+                    self._serial.timeout = 1
+                    # Wait/read a line of data from the serial port with the configured timeout.
+                    # FYI: The verbose-form result codes are preceded and terminated by the
+                    # sequence <CR><LF>. The numeric-form is also terminated by <CR> but it
+                    # has no preceding sequence.
+                    modem_data = self._serial.readline()
+                    self._serial.timeout = save_timeout
 
                 # Some telcos do not supply all the caller info fields.
                 # If the modem timed out (empty modem data) or another RING occured,
                 # then look for and handle a partial set of caller info.
-                if (modem_data == b'' or RING in modem_data) and call_record.get('NMBR'):
-                    now = datetime.now()
-                    if not call_record.get('DATE'):
-                        call_record['DATE'] = now.strftime("%m%d")
-                    if not call_record.get('TIME'):
-                        call_record['TIME'] = now.strftime("%H%M")
-                    if not call_record.get('NAME'):
-                        call_record['NAME'] = "Unknown"
+                if (modem_data == b'' or RING in modem_data):
+                    # NMBR is required for processing a partial CID
+                    if call_record.get('NMBR'):
+                        now = datetime.now()
+                        if not call_record.get('DATE'):
+                            call_record['DATE'] = now.strftime("%m%d")
+                        if not call_record.get('TIME'):
+                            call_record['TIME'] = now.strftime("%H%M")
+                        if not call_record.get('NAME'):
+                            call_record['NAME'] = "Unknown"
+                    else:
+                        # Othewise, throw away any partial data without a number
+                        # that was received between RINGs/timeouts.
+                        # Note: in UK and other regions that do not supply a NAME,
+                        # you could set the default name here, for example:
+                        #   call_record{"NAME": "Unknown"}
+                        call_record = {}
 
                 # Process the modem data
                 if modem_data != b'' and modem_data != CRLF:
@@ -263,14 +265,9 @@ class Modem(object):
                     if dev_mode:
                         logfile.write(modem_data)
                         logfile.flush()
-
+                    # Process the modem data
                     if RING in modem_data:
-                        # Notify other threads that a ring occurred
-                        self.ring_event.set()
-                        self.ring_event.clear()
-                        # Visual notification (LED)
-                        self.ring_indicator.ring()
-                    # Extract caller info
+                        self.ring()
                     elif DATE in modem_data:
                         items = decode(modem_data).split('=')
                         call_record['DATE'] = items[1].strip()
@@ -290,6 +287,9 @@ class Modem(object):
                     # Queue caller for screening
                     print("> Queueing call {} for processing".format(call_record["NMBR"]))
                     handle_caller(call_record)
+                    # Note: in UK and regions that do not supply a NAME,
+                    # you could set the default name here, for example:
+                    #   call_record{"NAME": "Unknown"}
                     call_record = {}
 
         finally:
@@ -588,6 +588,16 @@ class Modem(object):
 
         return False, ''
 
+    def ring(self):
+        """
+        Activate the ring indicator
+        """
+         # Notify other threads that a ring occurred
+        self.ring_event.set()
+        self.ring_event.clear()
+        # Visual notification (LED)
+        self.ring_indicator.ring()
+
     def _send(self, command, expected_response="OK", response_timeout=5):
         """
         Sends a command string (e.g., AT command) to the modem.
@@ -726,7 +736,6 @@ class Modem(object):
                 self.is_open = False
         except Exception as e:
             print("Error: _close_serial_port failed: {}".format(e))
-            sys.exit()
 
     def _init_serial_port(self, com_port):
         """

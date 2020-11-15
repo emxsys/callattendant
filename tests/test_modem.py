@@ -26,6 +26,8 @@
 
 import os
 import tempfile
+import queue
+import time
 from pprint import pprint
 from tempfile import gettempdir
 
@@ -127,3 +129,62 @@ def test_recording_audio(modem):
 def test_recording_audio_detect_silence(modem):
     filename = os.path.join(modem.config["DATA_PATH"], "message.wav")
     assert not modem.record_audio(filename)
+
+def test_call_handler(modem, mocker):
+    # Incoming caller id test data: valid numbers are sequential 10 digit repeating nums,
+    # plus some spurious call data intermixed between caller ids
+    call_data = [
+        b"RING", b"DATE=0101", b"TIME=0101", b"NMBR=1111111111", b"NAME=Test1",
+        b"RING", b"DATE=0202", b"TIME=0202", b"NMBR=2222222222",  # Test2 - no name
+        b"RING", b"NMBR=3333333333",                              # Test3 - number only
+        b"RING", b"DATE=0404", b"TIME=0404", b"NMBR=4444444444", b"NAME=Test4",
+        b"RING", b"RING",b"NAME=TestNoNumber", b"RING", b"RING",  # Partial data w/o number
+        b"RING", b"DATE=0505", b"TIME=0505", b"NMBR=5555555555", b"NAME=Test5",
+    ]
+    data_queue = queue.Queue()
+    caller_queue = queue.Queue()
+
+    # Mock Serial.readline() with a 1 sec timeout
+    def mock_readline():
+        try:
+            return data_queue.get(True, 1)
+        except queue.Empty:
+            return b''
+    mocker.patch.object(modem._serial, "readline", mock_readline)
+
+    # Define the _call_handler callback and start the call handler thread
+    def handle_call(call_record):
+        caller_queue.put(call_record)
+    modem.start(handle_call)
+
+    # Roughly simulate incoming calls
+    for x in call_data:
+        if x == b"RING":
+            time.sleep(3)
+        data_queue.put(x)
+
+    # Wait for last call to be processed, then stop the modem thread
+    time.sleep(3)
+    modem._stop_event.set()
+    modem._thread.join()
+
+    # Put the call records into an array for asserts in a loop
+    calls_rcvd = []
+    while not caller_queue.empty():
+        call_record = caller_queue.get_nowait()
+        calls_rcvd.append(call_record)
+        print(call_record)
+
+    # Run the asserts
+    n = 1
+    for call in calls_rcvd:
+        # Assert all four data elements are present
+        assert all(k in call for k in ("DATE", "TIME", "NAME", "NMBR"))
+
+        # Assert the number and name matches the inputs or defaults
+        assert call["NMBR"] == str(n)*10
+        if n in [1,4,5]:
+            assert call["NAME"] == "Test{}".format(n)
+        else:
+            assert call["NAME"] == "Unknown"
+        n += 1
