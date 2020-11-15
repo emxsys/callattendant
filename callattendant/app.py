@@ -28,6 +28,7 @@ import queue
 import sqlite3
 import time
 import threading
+from datetime import datetime
 from pprint import pprint
 from shutil import copyfile
 
@@ -188,16 +189,23 @@ class CallAttendant(object):
                     greeting = blocked_greeting_file
                     rings_before_answer = blocked["rings_before_answer"]
 
-                # Wait for the callee to answer the phone, if configured to do so
+                # Wait for the callee to answer the phone, if configured to do so.
+                # In North America, the standard ring cadence is "2-4", or two seconds
+                # of ringing followed by four seconds of silence (33% Duty Cycle).                ring_count = 1  # Already had at least 1 ring to get here
+                RING_WAIT_SECS = 10.0
+                wait_start = datetime.now()
                 ok_to_answer = True
                 ring_count = 1  # Already had at least 1 ring to get here
                 while ring_count < rings_before_answer:
-                    # In North America, the standard ring cadence is "2-4", or two seconds
-                    # of ringing followed by four seconds of silence (33% Duty Cycle).
-                    if self.modem.ring_event.wait(10.0):
-                        ring_count = ring_count + 1
+                    if not self._caller_queue.empty():
+                        print(" > > > Another call has come in")
+                        # Skip this call and process the next one
+                        ok_to_answer = False
+                        break
+                    elif self.modem.ring_event.wait(1.0):
+                        ring_count += 1
                         print(" > > > Ring count: {}".format(ring_count))
-                    else:
+                    elif (datetime.now() - wait_start).total_seconds() > RING_WAIT_SECS:
                         # wait timeout; assume ringing has stopped before the ring count
                         # was reached because either the callee answered or caller hung up.
                         ok_to_answer = False
@@ -207,18 +215,23 @@ class CallAttendant(object):
                 # Answer the call!
                 if ok_to_answer:
                     self.answer_call(actions, greeting, call_no, caller)
+                else:
+                    self.bypass_call(caller)
 
                 print("Waiting for next call...")
 
             except KeyboardInterrupt:
                 print("** User initiated shutdown")
-                self._stop_event.set()
+                self.stop()
             except Exception as e:
                 pprint(e)
                 print("** Error running callattendant")
-                self._stop_event.set()
+                self.stop()
                 exit_code = 1
         return exit_code
+
+    def stop(self):
+        self._stop_event.set()
 
     def shutdown(self):
         """
@@ -271,6 +284,14 @@ class CallAttendant(object):
             finally:
                 # Go "on-hook"
                 self.modem.hang_up()
+
+    def bypass_call(self, caller):
+        """
+        Bpypas (do not answer) the call.
+            :param caller:
+                The caller ID data
+        """
+        pass
 
 
 def make_config(filename=None, datapath=None, create_folder=False):
