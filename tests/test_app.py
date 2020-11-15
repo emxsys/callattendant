@@ -59,6 +59,12 @@ def app(mocker):
     mocker.patch("hardware.modem.Modem.start", return_value=True)
     mocker.patch("hardware.modem.Modem.pick_up", return_value=True)
     mocker.patch("hardware.modem.Modem.hang_up", return_value=True)
+    mocker.patch("hardware.indicators.ApprovedIndicator.__init__", return_value=None)
+    mocker.patch("hardware.indicators.ApprovedIndicator.blink")
+    mocker.patch("hardware.indicators.ApprovedIndicator.close")
+    mocker.patch("hardware.indicators.BlockedIndicator.__init__", return_value=None)
+    mocker.patch("hardware.indicators.BlockedIndicator.blink")
+    mocker.patch("hardware.indicators.BlockedIndicator.close")
 
     # Create and start the application
     app = CallAttendant(config)
