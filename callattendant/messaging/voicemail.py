@@ -127,7 +127,7 @@ class VoiceMail:
         if not rec_msg:
             self.reset_message_indicator()
 
-    def record_message(self, call_no, caller):
+    def record_message(self, call_no, caller, detect_silence=True):
         """
         Records a message.
         """
@@ -146,7 +146,7 @@ class VoiceMail:
         # Show recording in progress
         self.message_indicator.turn_on()
 
-        if self.modem.record_audio(filepath):
+        if self.modem.record_audio(filepath, detect_silence):
             # Save to Message table (message.add will update the indicator)
             msg_no = self.messages.add(call_no, filepath)
             # Return the messageID on success

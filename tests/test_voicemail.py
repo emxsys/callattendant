@@ -69,7 +69,6 @@ def logger(db, config):
 def modem(db, config):
 
     modem = Modem(config)
-    modem.open_serial_port()
     yield modem
     modem.stop()
 
@@ -87,7 +86,7 @@ def voicemail(db, config, modem):
 def test_multiple(voicemail, logger):
 
     call_no = logger.log_caller(caller)
-    msg_no = voicemail.record_message(call_no, caller)
+    msg_no = voicemail.record_message(call_no, caller, detect_silence=False)
     assert msg_no > 0
 
     count = voicemail.messages.get_unplayed_count()
