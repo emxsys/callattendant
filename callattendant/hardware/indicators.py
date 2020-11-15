@@ -314,23 +314,23 @@ class MessageCountIndicator(object):
     """
     def __init__(self, *pins, **kwargs):
         if len(pins) > 0:
-            self.display = SevenSegmentDisplay(*pins, **kwargs)
+            self.seven_seg = SevenSegmentDisplay(*pins, **kwargs)
         else:
-            self.display = SevenSegmentDisplay(*GPIO_MESSAGE_COUNT_PINS, **GPIO_MESSAGE_COUNT_KWARGS)
+            self.seven_seg = SevenSegmentDisplay(*GPIO_MESSAGE_COUNT_PINS, **GPIO_MESSAGE_COUNT_KWARGS)
 
     def display(self, char):
-        self.display(char)
+        self.seven_seg.display(char)
 
     def display_hex(self, hexnumber):
-        self.display_hex(hexnumber)
+        self.seven_seg.display_hex(hexnumber)
 
     @property
     def decimal_point(self):
-        return self.display.decimal_point
+        return self.seven_seg.decimal_point
 
     @decimal_point.setter
     def decimal_point(self, value):
-        self.display.decimal_point(value)
+        self.seven_seg.decimal_point(value)
 
     def close(self):
-        self.display.close()
+        self.seven_seg.close()
