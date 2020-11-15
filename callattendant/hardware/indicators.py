@@ -308,13 +308,29 @@ class MessageIndicator(PWMLEDIndicator):
         super().pulse(max_times=None)   # None = forever
 
 
-class MessageCountIndicator(SevenSegmentDisplay):
+class MessageCountIndicator(object):
     """
     The message count indicator displays the number of unplayed messages in the system.
     """
-
     def __init__(self, *pins, **kwargs):
         if len(pins) > 0:
-            super().__init__(*pins, **kwargs)
+            self.display = SevenSegmentDisplay(*pins, **kwargs)
         else:
-            super().__init__(*GPIO_MESSAGE_COUNT_PINS, **GPIO_MESSAGE_COUNT_KWARGS)
+            self.display = SevenSegmentDisplay(*GPIO_MESSAGE_COUNT_PINS, **GPIO_MESSAGE_COUNT_KWARGS)
+
+    def display(self, char):
+        self.display(char)
+
+    def display_hex(self, hexnumber):
+        self.display_hex(hexnumber)
+
+    @property
+    def decimal_point(self):
+        return self.display.decimal_point
+
+    @decimal_point.setter
+    def decimal_point(self, value):
+        self.display.decimal_point(value)
+
+    def close(self):
+        self.display.close()

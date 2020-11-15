@@ -33,8 +33,6 @@ from datetime import datetime
 
 from callattendant.app import CallAttendant
 from callattendant.config import Config
-from hardware.modem import Modem
-from hardware.indicators import ApprovedIndicator, BlockedIndicator, RingIndicator
 
 # Globals
 call_no = 0
@@ -65,10 +63,18 @@ def app(mocker):
     mocker.patch("hardware.indicators.BlockedIndicator.__init__", return_value=None)
     mocker.patch("hardware.indicators.BlockedIndicator.blink")
     mocker.patch("hardware.indicators.BlockedIndicator.close")
+    mocker.patch("hardware.indicators.MessageIndicator.__init__", return_value=None)
+    mocker.patch("hardware.indicators.MessageIndicator.pulse")
+    mocker.patch("hardware.indicators.MessageIndicator.turn_on")
+    mocker.patch("hardware.indicators.MessageIndicator.turn_off")
+    mocker.patch("hardware.indicators.MessageIndicator.close")
+    mocker.patch("hardware.indicators.MessageCountIndicator.__init__", return_value=None)
+    mocker.patch("hardware.indicators.MessageCountIndicator.display")
+    mocker.patch("hardware.indicators.MessageCountIndicator.decimal_point")
+    mocker.patch("hardware.indicators.MessageCountIndicator.close")
     mocker.patch("hardware.indicators.RingIndicator.__init__", return_value=None)
     mocker.patch("hardware.indicators.RingIndicator.blink")
     mocker.patch("hardware.indicators.RingIndicator.close")
-
     # Create and start the application
     app = CallAttendant(config)
 
