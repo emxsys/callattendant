@@ -330,7 +330,7 @@ class MessageCountIndicator(object):
 
     @decimal_point.setter
     def decimal_point(self, value):
-        self.seven_seg.decimal_point(value)
+        self.seven_seg.decimal_point = value
 
     def close(self):
         self.seven_seg.close()
