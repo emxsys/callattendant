@@ -193,9 +193,9 @@ class CallAttendant(object):
                 # In North America, the standard ring cadence is "2-4", or two seconds
                 # of ringing followed by four seconds of silence (33% Duty Cycle).                ring_count = 1  # Already had at least 1 ring to get here
                 RING_WAIT_SECS = 10.0
-                wait_start = datetime.now()
                 ok_to_answer = True
                 ring_count = 1  # Already had at least 1 ring to get here
+                last_ring = datetime.now()
                 while ring_count < rings_before_answer:
                     if not self._caller_queue.empty():
                         print(" > > > Another call has come in")
@@ -204,8 +204,9 @@ class CallAttendant(object):
                         break
                     elif self.modem.ring_event.wait(1.0):
                         ring_count += 1
+                        last_ring = datetime.now()
                         print(" > > > Ring count: {}".format(ring_count))
-                    elif (datetime.now() - wait_start).total_seconds() > RING_WAIT_SECS:
+                    elif (datetime.now() - last_ring).total_seconds() > RING_WAIT_SECS:
                         # wait timeout; assume ringing has stopped before the ring count
                         # was reached because either the callee answered or caller hung up.
                         ok_to_answer = False
