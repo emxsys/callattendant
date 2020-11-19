@@ -33,21 +33,22 @@ default_config = {
 
     "BLOCK_ENABLED": True,
     "BLOCK_SERVICE": "NOMOROBO",
+
     "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID", },
     "BLOCK_NUMBER_PATTERNS": {},
-
-    "BLOCKED_ACTIONS": ("greeting", "record_message"),
-    "BLOCKED_RINGS_BEFORE_ANSWER": 0,
-    "BLOCKED_GREETING_FILE": "resources/blocked_greeting.wav",
-
-    "SCREENED_ACTIONS": (),
-    "SCREENED_GREETING_FILE": "resources/general_greeting.wav",
-    "SCREENED_RINGS_BEFORE_ANSWER": 0,
 
     "PERMIT_NAME_PATTERNS": {},
     "PERMIT_NUMBER_PATTERNS": {},
 
-    "PERMITTED_ACTIONS": (),
+    "BLOCKED_ACTIONS": ("answer", "greeting", "record_message"),
+    "BLOCKED_GREETING_FILE": "resources/blocked_greeting.wav",
+    "BLOCKED_RINGS_BEFORE_ANSWER": 0,
+
+    "SCREENED_ACTIONS": ("ignore",),
+    "SCREENED_GREETING_FILE": "resources/general_greeting.wav",
+    "SCREENED_RINGS_BEFORE_ANSWER": 0,
+
+    "PERMITTED_ACTIONS": ("ignore",),
     "PERMITTED_GREETING_FILE": "resources/general_greeting.wav",
     "PERMITTED_RINGS_BEFORE_ANSWER": 4,
 
@@ -181,18 +182,12 @@ class Config(dict):
                 print("* SCREENING_MODE option is invalid: {}".format(mode))
                 success = False
 
-        for mode in self["BLOCKED_ACTIONS"]:
-            if mode not in ("greeting", "record_message", "voice_mail"):
-                print("* BLOCKED_ACTIONS option is invalid: {}".format(mode))
-                success = False
-        for mode in self["SCREENED_ACTIONS"]:
-            if mode not in ("greeting", "record_message", "voice_mail"):
-                print("* SCREENED_ACTIONS option is invalid: {}".format(mode))
-                success = False
-        for mode in self["PERMITTED_ACTIONS"]:
-            if mode not in ("greeting", "record_message", "voice_mail"):
-                print("* PERMITTED_ACTIONS option is invalid: {}".format(mode))
-                success = False
+        if not self._validate_actions("BLOCKED_ACTIONS"):
+            success = False
+        if not self._validate_actions("SCREENED_ACTIONS"):
+            success = False
+        if not self._validate_actions("PERMITTED_ACTIONS"):
+            success = False
 
         if not isinstance(self["BLOCKED_RINGS_BEFORE_ANSWER"], int):
             print("* BLOCKED_RINGS_BEFORE_ANSWER should be an integer: {}".format(type(self["BLOCKED_RINGS_BEFORE_ANSWER"])))
@@ -243,6 +238,42 @@ class Config(dict):
             success = False
 
         return success
+
+    def _validate_actions(self, key):
+        """
+        :param key:
+            String: "BLOCKED_ACTIONS", "SCREENED_ACTIONS" or "PERMITTED_ACTIONS"
+        """
+        if not isinstance(self[key], tuple):
+            print("* {} should be a tuple, not {}".format(key, type(self[key])))
+            return False
+
+        for action in self[key]:
+            if action not in ("answer", "ignore", "greeting", "record_message", "voice_mail"):
+                print("* {} option is invalid: {}".format(key, action))
+                return False
+
+        if not any(a in self[key] for a in ("answer", "ignore")):
+            print("* {} must include either 'answer' or 'ignore'".format(key))
+            return False
+
+        if all(a in self[key] for a in ("answer", "ignore")):
+            print("* {} cannot include both 'answer' and 'ignore'".format(key))
+            return False
+
+        if all(a in self[key] for a in ("record_message", "voice_mail")):
+            print("* {} cannot include both 'record_message' and 'voice_mail'".format(key))
+            return False
+
+        # WARNINGS follow...they print only, they do not fail validation.
+        if "record_message" in self[key]:
+            if not "greeting" in self[key]:
+                print("* WARNING: {} contains 'record_message' without a 'greeting'.".format(key))
+        if "ignore" in self[key]:
+            if any(a in self[key] for a in ("greeting", "record_message", "voice_mail")):
+                print("* WARNING: {} contains actions in addition to 'ignore'. They not be used.".format(key))
+
+        return True
 
     def pretty_print(self):
         """
