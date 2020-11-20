@@ -452,7 +452,7 @@ def main(argv):
 
     # Ensure all specified files exist and that values are conformant
     if not config.validate():
-        print("Configuration is invalid. Please check {}".format(config_file))
+        print("ERROR: Configuration is invalid. Please check {}".format(config_file))
         return 1
 
     # Create and start the application
