@@ -40,17 +40,17 @@ default_config = {
     "PERMIT_NAME_PATTERNS": {},
     "PERMIT_NUMBER_PATTERNS": {},
 
-    "BLOCKED_ACTIONS": ("answer", "greeting", "record_message"),
+    "BLOCKED_ACTIONS": ("answer", "greeting", "voice_mail"),
     "BLOCKED_GREETING_FILE": "resources/blocked_greeting.wav",
     "BLOCKED_RINGS_BEFORE_ANSWER": 0,
 
-    "SCREENED_ACTIONS": ("ignore",),
+    "SCREENED_ACTIONS": ("answer", "greeting", "record_message"),
     "SCREENED_GREETING_FILE": "resources/general_greeting.wav",
     "SCREENED_RINGS_BEFORE_ANSWER": 0,
 
     "PERMITTED_ACTIONS": ("ignore",),
     "PERMITTED_GREETING_FILE": "resources/general_greeting.wav",
-    "PERMITTED_RINGS_BEFORE_ANSWER": 4,
+    "PERMITTED_RINGS_BEFORE_ANSWER": 0,
 
     "VOICE_MAIL_GREETING_FILE": "resources/general_greeting.wav",
     "VOICE_MAIL_GOODBYE_FILE": "resources/goodbye.wav",
@@ -237,6 +237,10 @@ class Config(dict):
             print("* VOICE_MAIL_MESSAGE_FOLDER not found: {}".format(filepath))
             success = False
 
+        # Warnings
+        if not self["PHONE_DISPLAY_SEPARATOR"] in self["PHONE_DISPLAY_FORMAT"]:
+            print("* WARNING: PHONE_DISPLAY_SEPARATOR not used in PHONE_DISPLAY_FORMAT: '{}'".format(self["PHONE_DISPLAY_SEPARATOR"]))
+
         return success
 
     def _validate_actions(self, key):
@@ -245,7 +249,7 @@ class Config(dict):
             String: "BLOCKED_ACTIONS", "SCREENED_ACTIONS" or "PERMITTED_ACTIONS"
         """
         if not isinstance(self[key], tuple):
-            print("* {} should be a tuple, not {}".format(key, type(self[key])))
+            print("* {} must be a tuple, not {}".format(key, type(self[key])))
             return False
 
         for action in self[key]:
@@ -265,10 +269,7 @@ class Config(dict):
             print("* {} cannot include both 'record_message' and 'voice_mail'".format(key))
             return False
 
-        # WARNINGS follow...they print only, they do not fail validation.
-        if "record_message" in self[key]:
-            if not "greeting" in self[key]:
-                print("* WARNING: {} contains 'record_message' without a 'greeting'.".format(key))
+        # WARNINGS: they print only; they do not fail validation.
         if "ignore" in self[key]:
             if any(a in self[key] for a in ("greeting", "record_message", "voice_mail")):
                 print("* WARNING: {} contains actions in addition to 'ignore'. They not be used.".format(key))
