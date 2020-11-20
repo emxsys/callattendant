@@ -189,35 +189,14 @@ class CallAttendant(object):
                     greeting = blocked_greeting_file
                     rings_before_answer = blocked["rings_before_answer"]
 
-                # Wait for the callee to answer the phone, if configured to do so.
-                # In North America, the standard ring cadence is "2-4", or two seconds
-                # of ringing followed by four seconds of silence (33% Duty Cycle).                ring_count = 1  # Already had at least 1 ring to get here
-                RING_WAIT_SECS = 10.0
-                ok_to_answer = True
-                ring_count = 1  # Already had at least 1 ring to get here
-                last_ring = datetime.now()
-                while ring_count < rings_before_answer:
-                    if not self._caller_queue.empty():
-                        print(" > > > Another call has come in")
-                        # Skip this call and process the next one
-                        ok_to_answer = False
-                        break
-                    elif self.modem.ring_event.wait(1.0):
-                        ring_count += 1
-                        last_ring = datetime.now()
-                        print(" > > > Ring count: {}".format(ring_count))
-                    elif (datetime.now() - last_ring).total_seconds() > RING_WAIT_SECS:
-                        # wait timeout; assume ringing has stopped before the ring count
-                        # was reached because either the callee answered or caller hung up.
-                        ok_to_answer = False
-                        print(" > > > Ringing stopped: Caller hung up or callee answered")
-                        break
+                # Waits for the callee to answer the phone, if configured to do so.
+                ok_to_answer = self.wait_for_rings(rings_before_answer)
 
                 # Answer the call!
-                if ok_to_answer:
+                if ok_to_answer and "answer" in actions:
                     self.answer_call(actions, greeting, call_no, caller)
                 else:
-                    self.bypass_call(caller)
+                    self.ignore_call(caller)
 
                 print("Waiting for next call...")
 
@@ -286,13 +265,50 @@ class CallAttendant(object):
                 # Go "on-hook"
                 self.modem.hang_up()
 
-    def bypass_call(self, caller):
+    def ignore_call(self, caller):
         """
-        Bpypas (do not answer) the call.
+        Ignore (do not answer) the call.
             :param caller:
                 The caller ID data
         """
         pass
+
+    def wait_for_rings(self, rings_before_answer):
+        """
+        Waits for the given number of rings to occur.
+        :param rings_before_answer:
+            the number of rings to wait for.
+        :return:
+            True if the ring count meets or exceeds the rings before answer;
+            False if the rings stop or if another call comes in.
+        """
+        # In North America, the standard ring cadence is "2-4", or two seconds
+        # of ringing followed by four seconds of silence (33% Duty Cycle).
+        RING_CADENCE = 6.0  # secs
+        RING_WAIT_SECS = RING_CADENCE + (RING_CADENCE * 0.5)
+        ok_to_answer = True
+        ring_count = 1  # Already had at least 1 ring to get here
+        last_ring = datetime.now()
+        while ring_count < rings_before_answer:
+            if not self._caller_queue.empty():
+                # Skip this call and process the next one
+                print(" > > > Another call has come in")
+                ok_to_answer = False
+                break
+            # Wait for a ring
+            elif self.modem.ring_event.wait(1.0):
+                # Increment the ring count and time of last ring
+                ring_count += 1
+                last_ring = datetime.now()
+                print(" > > > Ring count: {}".format(ring_count))
+            # On wait timeout, test for ringing stopped
+            elif (datetime.now() - last_ring).total_seconds() > RING_WAIT_SECS:
+                # Assume ringing has stopped before the ring count
+                # was reached because either the callee answered or caller hung up.
+                print(" > > > Ringing stopped: Caller hung up or callee answered")
+                ok_to_answer = False
+                break
+        return ok_to_answer
 
 
 def make_config(filename=None, datapath=None, create_folder=False):
@@ -437,7 +453,7 @@ def main(argv):
 
     # Ensure all specified files exist and that values are conformant
     if not config.validate():
-        print("Configuration is invalid. Please check {}".format(config_file))
+        print("ERROR: Configuration is invalid. Please check {}".format(config_file))
         return 1
 
     # Create and start the application
