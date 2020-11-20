@@ -63,8 +63,10 @@ def modem():
 
     modem.stop()
 
+
 def test_modem_online(modem):
     assert modem.is_open
+
 
 def test_profile_reset(modem):
     assert modem._send(RESET)
@@ -126,9 +128,11 @@ def test_recording_audio(modem):
     filename = os.path.join(modem.config["DATA_PATH"], "message.wav")
     assert modem.record_audio(filename, detect_silence=False)
 
+
 def test_recording_audio_detect_silence(modem):
     filename = os.path.join(modem.config["DATA_PATH"], "message.wav")
     assert not modem.record_audio(filename)
+
 
 def test_call_handler(modem, mocker):
     # Incoming caller id test data: valid numbers are sequential 10 digit repeating nums,
@@ -138,7 +142,7 @@ def test_call_handler(modem, mocker):
         b"RING", b"DATE=0202", b"TIME=0202", b"NMBR=2222222222",  # Test2 - no name
         b"RING", b"NMBR=3333333333",                              # Test3 - number only
         b"RING", b"DATE=0404", b"TIME=0404", b"NMBR=4444444444", b"NAME=Test4",
-        b"RING", b"RING",b"NAME=TestNoNumber", b"RING", b"RING",  # Partial data w/o number
+        b"RING", b"RING", b"NAME=TestNoNumber", b"RING", b"RING",  # Partial data w/o number
         b"RING", b"DATE=0505", b"TIME=0505", b"NMBR=5555555555", b"NAME=Test5",
     ]
     data_queue = queue.Queue()
@@ -182,8 +186,8 @@ def test_call_handler(modem, mocker):
         assert all(k in call for k in ("DATE", "TIME", "NAME", "NMBR"))
 
         # Assert the number and name matches the inputs or defaults
-        assert call["NMBR"] == str(n)*10
-        if n in [1,4,5]:
+        assert call["NMBR"] == str(n) * 10
+        if n in [1, 4, 5]:
             assert call["NAME"] == "Test{}".format(n)
         else:
             assert call["NAME"] == "Unknown"

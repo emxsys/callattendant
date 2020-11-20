@@ -592,7 +592,7 @@ class Modem(object):
         """
         Activate the ring indicator
         """
-         # Notify other threads that a ring occurred
+        # Notify other threads that a ring occurred
         self.ring_event.set()
         self.ring_event.clear()
         # Visual notification (LED)

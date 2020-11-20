@@ -310,6 +310,7 @@ class CallAttendant(object):
                 break
         return ok_to_answer
 
+
 def make_config(filename=None, datapath=None, create_folder=False):
     """
     Creates the config dictionary for this application/module.

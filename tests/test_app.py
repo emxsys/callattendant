@@ -29,7 +29,6 @@
 import pytest
 import threading
 import time
-from datetime import datetime
 
 from callattendant.app import CallAttendant
 from callattendant.config import Config
@@ -46,6 +45,7 @@ caller2 = {"NAME": "CALLER2", "NMBR": "2222222222", "DATE": "0202", "TIME": "020
 caller3 = {"NAME": "CALLER3", "NMBR": "3333333333", "DATE": "0303", "TIME": "0303"}
 caller4 = {"NAME": "CALLER4", "NMBR": "4444444444", "DATE": "0404", "TIME": "0404"}
 
+
 @pytest.fixture()
 def app(mocker):
 
@@ -53,9 +53,9 @@ def app(mocker):
     config = Config()
     config['DEBUG'] = False
     config['TESTING'] = True
-    config["BLOCKED_ACTIONS"] = ("answer","greeting","voice_mail")
+    config["BLOCKED_ACTIONS"] = ("answer", "greeting", "voice_mail")
     config["BLOCKED_RINGS_BEFORE_ANSWER"] = 0
-    config["SCREENED_ACTIONS"] = ("answer","greeting","record_message")
+    config["SCREENED_ACTIONS"] = ("answer", "greeting", "record_message")
     config["SCREENED_RINGS_BEFORE_ANSWER"] = 0
     config["PERMITTED_ACTIONS"] = ("ignore",)
     config["PERMITTED_RINGS_BEFORE_ANSWER"] = 4
@@ -163,6 +163,7 @@ def app(mocker):
 
     app.shutdown()
 
+
 def test_ignore_permitted(app):
     """
     Tests that permitted calls are ignored (per config)
@@ -265,6 +266,7 @@ def test_answer_call_no_actions(app, mocker):
     assert not record_message_called
     assert not voice_messaging_menu_called
 
+
 def test_answer_call_greeting(app):
 
     global play_audio_called
@@ -281,6 +283,7 @@ def test_answer_call_greeting(app):
     assert not record_message_called
     assert not voice_messaging_menu_called
 
+
 def test_answer_call_record_message(app):
 
     global play_audio_called
@@ -296,6 +299,7 @@ def test_answer_call_record_message(app):
     assert not play_audio_called
     assert record_message_called
     assert not voice_messaging_menu_called
+
 
 def test_answer_call_voice_mail(app):
 
