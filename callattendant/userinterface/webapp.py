@@ -32,7 +32,6 @@ from __future__ import division
 
 import logging
 import os
-import re
 import random
 import string
 import _thread
@@ -244,6 +243,8 @@ def dashboard():
             allowed=allowed_per_day.get(date_key, 0),
             screened=screened_per_day.get(date_key, 0)))
 
+    if not current_app.config.get("MASTER_CONFIG").get("MODEM_ONLINE", True):
+        flash('The modem is not online. Calls will not be screened or blocked. Check the logs and restart the CallAttendant.')
     # Render the resullts
     return render_template(
         'dashboard.html',
@@ -273,8 +274,7 @@ def calls():
     search_criteria = ""
     if search_text:
         if search_type == "phone":
-            num_list = re.findall('[0-9]+', search_text)
-            number = "".join(num_list)  # override GET arg if we're searching
+            number = transform_number(search_text)  # override GET arg if we're searching
             search_criteria = "WHERE Number='{}'".format(number)
         else:
             search_criteria = "WHERE Caller LIKE '%{}%'".format(search_text)
@@ -320,7 +320,7 @@ def calls():
     calls = []
     for row in result_set:
         number = row[2]
-        phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
+        phone_no = format_phone_no(number)
         # Flask pages use the static folder to get resources.
         # In the static folder we have created a soft-link to the
         # data/messsages folder containing the actual messages.
@@ -403,7 +403,7 @@ def calls_view(call_no):
     caller = {}
     if len(row) > 0:
         number = row[2]
-        phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
+        phone_no = format_phone_no(number)
         # Flask pages use the static folder to get resources.
         # In the static folder we have created a soft-link to the
         # data/messsages folder containing the actual messages.
@@ -448,7 +448,7 @@ def callers_manage(call_no):
 
     # Post changes to the blacklist or whitelist table before rendering
     if request.method == 'POST':
-        number = request.form['phone_no'].replace('-', '')
+        number = transform_number(request.form['phone_no'])
         if request.form['action'] == 'add-permit':
             caller = {}
             caller['NMBR'] = number
@@ -503,7 +503,7 @@ def callers_manage(call_no):
         number = record[2]
         caller.update(dict(
             call_no=record[0],
-            phone_no='{}-{}-{}'.format(number[0:3], number[3:6], number[6:]),
+            phone_no=format_phone_no(number),
             name=record[1],
             whitelisted=record[3],
             blacklisted=record[4],
@@ -544,7 +544,7 @@ def callers_blocked():
     records = []
     for record in result_set:
         number = record[0]
-        phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
+        phone_no = format_phone_no(number)
         records.append(dict(
             Phone_Number=phone_no,
             Name=record[1],
@@ -564,6 +564,7 @@ def callers_blocked():
     return render_template(
         'callers_blocked.html',
         active_nav_item='blocked',
+        phone_no_format=current_app.config.get("MASTER_CONFIG").get("PHONE_DISPLAY_FORMAT"),
         blacklist=records,
         page=page,
         per_page=per_page,
@@ -577,8 +578,7 @@ def callers_blocked_add():
     Add a new blacklist entry
     """
     caller = {}
-    # TODO: Strip all none digits from phone via regex
-    number = request.form["phone"].replace('-', '')
+    number = transform_number(request.form["phone"])
     caller['NMBR'] = number
     caller['NAME'] = request.form["name"]
     print("Adding " + number + " to blacklist")
@@ -596,7 +596,7 @@ def callers_blocked_update(phone_no):
     """
     Update the blacklist entry associated with the phone number.
     """
-    number = phone_no.replace('-', '')
+    number = transform_number(phone_no)
     print("Updating " + number + " in blacklist")
     blacklist = Blacklist(get_db(), current_app.config)
     blacklist.update_number(number, request.form['name'], request.form['reason'])
@@ -609,7 +609,7 @@ def callers_blocked_delete(phone_no):
     """
     Delete the blacklist entry associated with the phone number.
     """
-    number = phone_no.replace('-', '')
+    number = transform_number(phone_no)
 
     print("Removing " + number + " from blacklist")
     blacklist = Blacklist(get_db(), current_app.config)
@@ -636,7 +636,7 @@ def callers_permitted():
     records = []
     for record in result_set:
         number = record[0]
-        phone_no = '{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
+        phone_no = format_phone_no(number)
         records.append(dict(
             Phone_Number=phone_no,
             Name=record[1],
@@ -655,6 +655,7 @@ def callers_permitted():
     return render_template(
         'callers_permitted.html',
         active_nav_item='permitted',
+        phone_no_format=current_app.config.get("MASTER_CONFIG").get("PHONE_DISPLAY_FORMAT"),
         whitelist=records,
         total_calls=total,
         page=page,
@@ -669,8 +670,7 @@ def callers_permitted_add():
     Add a new whitelist entry
     """
     caller = {}
-    # TODO: Strip all none digits from phone via regex
-    number = request.form['phone'].replace('-', '')
+    number = transform_number(request.form['phone'])
     caller['NMBR'] = number
     caller['NAME'] = request.form['name']
     print("Adding " + number + " to whitelist")
@@ -688,7 +688,8 @@ def callers_permitted_update(phone_no):
     """
     Update the whitelist entry associated with the phone number.
     """
-    number = phone_no.replace('-', '')
+    number = transform_number(phone_no)
+
     print("Updating " + number + " in whitelist")
     whitelist = Whitelist(get_db(), current_app.config)
     whitelist.update_number(number, request.form['name'], request.form['reason'])
@@ -701,7 +702,7 @@ def callers_permitted_delete(phone_no):
     """
     Delete the whitelist entry associated with the phone number.
     """
-    number = phone_no.replace('-', '')
+    number = transform_number(phone_no)
 
     print("Removing " + number + " from whitelist")
     whitelist = Whitelist(get_db(), current_app.config)
@@ -763,7 +764,7 @@ def messages():
             msg_no=row[0],
             call_no=row[1],
             name=row[2],
-            phone_no='{}-{}-{}'.format(number[0:3], number[3:6], number[6:]),
+            phone_no=format_phone_no(number),
             wav_file=filepath,
             msg_played=row[5],
             date=date_time.strftime('%d-%b-%y'),
@@ -865,11 +866,54 @@ def settings():
 
 
 def format_phone_no(number):
-    return'{}-{}-{}'.format(number[0:3], number[3:6], number[6:])
+    '''
+    Returns a formatted the phone number based on the PHONE_DISPLAY_FORMAT configuration setting.
+    '''
+    config = current_app.config.get("MASTER_CONFIG")
+    template = config.get("PHONE_DISPLAY_FORMAT")
+    separator = config.get("PHONE_DISPLAY_SEPARATOR")
+    if separator == "" or template == "":
+        return number
+
+    # Get the template and split into reverse ordered parts for processing
+    tmpl_parts = template.split(separator)
+    tmpl_parts.reverse()
+
+    # Piece together the phone no from right to left to handle variable len numbers
+    number_len = len(number)
+    end = number_len
+    total_digits = 0
+    phone_parts = []
+    for tmpl in tmpl_parts:
+        # Assemble parts from right to left
+        start = max(0, end - len(tmpl))
+        digits = number[start: end]
+        phone_parts.insert(0, digits)
+        # Prepare for next part
+        end = start
+        total_digits += len(digits)
+        # if number is shorter than template then exit loop
+        if start == 0:
+            break
+    # If number is longer then template, then capture remaining digits
+    if total_digits < number_len:
+        # Prepend remaining digits to parts
+        phone_parts.insert(0, number[0: number_len - total_digits])
+    # Return the formatted number
+    return separator.join(phone_parts)
+
+
+def transform_number(phone_no):
+    '''
+    Returns the phone no stripped of all non-alphanumeric characters and makes uppercase.
+    '''
+    return "".join(filter(str.isalnum, phone_no)).upper()
 
 
 def get_db():
-    '''Get a connection to the database'''
+    '''
+    Get a connection to the database
+    '''
     # Flask template for database connections
     if 'db' not in g:
         master_config = current_app.config.get("MASTER_CONFIG")
@@ -883,7 +927,9 @@ def get_db():
 
 
 def close_db(e=None):
-    '''Clost the connection to the database'''
+    '''
+    Clost the connection to the database
+    '''
     # Flask template for database connections
     db = g.pop('db', None)
 
@@ -892,7 +938,9 @@ def close_db(e=None):
 
 
 def get_row_count(table_name):
-    '''Returns the row count for the given table'''
+    '''
+    Returns the row count for the given table
+    '''
     # Using the current request's db connection
     sql = 'select count(*) from {}'.format(table_name)
     g.cur.execute(sql)
@@ -938,7 +986,7 @@ def get_pagination(**kwargs):
 def run_flask(config):
     '''
     Runs the Flask webapp.
-        :param database: full path to the callattendant database file
+        :param config: the application-wide master config object
     '''
     app.secret_key = get_random_string()
     with app.app_context():
@@ -953,7 +1001,7 @@ def run_flask(config):
         log = logging.getLogger('werkzeug')
         log.disabled = True
 
-    print("Running Flask webapp")
+    print("Running the Flask server")
     # debug mode prevents app from running in separate thread
     app.run(host='0.0.0.0', debug=False)
 
@@ -961,6 +1009,6 @@ def run_flask(config):
 def start(config):
     '''
     Starts the Flask webapp in a separate thread.
-        :param database: full path to the callattendant database file
+        :param config: the application-wide master config object
     '''
     _thread.start_new_thread(run_flask, (config,))

@@ -26,6 +26,9 @@ import os
 import sys
 import queue
 import sqlite3
+import time
+import threading
+from datetime import datetime
 from pprint import pprint
 from shutil import copyfile
 
@@ -50,6 +53,9 @@ class CallAttendant(object):
         # The application-wide configuration
         self.config = config
 
+        # Thread synchonization object
+        self._stop_event = threading.Event()
+
         # Open the database
         if self.config["TESTING"]:
             self.db = sqlite3.connect(":memory:")
@@ -59,6 +65,7 @@ class CallAttendant(object):
         # Create a synchronized queue for incoming callers from the modem
         self._caller_queue = queue.Queue()
 
+        #  Hardware subsystem
         #  Initialize the visual indicators (LEDs)
         self.approved_indicator = ApprovedIndicator(
                 self.config.get("GPIO_LED_APPROVED_PIN"),
@@ -66,14 +73,13 @@ class CallAttendant(object):
         self.blocked_indicator = BlockedIndicator(
                 self.config.get("GPIO_LED_BLOCKED_PIN"),
                 self.config.get("GPIO_LED_BLOCKED_BRIGHTNESS", 100))
+        #  Create (and open) the modem
+        self.modem = Modem(self.config)
+        self.config["MODEM_ONLINE"] = self.modem.is_open  # signal the webapp not online
 
         # Screening subsystem
         self.logger = CallLogger(self.db, self.config)
         self.screener = CallScreener(self.db, self.config)
-
-        #  Hardware subsystem
-        #  Create (and open) the modem
-        self.modem = Modem(self.config)
 
         # Messaging subsystem
         self.voice_mail = VoiceMail(self.db, self.config, self.modem)
@@ -98,10 +104,11 @@ class CallAttendant(object):
             pprint(caller)
         self._caller_queue.put(caller)
 
-    def process_calls(self):
+    def run(self):
         """
         Processes incoming callers by logging, screening, blocking
         and/or recording messages.
+            :returns: exit code 1 on error otherwise 0
         """
         # Get relevant config settings
         screening_mode = self.config['SCREENING_MODE']
@@ -113,19 +120,27 @@ class CallAttendant(object):
         permitted_greeting_file = permitted['greeting_file']
 
         # Instruct the modem to start feeding calls into the caller queue
-        self.modem.handle_calls(self.handle_caller)
+        self.modem.start(self.handle_caller)
+
+        # If testing, allow queue to be filled before processing for clean, readable logs
+        if self.config["TESTING"]:
+            time.sleep(1)
 
         # Process incoming calls
-        while 1:
+        exit_code = 0
+        caller = {}
+        print("Waiting for call...")
+        while not self._stop_event.is_set():
             try:
                 # Wait (blocking) for a caller
-                print("Waiting for call...")
-                caller = self._caller_queue.get()
+                try:
+                    caller = self._caller_queue.get(True, 3.0)
+                except queue.Empty:
+                    continue
 
                 # An incoming call has occurred, log it
                 number = caller["NMBR"]
-                phone_no = "{}-{}-{}".format(number[0:3], number[3:6], number[6:])
-                print("Incoming call from {}".format(phone_no))
+                print("Incoming call from {}".format(number))
 
                 # Vars used in the call screening
                 caller_permitted = False
@@ -158,7 +173,7 @@ class CallAttendant(object):
 
                 # Log every call to the database (and console)
                 call_no = self.logger.log_caller(caller, action, reason)
-                print("--> {} {}: {}".format(phone_no, action, reason))
+                print("--> {} {}: {}".format(number, action, reason))
 
                 # Gather the data used to answer the call
                 if caller_permitted:
@@ -174,30 +189,43 @@ class CallAttendant(object):
                     greeting = blocked_greeting_file
                     rings_before_answer = blocked["rings_before_answer"]
 
-                # Wait for the callee to answer the phone, if configured to do so
-                ok_to_answer = True
-                ring_count = 1  # Already had at least 1 ring to get here
-                while ring_count < rings_before_answer:
-                    # In North America, the standard ring cadence is "2-4", or two seconds
-                    # of ringing followed by four seconds of silence (33% Duty Cycle).
-                    if self.modem.ring_event.wait(10.0):
-                        ring_count = ring_count + 1
-                        print(" > > > Ring count: {}".format(ring_count))
-                    else:
-                        # wait timeout; assume ringing has stopped before the ring count
-                        # was reached because either the callee answered or caller hung up.
-                        ok_to_answer = False
-                        print(" > > > Ringing stopped: Caller hung up or callee answered")
-                        break
+                # Waits for the callee to answer the phone, if configured to do so.
+                ok_to_answer = self.wait_for_rings(rings_before_answer)
 
                 # Answer the call!
-                if ok_to_answer and len(actions) > 0:
+                if ok_to_answer and "answer" in actions:
                     self.answer_call(actions, greeting, call_no, caller)
+                else:
+                    self.ignore_call(caller)
 
+                print("Waiting for next call...")
+
+            except KeyboardInterrupt:
+                print("** User initiated shutdown")
+                self.stop()
             except Exception as e:
                 pprint(e)
-                print("** Error running callattendant. Exiting.")
-                return 1
+                print("** Error running callattendant")
+                self.stop()
+                exit_code = 1
+        return exit_code
+
+    def stop(self):
+        self._stop_event.set()
+
+    def shutdown(self):
+        """
+        Shuts down threads and releases resources.
+        """
+        print("Shutting down...")
+        print("-> Stopping modem")
+        self.modem.stop()
+        print("-> Stopping voice mail")
+        self.voice_mail.stop()
+        print("-> Releasing resources")
+        self.approved_indicator.close()
+        self.blocked_indicator.close()
+        print("Shutdown finished")
 
     def answer_call(self, actions, greeting, call_no, caller):
         """
@@ -231,11 +259,56 @@ class CallAttendant(object):
                     self.voice_mail.voice_messaging_menu(call_no, caller)
 
             except RuntimeError as e:
-                print("** Error handling a blocked caller: {}".format(e))
+                print("** Error answering a call: {}".format(e))
 
             finally:
                 # Go "on-hook"
                 self.modem.hang_up()
+
+    def ignore_call(self, caller):
+        """
+        Ignore (do not answer) the call.
+            :param caller:
+                The caller ID data
+        """
+        pass
+
+    def wait_for_rings(self, rings_before_answer):
+        """
+        Waits for the given number of rings to occur.
+        :param rings_before_answer:
+            the number of rings to wait for.
+        :return:
+            True if the ring count meets or exceeds the rings before answer;
+            False if the rings stop or if another call comes in.
+        """
+        # In North America, the standard ring cadence is "2-4", or two seconds
+        # of ringing followed by four seconds of silence (33% Duty Cycle).
+        RING_CADENCE = 6.0  # secs
+        RING_WAIT_SECS = RING_CADENCE + (RING_CADENCE * 0.5)
+        ok_to_answer = True
+        ring_count = 1  # Already had at least 1 ring to get here
+        last_ring = datetime.now()
+        while ring_count < rings_before_answer:
+            if not self._caller_queue.empty():
+                # Skip this call and process the next one
+                print(" > > > Another call has come in")
+                ok_to_answer = False
+                break
+            # Wait for a ring
+            elif self.modem.ring_event.wait(1.0):
+                # Increment the ring count and time of last ring
+                ring_count += 1
+                last_ring = datetime.now()
+                print(" > > > Ring count: {}".format(ring_count))
+            # On wait timeout, test for ringing stopped
+            elif (datetime.now() - last_ring).total_seconds() > RING_WAIT_SECS:
+                # Assume ringing has stopped before the ring count
+                # was reached because either the callee answered or caller hung up.
+                print(" > > > Ringing stopped: Caller hung up or callee answered")
+                ok_to_answer = False
+                break
+        return ok_to_answer
 
 
 def make_config(filename=None, datapath=None, create_folder=False):
@@ -380,13 +453,17 @@ def main(argv):
 
     # Ensure all specified files exist and that values are conformant
     if not config.validate():
-        print("Configuration is invalid. Please check {}".format(config_file))
+        print("ERROR: Configuration is invalid. Please check {}".format(config_file))
         return 1
 
     # Create and start the application
     app = CallAttendant(config)
-    app.process_calls()
-    return 0
+    exit_code = 0
+    try:
+        exit_code = app.run()
+    finally:
+        app.shutdown()
+    return exit_code
 
 
 if __name__ == '__main__':

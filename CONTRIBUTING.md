@@ -1,6 +1,6 @@
 ## How to contribute to Call Attendant (callattendant)
 
-:+1::tada: First off, thanks for taking the time to contribute! :tada::+1:
+First off, thanks for taking the time to contribute! :+1:
 
 This project and everyone participating in it is governed by the project's [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
@@ -24,8 +24,8 @@ This project and everyone participating in it is governed by the project's [Code
 
 * Ensure the PR description clearly describes the new feature or enhancement. Include the relevant issue number if applicable.
 
-#### **Do you have questions about the source code?**
+#### **Do you have questions about the source code, operations, configuration or installation?**
 
-* Ask any question by [opening a new issue](https://github.com/emxsys/callattendant/issues/new) and add a _question_ label to it.
+* Ask any question in the [callattendant forum](https://groups.io/g/callattendant) on _Groups.io_, or ask a question by [opening a new issue](https://github.com/emxsys/callattendant/issues/new) in GitHub and add a _question_ label to it.
 
-Thanks! :heart: :heart: :heart:
+Thanks! 

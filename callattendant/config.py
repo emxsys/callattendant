@@ -19,7 +19,7 @@ from werkzeug.utils import import_string
 # and screened callers through to the home phone.
 #
 default_config = {
-    "VERSION": '1.1.0a',
+    "VERSION": '1.1.1',
 
     "ENV": 'production',
     "DEBUG": False,
@@ -28,21 +28,29 @@ default_config = {
     "DATABASE": "callattendant.db",
     "SCREENING_MODE": ("whitelist", "blacklist"),
 
+    "PHONE_DISPLAY_SEPARATOR": "-",
+    "PHONE_DISPLAY_FORMAT": "###-###-####",
+
     "BLOCK_ENABLED": True,
+    "BLOCK_SERVICE": "NOMOROBO",
+
     "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID", },
     "BLOCK_NUMBER_PATTERNS": {},
 
-    "BLOCKED_ACTIONS": ("greeting", "record_message" ),
-    "BLOCKED_RINGS_BEFORE_ANSWER": 0,
-    "BLOCKED_GREETING_FILE": "resources/blocked_greeting.wav",
+    "PERMIT_NAME_PATTERNS": {},
+    "PERMIT_NUMBER_PATTERNS": {},
 
-    "SCREENED_ACTIONS": (),
+    "BLOCKED_ACTIONS": ("answer", "greeting", "voice_mail"),
+    "BLOCKED_GREETING_FILE": "resources/blocked_greeting.wav",
+    "BLOCKED_RINGS_BEFORE_ANSWER": 0,
+
+    "SCREENED_ACTIONS": ("answer", "greeting", "record_message"),
     "SCREENED_GREETING_FILE": "resources/general_greeting.wav",
     "SCREENED_RINGS_BEFORE_ANSWER": 0,
 
-    "PERMITTED_ACTIONS": (),
+    "PERMITTED_ACTIONS": ("ignore",),
     "PERMITTED_GREETING_FILE": "resources/general_greeting.wav",
-    "PERMITTED_RINGS_BEFORE_ANSWER": 4,
+    "PERMITTED_RINGS_BEFORE_ANSWER": 0,
 
     "VOICE_MAIL_GREETING_FILE": "resources/general_greeting.wav",
     "VOICE_MAIL_GOODBYE_FILE": "resources/goodbye.wav",
@@ -55,8 +63,8 @@ default_config = {
     "GPIO_LED_RING_BRIGHTNESS": 100,
     "GPIO_LED_APPROVED_PIN": 15,
     "GPIO_LED_APPROVED_BRIGHTNESS": 100,
-    "GPIO_LED_BLOCKED_PIN":17,
-    "GPIO_LED_BLOCKED_BRIGHTNESS":100,
+    "GPIO_LED_BLOCKED_PIN": 17,
+    "GPIO_LED_BLOCKED_BRIGHTNESS": 100,
     "GPIO_LED_MESSAGE_PIN": 4,
     "GPIO_LED_MESSAGE_BRIGHTNESS": 100,
     "GPIO_LED_MESSAGE_COUNT_PINS": (8, 7, 27, 23, 10, 11, 9, 18),
@@ -174,18 +182,12 @@ class Config(dict):
                 print("* SCREENING_MODE option is invalid: {}".format(mode))
                 success = False
 
-        for mode in self["BLOCKED_ACTIONS"]:
-            if mode not in ("greeting", "record_message", "voice_mail"):
-                print("* BLOCKED_ACTIONS option is invalid: {}".format(mode))
-                success = False
-        for mode in self["SCREENED_ACTIONS"]:
-            if mode not in ("greeting", "record_message", "voice_mail"):
-                print("* SCREENED_ACTIONS option is invalid: {}".format(mode))
-                success = False
-        for mode in self["PERMITTED_ACTIONS"]:
-            if mode not in ("greeting", "record_message", "voice_mail"):
-                print("* PERMITTED_ACTIONS option is invalid: {}".format(mode))
-                success = False
+        if not self._validate_actions("BLOCKED_ACTIONS"):
+            success = False
+        if not self._validate_actions("SCREENED_ACTIONS"):
+            success = False
+        if not self._validate_actions("PERMITTED_ACTIONS"):
+            success = False
 
         if not isinstance(self["BLOCKED_RINGS_BEFORE_ANSWER"], int):
             print("* BLOCKED_RINGS_BEFORE_ANSWER should be an integer: {}".format(type(self["BLOCKED_RINGS_BEFORE_ANSWER"])))
@@ -235,7 +237,44 @@ class Config(dict):
             print("* VOICE_MAIL_MESSAGE_FOLDER not found: {}".format(filepath))
             success = False
 
+        # Warnings
+        if not self["PHONE_DISPLAY_SEPARATOR"] in self["PHONE_DISPLAY_FORMAT"]:
+            print("* WARNING: PHONE_DISPLAY_SEPARATOR not used in PHONE_DISPLAY_FORMAT: '{}'".format(self["PHONE_DISPLAY_SEPARATOR"]))
+
         return success
+
+    def _validate_actions(self, key):
+        """
+        :param key:
+            String: "BLOCKED_ACTIONS", "SCREENED_ACTIONS" or "PERMITTED_ACTIONS"
+        """
+        if not isinstance(self[key], tuple):
+            print("* {} must be a tuple, not {}".format(key, type(self[key])))
+            return False
+
+        for action in self[key]:
+            if action not in ("answer", "ignore", "greeting", "record_message", "voice_mail"):
+                print("* {} option is invalid: {}".format(key, action))
+                return False
+
+        if not any(a in self[key] for a in ("answer", "ignore")):
+            print("* {} must include either 'answer' or 'ignore'".format(key))
+            return False
+
+        if all(a in self[key] for a in ("answer", "ignore")):
+            print("* {} cannot include both 'answer' and 'ignore'".format(key))
+            return False
+
+        if all(a in self[key] for a in ("record_message", "voice_mail")):
+            print("* {} cannot include both 'record_message' and 'voice_mail'".format(key))
+            return False
+
+        # WARNINGS: they print only; they do not fail validation.
+        if "ignore" in self[key]:
+            if any(a in self[key] for a in ("greeting", "record_message", "voice_mail")):
+                print("* WARNING: {} contains actions in addition to 'ignore'. They not be used.".format(key))
+
+        return True
 
     def pretty_print(self):
         """

@@ -68,9 +68,8 @@
         <form>
           <div class="modal-body">
               <div class="form-group">
-                <label for="add-phone" class="col-form-label">Phone: ...-...-....</label>
-                <input name="phone" type="tel" class="form-control" id="add-phone" required="required"
-                    pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" >
+                <label for="add-phone" class="col-form-label">Phone: {{ phone_no_format }}</label>
+                <input name="phone" type="tel" class="form-control" id="add-phone" required="required" >
               </div>
               <div class="form-group">
                 <label for="add-name" class="col-form-label">Name:</label>

@@ -52,7 +52,7 @@ LF_CODE = chr(10)       # Line feed
 
 # Supported modem product codes returned by ATI0
 USR_5637_PRODUCT_CODE = b'5601'
-ZOOM_3905_PRODUCT_CODE = b'56000'
+CONEXANT_PROODUCT_CODE = b'56000'
 
 #  Modem AT commands:
 #  See http://support.usr.com/support/5637/5637-ug/ref_data.html
@@ -65,19 +65,19 @@ ENABLE_ECHO_COMMANDS = "ATE1"
 ENABLE_FORMATTED_CID = "AT+VCID=1"
 ENABLE_VERBOSE_CODES = "ATV1"
 DISABLE_SILENCE_DETECTION = "AT+VSD=128,0"
-DISABLE_SILENCE_DETECTION_ZOOM = "AT+VSD=0,0"
+DISABLE_SILENCE_DETECTION_CONEXANT = "AT+VSD=0,0"
 ENABLE_SILENCE_DETECTION_5_SECS = "AT+VSD=128,50"
-ENABLE_SILENCE_DETECTION_5_SECS_ZOOM = "AT+VSD=0,50"
+ENABLE_SILENCE_DETECTION_5_SECS_CONEXANT = "AT+VSD=0,50"
 ENABLE_SILENCE_DETECTION_10_SECS = "AT+VSD=128,100"
-ENABLE_SILENCE_DETECTION_10_SECS_ZOOM = "AT+VSD=0,100"
+ENABLE_SILENCE_DETECTION_10_SECS_CONEXANT = "AT+VSD=0,100"
 ENTER_VOICE_MODE = "AT+FCLASS=8"
 ENTER_VOICE_RECIEVE_DATA_STATE = "AT+VRX"
 ENTER_VOICE_TRANSMIT_DATA_STATE = "AT+VTX"
-SEND_VOICE_TONE_BEEP = "AT+VTS=[933,900,120]"   # 1.2 second beep
+SEND_VOICE_TONE_BEEP = "AT+VTS=[900,900,120]"   # 1.2 second beep
 GET_VOICE_COMPRESSION_SETTING = "AT+VSM?"
 GET_VOICE_COMPRESSION_OPTIONS = "AT+VSM=?"
-SET_VOICE_COMPRESSION = "AT+VSM=128,8000"         # USR 5637: 128 = 8-bit linear, 8.0 kHz
-SET_VOICE_COMPRESSION_ZOOM = "AT+VSM=1,8000,0,0"  # Zoom 3095:  1 = 8-bit unsigned pcm, 8.0 kHz
+SET_VOICE_COMPRESSION = "AT+VSM=128,8000"             # USR 5637: 128 = 8-bit linear, 8.0 kHz
+SET_VOICE_COMPRESSION_CONEXANT = "AT+VSM=1,8000,0,0"  # Zoom 3095:  1 = 8-bit unsigned pcm, 8.0 kHz
 TELEPHONE_ANSWERING_DEVICE_OFF_HOOK = "AT+VLS=1"  # TAD (DCE) off-hook, connected to telco
 TELEPHONE_ANSWERING_DEVICE_ON_HOOK = "AT+VLS=0"   # TAD (DCE) on-hook
 GO_OFF_HOOK = "ATH1"
@@ -93,8 +93,8 @@ DCE_DATA_CALLING_TONE = (chr(16) + chr(101)).encode()   # <DLE>-e
 DCE_LINE_REVERSAL = (chr(16) + chr(108)).encode()       # <DLE>-l
 DCE_PHONE_ON_HOOK = (chr(16) + chr(104)).encode()       # <DLE>-h
 DCE_PHONE_OFF_HOOK = (chr(16) + chr(72)).encode()       # <DLE>-H
-DCE_PHONE_OFF_HOOK2 = (chr(16) + chr(80)).encode()      # <DLE>-P Zoom
-DCE_QUIET_DETECTED = (chr(16) + chr(113)).encode()      # <DLE>-q Zoom
+DCE_PHONE_OFF_HOOK2 = (chr(16) + chr(80)).encode()      # <DLE>-P (Conexant)
+DCE_QUIET_DETECTED = (chr(16) + chr(113)).encode()      # <DLE>-q (Conexant)
 DCE_RING = (chr(16) + chr(82)).encode()                 # <DLE>-R
 DCE_SILENCE_DETECTED = (chr(16) + chr(115)).encode()    # <DLE>-s
 DCE_TX_BUFFER_UNDERRUN = (chr(16) + chr(117)).encode()  # <DLE>-u
@@ -112,7 +112,7 @@ DTE_CLEAR_TRANSMIT_BUFFER = (chr(16) + chr(24))   # <DLE><CAN>
 CRLF = (chr(13) + chr(10)).encode()
 
 # Record Voice Mail variables
-REC_VM_MAX_DURATION = 120  # Time in Seconds
+REC_VM_MAX_DURATION = 120  # Time in Seconds - TODO: make REC_VM_MAX_DURATION a config setting.
 
 TEST_DATA = [
     b"RING", b"DATE=0801", b"TIME=1801", b"NMBR=8055554567", b"NAME=Test1 - Permitted", b"RING", b"RING", b"RING", b"RING",
@@ -120,6 +120,7 @@ TEST_DATA = [
     b"RING", b"DATE=0803", b"TIME=1803", b"NMBR=3605554567", b"NAME=Test3 - Blocked",
     b"RING", b"DATE=0804", b"TIME=1804", b"NMBR=8005554567", b"NAME=V123456789012345",
     b"RING", b"DATE = 0805", b"TIME = 1805", b"NMBR = 8055554567", b"NAME = Test5 - Permitted",
+    b"RING", b"NMBR = 1234567890", b""
 ]
 
 
@@ -135,11 +136,15 @@ class Modem(object):
             :param config:
                 application configuration dict
         """
+        print("Initializing Modem")
         self.config = config
-        self.model = None
+        self.is_open = False
+        self.model = None   # Model is set to USR, CONEXANT or UNKNOWN by _detect_modem
 
-        # Thread synchronization object
+        # Thread synchronization objects
+        self._stop_event = threading.Event()
         self._lock = threading.RLock()
+        self._thread = None
 
         # Ring notifications
         self.ring_indicator = RingIndicator(
@@ -147,69 +152,42 @@ class Modem(object):
             self.config.get("GPIO_LED_RING_BRIGHTNESS", 100))
         self.ring_event = threading.Event()
 
-        # Setup and open the serial port
+        # Initialize the serial port attached to the physical modem
         self._serial = serial.Serial()
+        self.is_open = self._open_serial_port()
+        # Automatically close the serial port at program termination
+        atexit.register(self._close_serial_port)
 
-    def open_serial_port(self):
-        """Detects and opens the serial port attached to the modem."""
-        # List all the Serial COM Ports on Raspberry Pi
-        proc = subprocess.Popen(['ls /dev/tty[A-Za-z]*'], shell=True, stdout=subprocess.PIPE)
-        com_ports = proc.communicate()[0]
-        # In order to split, need to pass a bytes-like object
-        com_ports_list = com_ports.split(b'\n')
+        print("Modem {}".format("initialized" if self.is_open else "initialization failed!"))
 
-        # Find the right port associated with the Voice Modem
-        found = False
-        for com_port in com_ports_list:
-            if b'tty' in com_port:
-                # Try to open the COM Port and execute AT Command
-                try:
-                    # Initialize the serial port and attempt to open
-                    self._init_serial_port(com_port.decode("utf-8"))
-                    self._serial.open()
-                except Exception as e:
-                    print(e)
-                    print("Unable to open COM Port: " + str(com_port.decode("utf-8")))
-                    pass
-                else:
-                    # Detect the modem model
-                    if not self._detect_modem():
-                        print("Error: Failed to detect a compatible modem.")
-                        if self._serial.isOpen():
-                            self._serial.close()
-                    else:
-                        # Found a compatible modem on the COM Port - exit the loop
-                        print("Modem COM Port is: " + com_port.decode("utf-8"))
-                        self._serial.flushInput()
-                        self._serial.flushOutput()
-                        return True
-        return False
-
-    def close_serial_port(self):
-        """Closes the serial port attached to the modem."""
-        print("Closing Serial Port")
-        try:
-            if self._serial.isOpen():
-                self._serial.close()
-                print("Serial Port closed...")
-        except Exception as e:
-            print(e)
-            print("Error: Unable to close the Serial Port.")
-            sys.exit()
-
-    def handle_calls(self, handle_caller):
+    def start(self, handle_caller):
         """
         Starts the thread that processes incoming data.
             :param handle_caller:
                 A callback function that takes a caller dict object.
+            :return:
+                True if modem was started successfully
         """
-        self._init_modem()
-
-        self.event_thread = threading.Thread(
+        if self.is_open:
+            self._thread = threading.Thread(
                 target=self._call_handler,
                 kwargs={'handle_caller': handle_caller})
-        self.event_thread.name = "modem_call_handler"
-        self.event_thread.start()
+            self._thread.name = "modem_call_handler"
+            self._thread.start()
+            return True
+        else:
+            print("Error: Starting the modem call handling thread failed; the serial port is not open")
+            return False
+
+    def stop(self):
+        """
+        Stops the modem thread and releases hardware resources.
+        """
+        self._stop_event.set()
+        if self._thread:
+            self._thread.join()
+        self.ring_indicator.close()
+        self._close_serial_port()
 
     def _call_handler(self, handle_caller):
         """
@@ -242,41 +220,55 @@ class Modem(object):
             # This loop reads incoming data from the serial port and
             # posts the caller data to the handle_caller function
             call_record = {}
-            while 1:
+            while not self._stop_event.is_set():
                 modem_data = b''
 
                 # Read from the modem
                 with self._lock:
-                    if testing:
-                        # Iterate thru the test data
-                        if test_index >= len(TEST_DATA):
-                            break
-                        modem_data = TEST_DATA[test_index]
-                        test_index += 1
+                    # Using a shorter timeout here (vs 3 secs) to improve performance
+                    # with detecting partial caller ID scenarios
+                    save_timeout = self._serial.timeout
+                    self._serial.timeout = 1
+                    # Wait/read a line of data from the serial port with the configured timeout.
+                    # FYI: The verbose-form result codes are preceded and terminated by the
+                    # sequence <CR><LF>. The numeric-form is also terminated by <CR> but it
+                    # has no preceding sequence.
+                    modem_data = self._serial.readline()
+                    self._serial.timeout = save_timeout
+
+                # Some telcos do not supply all the caller info fields.
+                # If the modem timed out (empty modem data) or another RING occured,
+                # then look for and handle a partial set of caller info.
+                if (modem_data == b'' or RING in modem_data):
+                    # NMBR is required for processing a partial CID
+                    if call_record.get('NMBR'):
+                        now = datetime.now()
+                        if not call_record.get('DATE'):
+                            call_record['DATE'] = now.strftime("%m%d")
+                        if not call_record.get('TIME'):
+                            call_record['TIME'] = now.strftime("%H%M")
+                        if not call_record.get('NAME'):
+                            call_record['NAME'] = "Unknown"
                     else:
-                        # Wait/read a line of data from the serial port.
-                        # The verbose-form code is preceded and terminated by the
-                        # sequence <CR><LF>. The numeric-form is also terminated
-                        # by <CR>, but it has no preceding sequence.
-                        modem_data = self._serial.readline()
+                        # Othewise, throw away any partial data without a number
+                        # that was received between RINGs/timeouts.
+                        # Note: in UK and other regions that do not supply a NAME,
+                        # you could set the default name here, for example:
+                        #   call_record{"NAME": "Unknown"}
+                        call_record = {}
 
                 # Process the modem data
                 if modem_data != b'' and modem_data != CRLF:
+                    # Some debugging/dev tasks here
                     if debugging:
                         print(modem_data)
                     if dev_mode:
                         logfile.write(modem_data)
                         logfile.flush()
-
+                    # Process the modem data
                     if RING in modem_data:
-                        # Notify other threads that a ring occurred
-                        self.ring_event.set()
-                        self.ring_event.clear()
-                        # Visual notification (LED)
-                        self.ring_indicator.ring()
-
-                    # Extract caller info
-                    if DATE in modem_data:
+                        self.ring()
+                    elif DATE in modem_data:
                         items = decode(modem_data).split('=')
                         call_record['DATE'] = items[1].strip()
                     elif TIME in modem_data:
@@ -289,16 +281,20 @@ class Modem(object):
                         items = decode(modem_data).split('=')
                         call_record['NMBR'] = items[1].strip()
 
-                    # https://stackoverflow.com/questions/1285911/how-do-i-check-that-multiple-keys-are-in-a-dict-in-a-single-pass
-                    if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
-                        # Queue caller for screening
-                        print("> Queueing call {} for processing".format(call_record["NMBR"]))
-                        handle_caller(call_record)
-                        call_record = {}
+                # Test for a complete set of caller ID data
+                # https://stackoverflow.com/questions/1285911/how-do-i-check-that-multiple-keys-are-in-a-dict-in-a-single-pass
+                if all(k in call_record for k in ("DATE", "TIME", "NAME", "NMBR")):
+                    # Queue caller for screening
+                    print("> Queueing call {} for processing".format(call_record["NMBR"]))
+                    handle_caller(call_record)
+                    # Note: in UK and regions that do not supply a NAME,
+                    # you could set the default name here, for example:
+                    #   call_record{"NAME": "Unknown"}
+                    call_record = {}
 
         finally:
             if dev_mode:
-                print("Closing modem log file")
+                print("-> Closing modem log file")
                 logfile.close()
 
     def pick_up(self):
@@ -308,6 +304,8 @@ class Modem(object):
         The hang_up() function must be called to release the lock.
 
         note:: hang_up() MUST be called by the same thread to release the lock
+            :return:
+                True if successful
         """
         print("> Going off hook...")
         self._serial.cancel_read()
@@ -324,12 +322,8 @@ class Modem(object):
             if not self._send(TELEPHONE_ANSWERING_DEVICE_OFF_HOOK):
                 raise RuntimeError("Unable put modem into telephone answering device mode.")
 
-            # Flush any existing input outout data from the buffers
-            # self._serial.flushInput()
-            # self._serial.flushOutput()
-
         except Exception as e:
-            pprint(e)
+            pprint("Error in pick_up: {}".format(e))
             # Only release the lock if we failed to go off-hook
             self._lock.release()
             print(">>> Lock released in pick-up()")
@@ -344,14 +338,16 @@ class Modem(object):
         to terminate the call and release the lock aquired by pick_up().
         note:: Assumes pick-up() has been called previously to acquire
             the lock
+            :return:
+                True if successful
         """
         print("> Going on hook...")
         try:
             self._serial.cancel_read()
 
             # Prevent any pending data from corrupting the next call
-            self._serial.flushInput()
-            self._serial.flushOutput()
+            self._serial.reset_input_buffer()
+            self._serial.reset_output_buffer()
 
             if not self._send(GO_ON_HOOK):
                 raise RuntimeError("Failed to hang up the call.")
@@ -376,6 +372,8 @@ class Modem(object):
         Play the given audio file.
             :param audio_file_name:
                 a wav file with 8-bit linear compression recored at 8.0 kHz sampling rate
+            :return:
+                True if successful
         """
         if self.config["DEBUG"]:
             print("> Playing {}...".format(audio_file_name))
@@ -399,29 +397,30 @@ class Modem(object):
 
             # Play Audio File
             with wave.open(audio_file_name, 'rb') as wavefile:
-                sleep_interval = .12  # 120ms; You may need to change to smooth-out audio
+                # Adjust sleep interval between frames as necessary to smooth audio
+                sleep_interval = .100 if self.model == "USR" else .030
                 chunk = 1024
                 data = wavefile.readframes(chunk)
                 while data != b'':
                     self._serial.write(data)
                     data = wavefile.readframes(chunk)
-                    # ~ time.sleep(sleep_interval)
+                    time.sleep(sleep_interval)
 
                 self._send(DTE_END_VOICE_DATA_TX)
 
         return True
 
-    def record_audio(self, audio_file_name):
+    def record_audio(self, audio_file_name, detect_silence=True):
         """
         Records audio from the model to the given audio file.
             :param audio_file_name:
                 the wav file to be created with the recorded audio;
                 recorded with 8-bit linear compression at 8.0 kHz sampling rate
+            :return:
+                True if a message was saved.
         """
         if self.config["DEBUG"]:
             print("> Recording {}...".format(audio_file_name))
-
-        debugging = self.config["DEBUG"]
 
         self._serial.cancel_read()
         with self._lock:
@@ -441,9 +440,6 @@ class Modem(object):
                 if not self._send(SEND_VOICE_TONE_BEEP):
                     raise RuntimeError("Failed to play 1.2 second beep.")
 
-                if not self._send(ENABLE_SILENCE_DETECTION_5_SECS):
-                    raise RuntimeError("Failed to enable silence detection.")
-
                 if not self._send(ENTER_VOICE_RECIEVE_DATA_STATE, "CONNECT"):
                     raise RuntimeError("Error: Unable put modem into voice receive mode.")
 
@@ -455,39 +451,43 @@ class Modem(object):
             start_time = datetime.now()
             CHUNK = 1024
             audio_frames = []
+            # Define the range of amplitude values that are to be considered silence.
+            # In the 8-bit audio data, silence is \0x7f or \0x80 (127.5 rounded up or down)
+            threshold = 1
+            min_silence = 127 - threshold
+            max_silence = 128 + threshold
+            silent_frame_count = 0
+            success = True
             while 1:
                 # Read audio data from the Modem
-
                 audio_data = self._serial.read(CHUNK)
 
-                # Check if <DLE><ETX> is in the stream
+                # Scan the audio data for DLE codes from modem
                 if (DCE_END_VOICE_DATA_TX in audio_data):
+                    # <DLE><ETX> is in the stream
                     print(">> <DLE><ETX> Char Recieved... Stop recording.")
                     break
-                # Check if <DLE>s is in the stream
-                if (DCE_SILENCE_DETECTED in audio_data):
-                    print(">> Silence Detected... Stop recording.")
-                    break
-                # Check if <DLE>q is in the stream
-                if (DCE_QUIET_DETECTED in audio_data):
-                    print(">> Silence Detected... Stop recording.")
-                    break
-                # Check if <DLE>H is in the stream
                 if (DCE_PHONE_OFF_HOOK in audio_data):
+                    # <DLE>H is in the stream
                     print(">> Local phone off hook... Stop recording")
                     break
-                # ~ # Check if <DLE>P is in the stream
-                # ~ if (DCE_PHONE_OFF_HOOK2 in audio_data):
-                    # ~ print(">> Local extension off hook... Stop recording")
-                    # ~ break
-                # ~ # Check if <DLE>l is in the stream
-                # ~ if (DCE_LINE_REVERSAL in audio_data):
-                    # ~ print(">> Local phone off hook... Stop recording")
-                    # ~ break
-                # Check if <DLE>b is in the stream
                 if (DCE_BUSY_TONE in audio_data):
                     print(">> Busy Tone... Stop recording.")
                     break
+
+                # Test for silence
+                if detect_silence:
+                    if len(audio_data) == sum(1 for x in audio_data if min_silence <= x <= max_silence):
+                        # Increment number of contiguous silent frames
+                        silent_frame_count += 1
+                    else:
+                        silent_frame_count = 0
+                    # At 8KHz sample rate, 5 secs is ~40K bytes
+                    if silent_frame_count > 40:  # 40 frames is ~5 secs
+                        # TODO: Consider trimming silent tail from audio data.
+                        print(">> Silent frames detected... Stop recording.")
+                        break
+
                 # Timeout
                 if ((datetime.now() - start_time).seconds) > REC_VM_MAX_DURATION:
                     print(">> Stop recording: max time limit reached.")
@@ -496,14 +496,19 @@ class Modem(object):
                 # Add Audio Data to Audio Buffer
                 audio_frames.append(audio_data)
 
-            # Save the Audio into a .wav file
-            with wave.open(audio_file_name, 'wb') as wf:
-                wf.setnchannels(1)
-                wf.setsampwidth(1)
-                wf.setframerate(8000)
-                wf.writeframes(b''.join(audio_frames))
+            # Save the file if there is audio
+            if len(audio_frames) > silent_frame_count:
+                print(">> Saving audio file.")
+                with wave.open(audio_file_name, 'wb') as wf:
+                    wf.setnchannels(1)
+                    wf.setsampwidth(1)
+                    wf.setframerate(8000)
+                    wf.writeframes(b''.join(audio_frames))
+            else:
+                print(">> Skipped saving silent audio.")
+                success = False
 
-            print(">> Recording stopped after {} seconds".format((datetime.now() - start_time).seconds))
+            print(">> Recording stopped after {} seconds.".format((datetime.now() - start_time).seconds))
 
             # Clear input buffer before sending commands else its
             # contents may interpreted as the cmd's return code
@@ -512,11 +517,11 @@ class Modem(object):
             # Send End of Recieve Data state by passing "<DLE>!"
             # USR-5637 note: The command returns <DLE><ETX>, but the DLE is stripped
             # from the response during the test, so we only test for the ETX.
-            response = lambda model: "OK" if model == "ZOOM" else ETX_CODE
-            if not self._send(DTE_END_VOICE_DATA_RX, response(self.model)):
+            response = "OK" if self.model == "CONEXANT" else ETX_CODE
+            if not self._send(DTE_END_VOICE_DATA_RX, response):
                 print("* Error: Unable to signal end of data receive state")
 
-        return True
+        return success
 
     def wait_for_keypress(self, wait_time_secs=15):
         """
@@ -579,9 +584,19 @@ class Modem(object):
                         return True, digit_list[0]
 
             except RuntimeError as e:
-                print("Wait for key-press: {}".format(e))
+                print("Error in wait_for_keypress({}): {}".format(wait_time_secs, e))
 
         return False, ''
+
+    def ring(self):
+        """
+        Activate the ring indicator
+        """
+        # Notify other threads that a ring occurred
+        self.ring_event.set()
+        self.ring_event.clear()
+        # Visual notification (LED)
+        self.ring_indicator.ring()
 
     def _send(self, command, expected_response="OK", response_timeout=5):
         """
@@ -614,7 +629,7 @@ class Modem(object):
         with self._lock:
             try:
                 if self.config["DEBUG"]:
-                    print(command)
+                    print("_send_and_read('{}','{}',{})".format(command, expected_response, response_timeout))
 
                 self._serial.write((command + '\r').encode())
                 self._serial.flush()
@@ -622,8 +637,7 @@ class Modem(object):
                 success, result = self._read_response(expected_response, response_timeout)
                 return (success, result)
             except Exception as e:
-                print(e)
-                print("Error: Failed to execute the command: {}".format(command))
+                print("Error in _send_and_read('{}','{}',{}): {}".format(command, expected_response, response_timeout, e))
             return False, None
 
     def _read_response(self, expected_response, response_timeout_secs):
@@ -635,14 +649,13 @@ class Modem(object):
             :param response_timeout_secs:
                 number of seconds to wait for the command to respond
             :return: (boolean, result)
-                True if the response matches the expected_response or False
-                if ERROR is returned or if it times out; followed by any preceeding
-                value(s) returned by the modem.
+                True if the response matches the expected_response, else False if
+                an ERROR is returned or if it times out; result contains any line(s)
+                preceeding the command response.
         """
         start_time = datetime.now()
         try:
             result = b''
-            self._serial.flushInput()
             while 1:
                 modem_data = self._serial.readline()
                 result += modem_data
@@ -663,88 +676,146 @@ class Modem(object):
 
                 elif (datetime.now() - start_time).seconds > response_timeout_secs:
                     if self.config["DEBUG"]:
-                        print(">>> _read_response timed out")
+                        print(">>> _read_response('{}',{}) timed out".format(expected_response, response_timeout_secs))
                     return (False, result)
 
         except Exception as e:
-            print("Error in read_response function...")
-            print(e)
+            print("Error in _read_response('{}',{}): {}".format(expected_response, response_timeout_secs, e))
         return (False, None)
 
+    def _open_serial_port(self):
+        """
+        Detects and opens the first serial port that is attached to a voice modem.
+            :return:
+                True if a modem was successfuly detected and initialized, else False
+        """
+        print("Opening serial port")
+        if self.is_open:
+            return True
+
+        # List all the Serial COM Ports on Raspberry Pi
+        proc = subprocess.Popen(['ls /dev/tty[A-Za-z]*'], shell=True, stdout=subprocess.PIPE)
+        com_ports = proc.communicate()[0]
+        com_ports_list = com_ports.split(b'\n')
+
+        # Find the right port associated with the Voice Modem
+        success = True
+        for com_port in com_ports_list:
+            if b'tty' in com_port:
+                # Try to open the COM Port and execute AT Command
+                try:
+                    # Initialize the serial port and attempt to open
+                    self._init_serial_port(com_port.decode("utf-8"))
+                    self._serial.open()
+                except Exception as e:
+                    print("Warning: _open_serial_port failed: {}, {}".format(self._serial.port, e))
+                    success = False
+                else:
+                    # Detect the modem model
+                    if self._detect_modem():
+                        print("Serial port opened on {}".format(self._serial.port))
+                        # Exit the loop after preparing the modem for use
+                        success = self._init_modem()
+                        break
+                    else:
+                        if self.config["DEBUG"]:
+                            print("Failed to detect a compatible modem on {}".format(self._serial.port))
+                        if self._serial.is_open:
+                            self._serial.close()
+                        # Loop to next com port
+        return success
+
+    def _close_serial_port(self):
+        """
+        Closes the serial port attached to the modem.
+        """
+        try:
+            if self._serial.is_open:
+                print("-> Closing modem serial port")
+                self._serial.close()
+                self.is_open = False
+        except Exception as e:
+            print("Error: _close_serial_port failed: {}".format(e))
+
     def _init_serial_port(self, com_port):
-        """Initializes the given COM port for communications with the modem."""
+        """
+        Initializes the given serial port for communications with a modem.
+            Called by open_serial_port.
+            :param com_port:
+                The OS com port
+        """
         self._serial.port = com_port
-        self._serial.baudrate = 57600                   # 9600
+        self._serial.baudrate = 57600                   # bps
         self._serial.bytesize = serial.EIGHTBITS        # number of bits per bytes
         self._serial.parity = serial.PARITY_NONE        # set parity check: no parity
         self._serial.stopbits = serial.STOPBITS_ONE     # number of stop bits
-        self._serial.timeout = 3                        # non-block read
+        self._serial.timeout = 3                        # timeout for read
         self._serial.writeTimeout = 3                   # timeout for write
         self._serial.xonxoff = False                    # disable software flow control
         self._serial.rtscts = False                     # disable hardware (RTS/CTS) flow control
         self._serial.dsrdtr = False                     # disable hardware (DSR/DTR) flow control
 
     def _detect_modem(self):
+        """
+        Auto-detects the existance of a modem on the serial port, and sets model property.
+            :return: True if successful, else False
+        """
+        print("Looking for modem on {}".format(self._serial.port))
 
         global SET_VOICE_COMPRESSION, DISABLE_SILENCE_DETECTION, \
             ENABLE_SILENCE_DETECTION_5_SECS, ENABLE_SILENCE_DETECTION_10_SECS, \
             DTE_RAISE_VOLUME, DTE_LOWER_VOLUME, DTE_END_VOICE_DATA_TX, \
             DTE_END_VOICE_DATA_RX, DTE_CLEAR_TRANSMIT_BUFFER
 
+        # Test if connected to a modem using basic AT command.
+        if not self._send("AT"):
+            return False
+
         # Attempt to identify the modem
-        success, result = self._send_and_read(GET_MODEM_PRODUCT_CODE)
+        (success, result) = self._send_and_read(GET_MODEM_PRODUCT_CODE)
 
         if success:
             if USR_5637_PRODUCT_CODE in result:
                 print("******* US Robotics Model 5637 detected **********")
                 self.model = "USR"
 
-            elif ZOOM_3905_PRODUCT_CODE in result:
-                print("******* Zoom Model 3905 Detected **********")
-                self.model = "ZOOM"
+            elif CONEXANT_PROODUCT_CODE in result:
+                print("******* Conextant-based modem detected **********")
+                self.model = "CONEXANT"
                 # Define the settings for the Zoom3905 where they differ from the USR5637
-                SET_VOICE_COMPRESSION = SET_VOICE_COMPRESSION_ZOOM
-                DISABLE_SILENCE_DETECTION = DISABLE_SILENCE_DETECTION_ZOOM
-                ENABLE_SILENCE_DETECTION_5_SECS = ENABLE_SILENCE_DETECTION_5_SECS_ZOOM
-                ENABLE_SILENCE_DETECTION_10_SECS = ENABLE_SILENCE_DETECTION_10_SECS_ZOOM
+                SET_VOICE_COMPRESSION = SET_VOICE_COMPRESSION_CONEXANT
+                DISABLE_SILENCE_DETECTION = DISABLE_SILENCE_DETECTION_CONEXANT
+                ENABLE_SILENCE_DETECTION_5_SECS = ENABLE_SILENCE_DETECTION_5_SECS_CONEXANT
+                ENABLE_SILENCE_DETECTION_10_SECS = ENABLE_SILENCE_DETECTION_10_SECS_CONEXANT
                 # System DLE shielded codes (double DLE) - DTE to DCE commands
-                DTE_RAISE_VOLUME = (chr(16) + chr(16) + chr(117))               # <DLE><DLE>-u
-                DTE_LOWER_VOLUME = (chr(16) + chr(16) + chr(100))               # <DLE><DLE>-d
-                DTE_END_VOICE_DATA_RX = (chr(16) + chr(16) + chr(16) + chr(33)) # <DLE><DLE><DLE>-!
-                DTE_END_VOICE_DATA_TX = (chr(16) + chr(16) + chr(16) + chr(3))  # <DLE><DLE><DLE><ETX>
-                DTE_CLEAR_TRANSMIT_BUFFER = (chr(16) + chr(16) + chr(16) + chr(24)) # <DLE><DLE><DLE><CAN>
+                DTE_RAISE_VOLUME = (chr(16) + chr(16) + chr(117))                # <DLE><DLE>-u
+                DTE_LOWER_VOLUME = (chr(16) + chr(16) + chr(100))                # <DLE><DLE>-d
+                DTE_END_VOICE_DATA_RX = (chr(16) + chr(16) + chr(16) + chr(33))  # <DLE><DLE><DLE>-!
+                DTE_END_VOICE_DATA_TX = (chr(16) + chr(16) + chr(16) + chr(3))   # <DLE><DLE><DLE><ETX>
+                DTE_CLEAR_TRANSMIT_BUFFER = (chr(16) + chr(16) + chr(16) + chr(24))  # <DLE><DLE><DLE><CAN>
 
             else:
                 print("******* Unknown modem detected **********")
-                # We'll try to use it with the predefined AT commands if it supports VOICE mode.
+                # We'll try to use the modem with the predefined USR AT commands if it supports VOICE mode.
                 if self._send(ENTER_VOICE_MODE):
                     self.model = "UNKNOWN"
                     # Use the default settings (used by the USR 5637 modem)
                 else:
-                    print("Error: Failed to put modem into voice mode.")
+                    print("Error: Failed detect a compatible modem")
+                    self.modem = None
                     success = False
 
         return success
 
     def _init_modem(self):
-        """Auto-detects and initializes the modem."""
-        # Detect and open the Modem Serial COM Port
+        """
+        Initializes/configures the modem device in preparation for call attendant tasks.
+            :return:
+                True if successful, otherwise False
+        """
+        if self.config["DEBUG"]:
+            print("Initializing modem settings")
         try:
-            self.open_serial_port()
-        except Exception as e:
-            print(e)
-            print("Error: Unable to open the Serial Port.")
-            sys.exit()
-
-        # Initialize the Modem
-        try:
-            # Flush any existing input outout data from the buffers
-            self._serial.flushInput()
-            self._serial.flushOutput()
-
-            # Test Modem connection, using basic AT command.
-            if not self._send("AT"):
-                print("Error: Unable to access the Modem")
             if not self._send(RESET):
                 print("Error: Unable reset to factory default")
             if not self._send(ENABLE_VERBOSE_CODES):
@@ -758,19 +829,13 @@ class Modem(object):
             if not self._send("AT&W0"):
                 print("Error: Failed to store profile.")
 
+            # Output the modem settings to the log
             self._send(GET_MODEM_SETTINGS)
 
-            # Flush any existing input outout data from the buffers
-            self._serial.flushInput()
-            self._serial.flushOutput()
-
-            # Automatically close the serial port at program termination
-            atexit.register(self.close_serial_port)
-
         except Exception as e:
-            print(e)
-            print("Error: unable to Initialize the Modem")
-            sys.exit()
+            print("Error: _init_modem failed: {}".format(e))
+            return False
+        return True
 
 
 def decode(bytestr):

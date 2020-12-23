@@ -24,11 +24,10 @@
 #  SOFTWARE.
 
 
-global SET_VOICE_COMPRESSION
-
 import os
-import sys
 import tempfile
+import queue
+import time
 from pprint import pprint
 from tempfile import gettempdir
 
@@ -41,10 +40,12 @@ from callattendant.hardware.modem import Modem, RESET, \
     ENTER_VOICE_TRANSMIT_DATA_STATE, DTE_END_VOICE_DATA_TX, \
     ENTER_VOICE_RECIEVE_DATA_STATE, DTE_END_VOICE_DATA_RX, \
     TERMINATE_CALL, ETX_CODE, DLE_CODE, \
-    SET_VOICE_COMPRESSION, SET_VOICE_COMPRESSION_ZOOM
+    SET_VOICE_COMPRESSION, SET_VOICE_COMPRESSION_CONEXANT
+
+global SET_VOICE_COMPRESSION
 
 # Skip the test when running under continous integraion
-pytestmark = pytest.mark.skipif(os.getenv("CI")=="true", reason="Hardware not installed")
+pytestmark = pytest.mark.skipif(os.getenv("CI") == "true", reason="Hardware not installed")
 
 
 @pytest.fixture(scope='module')
@@ -57,11 +58,14 @@ def modem():
     config['VOICE_MAIL_MESSAGE_FOLDER'] = gettempdir()
 
     modem = Modem(config)
-    modem.open_serial_port()
 
     yield modem
 
-    modem.ring_indicator.close()
+    modem.stop()
+
+
+def test_modem_online(modem):
+    assert modem.is_open
 
 
 def test_profile_reset(modem):
@@ -78,7 +82,7 @@ def test_put_modem_into_voice_mode(modem):
 
 def test_set_compression_method_and_sampling_rate_specifications(modem):
     assert modem._send(
-        SET_VOICE_COMPRESSION_ZOOM if modem.model == "ZOOM" else SET_VOICE_COMPRESSION
+        SET_VOICE_COMPRESSION_CONEXANT if modem.model == "CONEXANT" else SET_VOICE_COMPRESSION
     )
 
 
@@ -99,8 +103,8 @@ def test_put_modem_into_voice_recieve_data_state(modem):
 
 
 def test_cancel_data_receive_state(modem):
-    response = lambda model: "OK" if model == "ZOOM" else ETX_CODE
-    assert modem._send(DTE_END_VOICE_DATA_RX, response(modem.model))
+    response = "OK" if modem.model == "CONEXANT" else ETX_CODE
+    assert modem._send(DTE_END_VOICE_DATA_RX, response)
 
 
 def test_terminate_call(modem):
@@ -122,4 +126,69 @@ def test_playing_audio(modem):
 
 def test_recording_audio(modem):
     filename = os.path.join(modem.config["DATA_PATH"], "message.wav")
-    assert modem.record_audio(filename)
+    assert modem.record_audio(filename, detect_silence=False)
+
+
+def test_recording_audio_detect_silence(modem):
+    filename = os.path.join(modem.config["DATA_PATH"], "message.wav")
+    assert not modem.record_audio(filename)
+
+
+def test_call_handler(modem, mocker):
+    # Incoming caller id test data: valid numbers are sequential 10 digit repeating nums,
+    # plus some spurious call data intermixed between caller ids
+    call_data = [
+        b"RING", b"DATE=0101", b"TIME=0101", b"NMBR=1111111111", b"NAME=Test1",
+        b"RING", b"DATE=0202", b"TIME=0202", b"NMBR=2222222222",  # Test2 - no name
+        b"RING", b"NMBR=3333333333",                              # Test3 - number only
+        b"RING", b"DATE=0404", b"TIME=0404", b"NMBR=4444444444", b"NAME=Test4",
+        b"RING", b"RING", b"NAME=TestNoNumber", b"RING", b"RING",  # Partial data w/o number
+        b"RING", b"DATE=0505", b"TIME=0505", b"NMBR=5555555555", b"NAME=Test5",
+    ]
+    data_queue = queue.Queue()
+    caller_queue = queue.Queue()
+
+    # Mock Serial.readline() with a 1 sec timeout
+    def mock_readline():
+        try:
+            return data_queue.get(True, 1)
+        except queue.Empty:
+            return b''
+    mocker.patch.object(modem._serial, "readline", mock_readline)
+
+    # Define the _call_handler callback and start the call handler thread
+    def handle_call(call_record):
+        caller_queue.put(call_record)
+    modem.start(handle_call)
+
+    # Roughly simulate incoming calls
+    for x in call_data:
+        if x == b"RING":
+            time.sleep(3)
+        data_queue.put(x)
+
+    # Wait for last call to be processed, then stop the modem thread
+    time.sleep(3)
+    modem._stop_event.set()
+    modem._thread.join()
+
+    # Put the call records into an array for asserts in a loop
+    calls_rcvd = []
+    while not caller_queue.empty():
+        call_record = caller_queue.get_nowait()
+        calls_rcvd.append(call_record)
+        print(call_record)
+
+    # Run the asserts
+    n = 1
+    for call in calls_rcvd:
+        # Assert all four data elements are present
+        assert all(k in call for k in ("DATE", "TIME", "NAME", "NMBR"))
+
+        # Assert the number and name matches the inputs or defaults
+        assert call["NMBR"] == str(n) * 10
+        if n in [1, 4, 5]:
+            assert call["NAME"] == "Test{}".format(n)
+        else:
+            assert call["NAME"] == "Unknown"
+        n += 1

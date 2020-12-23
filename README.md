@@ -3,10 +3,13 @@
 
 #### `pip install callattendant`
 
-The Call Attendant (__callattendant__) is an auto attendant with call blocking and voice
-messaging features running on a Raspberry Pi. It stops annoying robocalls and spammers from
+The Call Attendant (__callattendant__) is an auto attendant with an integrated call blocker and 
+voice messaging system running on a Raspberry Pi. It stops annoying robocalls and spammers from
 interrupting your life. Let the Call Attendant intercept and block robocallers and telemarketers
 before the first ring on your landline.
+
+The __callattendant__ provides international support with configurable phone number formats, with 
+flexible and editable blocked-number and permitted-number lists.
 
 _If you're at all interested in this project, please provide some feedback by giving it a
 __[star](https://github.com/emxsys/callattendant/stargazers)__, or even better, get involved
@@ -34,8 +37,8 @@ handset(s). When an incoming call is received, the call goes to both your phone 
 __callattendant__. During the period of the first ring the __callattendant__ analyzes the caller ID,
 and based on your configuration, determines if the call should be blocked or allowed. Blocked calls
 can be simply hung up on, or routed to the voice message system. Calls that are allowed will simply
-ring your home phone like normal. All calls can be sent to a voice mail system if you choose. The
-__callattendant__'s filtering mechanisms include an online lookup service, a permitted number list,
+ring your home phone like normal. Calls can be sent to the integrated voice mail system if you choose. 
+The __callattendant__'s filtering mechanisms include an online lookup service, a permitted number list,
 a blocked number list and pattern matching on the caller's number and/or name.
 
 #### Features include:
@@ -71,7 +74,9 @@ complex setups and situations. For instance, _Running as a Service_.
 ### Hardware Requirements
 The __callattendant__ uses the following hardware:
 - [Raspberry Pi 3B+](https://www.amazon.com/ELEMENT-Element14-Raspberry-Pi-Motherboard/dp/B07P4LSDYV/ref=sr_1_4?dchild=1&keywords=raspberry+pi+3&qid=1598057138&sr=8-4) or better
-- [US Robotics 5637 Modem](https://www.amazon.com/gp/product/B0013FDLM0/ref=ppx_yo_dt_b_asin_image_o03_s00?ie=UTF8&psc=1)
+- [US Robotics 5637 Modem](https://www.amazon.com/gp/product/B0013FDLM0/ref=ppx_yo_dt_b_asin_image_o03_s00?ie=UTF8&psc=1) 
+or the [Zoom 3095 Modem](https://www.amazon.com/Zoom-Model-3095-USB-Modem/dp/B07HHKG6HR). Other Conexant-based
+modems may work.
 
 ##### _Photo of the required hardware: a Raspberry Pi 3B+ and USR5637 modem_
 ![Raspberry Pi and USR5637 Modem](https://github.com/emxsys/callattendant/raw/master/docs/raspberry_pi-modem.jpg)
@@ -163,47 +168,67 @@ callattendant --config myapp.cfg --data-path /var/lib/callattendant
 
 You should see output of the form:
 ```
+Command line options:
+  --config=app.cfg
+  --data-path=None
+  --create-folder=False
 [Configuration]
-  BLOCKED_ACTIONS = ('greeting',)
-  BLOCKED_GREETING_FILE = resources/blocked_greeting.wav
+  BLOCKED_ACTIONS = ('greeting', 'voice_mail')
+  BLOCKED_GREETING_FILE = /home/pi/.local/lib/python3.7/site-packages/callattendant/resources/blocked_greeting.wav
   BLOCKED_RINGS_BEFORE_ANSWER = 0
   BLOCK_ENABLED = True
   BLOCK_NAME_PATTERNS = {'V[0-9]{15}': 'Telemarketer Caller ID'}
   BLOCK_NUMBER_PATTERNS = {}
-  DATABASE = data/callattendant.db
+  BLOCK_SERVICE = NOMOROBO
+  CONFIG_FILE = app.cfg
+  DATABASE = callattendant.db
+  DATA_PATH = /home/pi/.callattendant
+  DB_FILE = /home/pi/.callattendant/callattendant.db
   DEBUG = False
   ENV = production
-  PERMITTED_ACTIONS = ()
-  PERMITTED_GREETING_FILE = resources/general_greeting.wav
-  PERMITTED_RINGS_BEFORE_ANSWER = 4
-  ROOT_PATH = /home/pi/src/callattendant/callattendant
+  PERMITTED_ACTIONS = ('greeting', 'record_message')
+  PERMITTED_GREETING_FILE = /home/pi/.local/lib/python3.7/site-packages/callattendant/resources/general_greeting.wav
+  PERMITTED_RINGS_BEFORE_ANSWER = 6
+  PERMIT_NAME_PATTERNS = {}
+  PERMIT_NUMBER_PATTERNS = {}
+  PHONE_DISPLAY_FORMAT = ###-###-####
+  PHONE_DISPLAY_SEPARATOR = -
+  ROOT_PATH = /home/pi/.local/lib/python3.7/site-packages/callattendant
   SCREENED_ACTIONS = ('greeting', 'record_message')
-  SCREENED_GREETING_FILE = resources/general_greeting.wav
+  SCREENED_GREETING_FILE = /home/pi/.local/lib/python3.7/site-packages/callattendant/resources/general_greeting.wav
   SCREENED_RINGS_BEFORE_ANSWER = 0
   SCREENING_MODE = ('whitelist', 'blacklist')
   TESTING = False
-  VOICE_MAIL_GOODBYE_FILE = resources/goodbye.wav
-  VOICE_MAIL_GREETING_FILE = resources/general_greeting.wav
-  VOICE_MAIL_INVALID_RESPONSE_FILE = resources/invalid_response.wav
-  VOICE_MAIL_LEAVE_MESSAGE_FILE = resources/please_leave_message.wav
-  VOICE_MAIL_MENU_FILE = resources/voice_mail_menu.wav
-  VOICE_MAIL_MESSAGE_FOLDER = data/messages
+  VERSION = 1.1.0
+  VOICE_MAIL_GOODBYE_FILE = /home/pi/.local/lib/python3.7/site-packages/callattendant/resources/goodbye.wav
+  VOICE_MAIL_GREETING_FILE = /home/pi/.local/lib/python3.7/site-packages/callattendant/resources/general_greeting.wav
+  VOICE_MAIL_INVALID_RESPONSE_FILE = /home/pi/.local/lib/python3.7/site-packages/callattendant/resources/invalid_response.wav
+  VOICE_MAIL_LEAVE_MESSAGE_FILE = /home/pi/.local/lib/python3.7/site-packages/callattendant/resources/please_leave_message.wav
+  VOICE_MAIL_MENU_FILE = /home/pi/.local/lib/python3.7/site-packages/callattendant/resources/voice_mail_menu.wav
+  VOICE_MAIL_MESSAGE_FOLDER = /home/pi/.callattendant/messages
+Initializing Modem
+Opening serial port
+Looking for modem on /dev/ttyACM0
+******* Conextant-based modem detected **********
+Serial port opened on /dev/ttyACM0
+Modem initialized
 {MSG LED OFF}
-Staring the Flask webapp
-Running Flask webapp
+Starting the Flask webapp
+Running the Flask server
+Waiting for call...
  * Serving Flask app "userinterface.webapp" (lazy loading)
  * Environment: production
    WARNING: This is a development server. Do not use it in a production deployment.
    Use a production WSGI server instead.
  * Debug mode: off
-Modem COM Port is: /dev/ttyACM0
+
 ```
 
 Make a few calls to yourself to test the service. The standard output will show the
 progress of the calls. Then navigate to `http://<pi-address>|<pi-hostname>:5000` in a
 web browser to checkout the web interface.
 
-Press `ctrl-c` a couple of times to exit the system
+Press `ctrl-c` to shutdown the system
 
 ---
 

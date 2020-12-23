@@ -85,7 +85,6 @@ def test_multiple():
     message.turn_off()
     time.sleep(2)
 
-
     print("Test normal status")
     ringer.ring()
     message.pulse(),

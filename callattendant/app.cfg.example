@@ -24,62 +24,129 @@ TESTING = False
 #   This should not be changed/overrriden except during development/testing
 #DATABASE = "callattendant.db"
 
+# PHONE_DISPLAY_SEPARATOR: Specify the character used to format phone numbers, e.g, a space, hyphen or period,
+PHONE_DISPLAY_SEPARATOR = "-"
+
+# PHONE_DISPLAY_FORMAT: Define the formatting of phone numbers in the various lists. You must use the
+# separator character defined by PHONE_DISPLAY_SEPARATOR above in the format string.
+#
+#   The phone display format handles variable length phone numbers. Excess digits not included
+#   in the format string are prepended to the number with a separator.
+#   For example, the AUS number 006173XXXYYYY would be formatted as follows:
+#       General format: 006173-XXX-YYYY
+#            AU format: 00-61-73-XXX-YYYY
+#            US format: 006-173-XXX-YYYY
+#            UK format: 00-6173-XXX-YYYY
+#            FR format: 0061-73X-XX-YY-YY
+#
+#  Example: General
+#   PHONE_DISPLAY_FORMAT = "###-####"
+#
+#  Example: US
+#   PHONE_DISPLAY_FORMAT = "###-###-####"
+#
+#  Example: UK
+#   PHONE_DISPLAY_FORMAT = "####-###-####"
+#
+#  Example: FR
+#   PHONE_DISPLAY_FORMAT = "###-##-##-##"
+#
+#  Example: AU
+#   PHONE_DISPLAY_FORMAT = "##-##-###-####"
+#
+#  Example: Raw - no formatting
+#  PHONE_DISPLAY_FORMAT = ""
+#
+PHONE_DISPLAY_FORMAT = "###-###-####"
+
+
 # SCREENING_MODE: A tuple containing: "whitelist" and/or "blacklist", or empty
 SCREENING_MODE = ("whitelist", "blacklist")
 
 # BLOCK_ENABLED: if True calls that fail screening will be blocked
 BLOCK_ENABLED = True
 
-# BLOCK_NAME_PATTERNS: A regex expression dict applied to the CID names
+
+# BLOCK_NAME_PATTERNS: Block calls based on a RegEx expression dict applied
+# to the CID names: {"regex": "description", ... }
 #   Example: {"V[0-9]{15}": "Telemarketer Caller ID", "O": "Unknown caller"}
 BLOCK_NAME_PATTERNS = {"V[0-9]{15}": "Telemarketer Caller ID", }
 
-# BLOCK_NUMBER_PATTERNS: A regx expression dict applied to the CID numbers
+# BLOCK_NUMBER_PATTERNS: Block calls based on a dict of regular expressions
+# applied to the CID numbers: {"regex": "description", ... }
 #   Example: {"P": "Private number", "O": "Out of area",}
 BLOCK_NUMBER_PATTERNS = {}
 
+# PERMIT_NAME_PATTERNS: Permit calls based on a RegEx expression dict
+# applied to the CID names: {"regex": "description", ... }
+#   Example: {".*DOE": "Family", ".*SCHOOL": "Schools", }
+PERMIT_NAME_PATTERNS = {}
 
-# BLOCKED_ACTIONS: A tuple containing a combination of the following actions:
-#   "greeting", "record_message", "voice_mail".
-#
-# These actions are performed before hanging up.
-#
-# Note: the  "record_message", "voice_mail" actions are mutually exclusive.
-# Also Note: A trailing comma is REQUIRED for a tuple with just one item
-#
-# Example: No actions, just hang_up
-#   BLOCKED_ACTIONS = ()
-#
-# Example: Play an announcement before hanging up
-#   BLOCKED_ACTIONS = ("greeting", )
-#
-# Example: Record a message before hanging up, no keypress required
-#   BLOCKED_ACTIONS = ("record_message", )
-#
-# Example: Option to record a message; keypress required to leave message
-#   BLOCKED_ACTIONS = ("voice_mail", )
-#
-# Example: Play announcment and record a message; no keypress required
-#   BLOCKED_ACTIONS = ("greeting", "record_message" )
-#
-# Example: Play announcment and voice mail menu; keypress required to leave message
-#   BLOCKED_ACTIONS = ("greeting", "voice_mail" )
-#
-BLOCKED_ACTIONS = ("greeting", "voice_mail")
+# PERMIT_NUMBER_PATTERNS: Permit calls based on a regx expression dict
+# applied to the CID numbers: {"regex": "description", ... }
+#   Example: {"01628": "My area", }
+PERMIT_NUMBER_PATTERNS = {}
 
-# BLOCKED_RINGS_BEFORE_ANSWER: The number of rings to wait before answering
-#   Example: 0 to act immediately, possibly before your local phone rings.
-BLOCKED_RINGS_BEFORE_ANSWER = 0
+
+# BLOCK_SERVICE: The name of the online service used to lookup robocallers and spam numbers.
+#   Currently, only NOMOROBO is supported and it is for the USA. Areas outside the USA should set
+#   to blank. When the online service is blank (disabled), only the blacklist and blocked
+#   name/number patterns are used to block numbers.
+#
+#   Example: "NOMOROBO" (USA)  or "" (disabled).
+BLOCK_SERVICE = "NOMOROBO"
+
+
+# BLOCKED_ACTIONS: A tuple containing following actions:
+#   "ignore" -OR- a combination of the following:
+#   "answer", "greeting", "record_message", "voice_mail".
+#
+# Note: "ignore" and "answer" are mutually exclusive; one or the other is required.
+# Note: "record_message" and "voice_mail" actions are mutually exclusive.
+# Note: A trailing comma is REQUIRED for a tuple with just one item.
+#
+# Example: Take no action, just let the phone ring
+#   BLOCKED_ACTIONS = ("ignore",)
+# NOTE: A tuple with one item requires a trailing comma; just like the example above
+#
+# Example: Just answer and hang_up
+#   BLOCKED_ACTIONS = ("answer",)
+# NOTE: A tuple with one item requires a trailing comma; just like the example above
+#
+# Example: Answer and play an announcement before hanging up
+#   BLOCKED_ACTIONS = ("answer", "greeting")
+#
+# Example: Answer and record a message before hanging up;
+# no keypress required
+#   BLOCKED_ACTIONS = ("answer", "record_message")
+#
+# Example: Answer and go into the voice mail menu;
+# a keypress is required to a leave message
+#   BLOCKED_ACTIONS = ("answer", "voice_mail")
+#
+# Example: Answer, play announcment and record a message;
+# no keypress required
+#   BLOCKED_ACTIONS = ("answer", "greeting", "record_message")
+#
+# Example: Answer, play announcment and go into the voice mail menu;
+# a keypress is required to leave message
+#   BLOCKED_ACTIONS = ("answer", "greeting", "voice_mail")
+#
+BLOCKED_ACTIONS = ("answer", "greeting", "voice_mail")
 
 # BLOCKED_GREETING_FILE: The wav file to be played to blocked callers.
 #   Example: "Your number has been blocked."
 BLOCKED_GREETING_FILE = "resources/blocked_greeting.wav"
 
+# BLOCKED_RINGS_BEFORE_ANSWER: The number of rings to wait before answering
+#   Example: 0 to act immediately, possibly before your local phone rings.
+BLOCKED_RINGS_BEFORE_ANSWER = 0
 
 
 # SCREENED_ACTIONS:  A tuple containing a combination of the following actions:
-#   "greeting", "record_message", "voice_mail". See BLOCKED_ACTIONS for more info.
-SCREENED_ACTIONS = ("greeting", "record_message")
+#   "ignore" OR a combo of "answer", "greeting", "record_message", "voice_mail".
+# See BLOCKED_ACTIONS for more info.
+SCREENED_ACTIONS = ("answer", "greeting", "record_message")
 
 # SCREENED_GREETING_FILE: The wav file to be played to allowed callers.
 #   Example: "I'm sorry, I can't take your call."
@@ -90,18 +157,18 @@ SCREENED_GREETING_FILE = "resources/general_greeting.wav"
 SCREENED_RINGS_BEFORE_ANSWER = 0
 
 
-
 # PERMITTED_ACTIONS:  A tuple containing a combination of the following actions:
-#   "greeting", "record_message", "voice_mail". See BLOCKED_ACTIONS for more info.
-PERMITTED_ACTIONS = ("greeting", "record_message")
+#   "ignore" OR a combo of "answer", "greeting", "record_message", "voice_mail".
+# See BLOCKED_ACTIONS for more info.
+PERMITTED_ACTIONS = ("ignore")
 
 # PERMITTED_GREETING_FILE: The wav file to be played to allowed callers.
 #   Example: "I'm sorry, I can't take your call."
 PERMITTED_GREETING_FILE = "resources/general_greeting.wav"
 
-# PERMITTED_RINGS_BEFORE_ANSWER: The number of rings to wait before answering
+# PERMITTED_RINGS_BEFORE_ANSWER: The number of rings to wait before answering a call.
 #   Example: 4 to allow the callee to pick up the phone before going to voice mail.
-PERMITTED_RINGS_BEFORE_ANSWER = 4
+PERMITTED_RINGS_BEFORE_ANSWER = 0
 
 
 # VOICE_MAIL_GREETING_FILE: The wav file played after answering: a general greeting

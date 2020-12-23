@@ -5,7 +5,6 @@
 #
 #  Copyright 2020 Bruce Schubert <bruce@emxsys.com>
 
-import os
 import setuptools
 
 # load the long_description from the README
@@ -14,7 +13,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="callattendant",   # Add user name when uploading to TestPyPI
-    version="1.0.0",        # Ensure this is in-sync with VERSION in config.py
+    version="1.1.1",        # Ensure this is in-sync with VERSION in config.py
     author="Bruce Schubert",
     author_email="bruce@emxsys.com",
     description="An automated call attendant and call blocker using a Raspberry Pi and USR-5637 modem",
@@ -42,6 +41,7 @@ setuptools.setup(
         "pygments",
         "pyserial>=3.4",
         "pytest>=6.0.1",
+        "pytest-mock>=3.3.1",
         "PyYAML>=5.3.1",
         "RPi.GPIO>=0.7.0",
         "RPIO>=0.10.0",
@@ -59,6 +59,14 @@ setuptools.setup(
         "bin/restart-callattendant",
         "bin/monitor-callattendant",
     ],
+    data_files=[
+        ('share/applications', [
+            'bin/configure-callattendant.desktop',
+            'bin/monitor-callattendant.desktop',
+            'bin/restart-callattendant.desktop',
+            'bin/stop-callattendant.desktop',
+        ]),
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
@@ -70,4 +78,5 @@ setuptools.setup(
         "Topic :: Home Automation",
     ],
     python_requires='>=3.5',
+
 )

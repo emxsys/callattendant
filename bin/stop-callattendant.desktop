@@ -1,0 +1,8 @@
+[Desktop Entry]
+Comment=Stop the callattendant service
+Terminal=true
+Name=Stop Call Attendant
+Exec=stop-callattendant
+Type=Application
+Icon=call-stop
+Categories=System;

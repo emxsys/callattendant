@@ -24,13 +24,13 @@
 #  SOFTWARE.
 
 import os
-import threading
 from pprint import pprint
 from datetime import datetime
 
 
 global unplayed_count
 unplayed_count = 0
+
 
 class Message:
 

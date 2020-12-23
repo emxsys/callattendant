@@ -26,8 +26,6 @@
 # See: https://gpiozero.readthedocs.io/en/stable/
 # See: https://gpiozero.readthedocs.io/en/stable/api_output.html#led
 
-import time
-from pprint import pprint
 from gpiozero import LED, PWMLED, LEDBoard, OutputDeviceError, LEDCollection
 
 GPIO_RING = 14
@@ -310,13 +308,29 @@ class MessageIndicator(PWMLEDIndicator):
         super().pulse(max_times=None)   # None = forever
 
 
-class MessageCountIndicator(SevenSegmentDisplay):
+class MessageCountIndicator(object):
     """
     The message count indicator displays the number of unplayed messages in the system.
     """
-
     def __init__(self, *pins, **kwargs):
         if len(pins) > 0:
-            super().__init__(*pins, **kwargs)
+            self.seven_seg = SevenSegmentDisplay(*pins, **kwargs)
         else:
-            super().__init__(*GPIO_MESSAGE_COUNT_PINS, **GPIO_MESSAGE_COUNT_KWARGS)
+            self.seven_seg = SevenSegmentDisplay(*GPIO_MESSAGE_COUNT_PINS, **GPIO_MESSAGE_COUNT_KWARGS)
+
+    def display(self, char):
+        self.seven_seg.display(char)
+
+    def display_hex(self, hexnumber):
+        self.seven_seg.display_hex(hexnumber)
+
+    @property
+    def decimal_point(self):
+        return self.seven_seg.decimal_point
+
+    @decimal_point.setter
+    def decimal_point(self, value):
+        self.seven_seg.decimal_point = value
+
+    def close(self):
+        self.seven_seg.close()
