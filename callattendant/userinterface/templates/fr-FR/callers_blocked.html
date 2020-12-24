@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Appels bloqués{% endblock %}
+
+{% block content %}
+<div class="container mb-2">
+  <h2><span class="bg-danger text-white px-2">Bloqués</span>
+   <a href="https://github.com/emxsys/callattendant/wiki/User-Guide#managing-blocked-numbers">
+    <img class="float-right" src="../static/info-circle.svg" alt="" width="32" height="32">
+   </a>
+  </h2>
+  <div>
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addModal">Ajouter</button>
+  </div>
+  <br/>
+  <div class="mb-2">
+    {% if blacklist %}
+    {{ pagination.links }}
+    <table id='blocked-table' class="table table-striped table-sm table-responsive-sm">
+      <thead>
+        <tr>
+          <th>Numéro</th>
+          <th>Raison</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in blacklist %}
+        <tr>
+          <td class="manage-caller">
+            <a href="/calls?search={{ row.Phone_Number }}&submit=phone"><b>{{ row.Phone_Number }}</b></a> -
+            <span class="d-lg-none"><br></span>
+            <i>{{ row.Name }}</i>
+          </td>
+          <td>{{ row.Reason }}</td>
+          <td class="px-1">
+            <button type="button" class="btn btn-outline-light text-dark" data-toggle="modal" data-target="#updateModal"
+                data-blocked-phone="{{ row.Phone_Number }}" data-blocked-name="{{ row.Name }}" data-blocked-reason="{{ row.Reason }}">
+              <img src="../static/pencil.svg" alt="" width="24" height="24" title="Edit">
+            </button>
+          </td>
+          <td>
+            <button type="button" class="btn btn-outline-light text-dark" onClick="location.href='/callers/blocked/delete/{{ row.Phone_Number }}'">
+              <img src="../static/trash.svg" alt="" width="24" height="24" title="Trash">
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {{ pagination.links }}
+    {% endif %}
+  </div>
+  <button id="back-button" type="button" class="btn btn-secondary">Retour</button>
+</div>
+
+<!-- Add Modal-->
+<div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addModalLabel">Ajouter bloquage</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+        <form>
+          <div class="modal-body">
+              <div class="form-group">
+                <label for="add-phone" class="col-form-label">Numéro : {{ phone_no_format }}</label>
+                <input name="phone" type="tel" class="form-control" id="add-phone" required="required" >
+              </div>
+              <div class="form-group">
+                <label for="add-name" class="col-form-label">Nom : </label>
+                <input name="name" type="text" class="form-control" id="add-name">
+              </div>
+              <div class="form-group">
+                <label for="add-reason" class="col-form-label">Raison : </label>
+                <input name="reason" type="text" class="form-control" id="add-reason">
+              </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+          </div>
+        </form>
+    </div>
+  </div>
+</div>
+
+<!-- Update Modal -->
+<div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="updateModalLabel">Mise à jour : </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+        <form>
+          <div class="modal-body">
+              <div class="form-group">
+                <label for="update-name" class="col-form-label">Nom : </label>
+                <input name="name" type="text" class="form-control" id="update-name">
+              </div>
+              <div class="form-group">
+                <label for="update-reason" class="col-form-label">Raison : </label>
+                <input name="reason" type="text" class="form-control" id="update-reason">
+              </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+            <button type="submit" class="btn btn-primary">Appliquer les changements</button>
+          </div>
+        </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+// Go back to the original referrer
+$('#back-button').on('click', function (event) {
+    history.back()
+});
+
+// Add
+$('#addModal').on('show.bs.modal', function (event) {
+  var modal = $(this)
+  modal.find('.modal-dialog form').attr('action', '/callers/blocked/add')
+  modal.find('.modal-dialog form').attr('method', 'post')
+})
+
+// Edit
+$('#updateModal').on('show.bs.modal', function (event) {
+  // Button that triggered the modal
+  var button = $(event.relatedTarget)
+  // Extract info from data-* attributes
+  var phone = button.data('blocked-phone')
+  var name = button.data('blocked-name')
+  var reason = button.data('blocked-reason')
+  var modal = $(this)
+  modal.find('.modal-title').text('Update blocked Number: ' + phone)
+  modal.find('.modal-dialog form').attr('action', '/callers/blocked/update/' + phone)
+  modal.find('.modal-dialog form').attr('method', 'post')
+  modal.find('#update-name').val(name)
+  modal.find('#update-reason').val(reason)
+})
+</script>
+{% endblock %}

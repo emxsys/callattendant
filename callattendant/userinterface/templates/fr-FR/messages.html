@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Messages{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2>Messages vocaux <img src="../static/chat-left-text.svg" alt="" width="32" height="32">
+  {% if total_unplayed > 0 %}
+    <i><span class="badge badge-primary"><span id="total-unplayed">{{ total_unplayed }}</span> Nouveau </span></i>
+  {% endif %}
+   <a href="https://github.com/emxsys/callattendant/wiki/User-Guide#managing-voice-messages">
+    <img class="float-right" src="../static/info-circle.svg" alt="" width="32" height="32">
+   </a>  </h2>
+
+  {% if total_messages == 0 %}
+  <h4><i>None</i></h4>
+  {% else %}
+  {{ pagination.links }}
+  <table class="table table-sm table-responsive-sm">
+    <thead>
+      <tr>
+        <th>Date/Heure</th>
+        <th>Message</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in messages %}
+      <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}">
+        <td class="time">
+          <b>{{ item.time }}</b>
+          <span class="d-lg-none"><br></span>
+          {{ item.date }}
+          {% if item.msg_played == 0 %}
+          <span id="msg-{{ item.msg_no }}" class="badge badge-pill badge-primary"><i> Nouveau </i></span>
+          {% endif %}
+        </td>
+        <td>
+          <audio id="audio" controls preload="metadata" data-msg-no="{{ item.msg_no }}" data-msg-played="{{ item.msg_played }}">
+            <source src="{{ item.wav_file }}" type="audio/wav">
+            Votre navigateur n'est pas compatible avec ce format audio.
+          </audio>
+          <br>
+          de <a href="/calls/view/{{ item.call_no }}"><b>{{ item.phone_no }}</b></a><small class="text-muted"> - {{ item.name }}</small>
+        </td>
+        <td class="px-1 align-middle">
+          <button type="button" class="btn btn-outline-light text-dark" onClick="location.href='/messages/delete/{{ item.msg_no }}'">
+            <img src="../static/trash.svg" alt="" width="32" height="32" title="Delete Message">
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {{ pagination.links }}
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+$("audio").on('play', function(e) {
+  var $audio = $(e.currentTarget)
+  var message_no = $audio.data('msg-no')
+  var msg_played = $audio.data('msg-played')
+  if (msg_played == 0) {
+    // Set the status to 1; "played"
+    var data = { msg_no: message_no, status: 1 }
+    $.post("/messages/played", data, function(results) {
+        if (results.success) {
+          $('#msg-'+results.msg_no).remove()
+          $('#total-unplayed').text(results.unplayed_count)
+        }
+    });
+  }
+});
+
+</script>
+{% endblock %}

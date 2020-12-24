@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Panneau de contrôle{% endblock %}
+
+{% block content %}
+<div class="container" >
+  <div>
+    <h3 class="pt-2">Statistiques</h3>
+    <div class="card-columns">
+      <a href="/calls">
+        <div class="card rounded-pill bg-primary text-white stats-card">
+          <img class="card-img-top" src="/static/telephone-inbound.svg" alt="Card image" height="100" style="opacity: 0.2;">
+          <div class="card-img-overlay">
+           <div class="card-body">
+            Numéro analysés :
+            <h3 class="font-weight-bolder">{{ total_calls }}</h3>
+           </div>
+          </div>
+        </div>
+      </a>
+      <div class="card rounded-pill bg-danger text-white stats-card">
+        <img class="card-img-top" src="/static/telephone-x.svg" alt="Card image" height="100" style="opacity: 0.2;">
+        <div class="card-img-overlay">
+         <div class="card-body">
+          Appels bloqués :
+          <h3 class="font-weight-bolder">{{ blocked_calls }}</h3>
+         </div>
+        </div>
+      </div>
+      <a href="#calls-per-day">
+        <div class="card rounded-pill bg-success text-white stats-card">
+          <img class="card-img-top" src="/static/bar-chart.svg" alt="Card image" height="100" style="opacity: 0.2;">
+          <div class="card-img-overlay">
+          <div class="card-body">
+            Pourcentage bloqué :
+            <h3 class="font-weight-bolder">{{ percent_blocked }}</h3>
+           </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div>
+    {% if new_messages > 0 %}
+    <div class="container m-2">
+      <button id="new-messages" type="button" class="btn btn-secondary">
+        <i>Nouveau(s) message(s) reçu(s) </i><span class="badge badge-primary"><span id="total-unplayed">{{ new_messages }}</span>
+      </button>
+    </div>
+    {% endif %}
+    <div class="container">
+
+      <div class="row">
+        <div class="m-2 col-lg border border-info">
+
+          <h4 class="pt-2">Appels récents
+           <a href="https://github.com/emxsys/callattendant/wiki/User-Guide#recent-calls">
+            <img class="float-right" src="../static/info-circle.svg" alt="" width="24" height="24">
+           </a>
+          </h4>
+          {% if recent_calls %}
+          <table id="recent-calls" class="table table-hover table-sm table-responsive-sm" width="100%">
+            <thead>
+              <tr>
+                <th>Date/Heure</th>
+                <th>Numéro</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for item in recent_calls %}
+              <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}">
+                <td class="time">
+                  <b>{{ item.time }}</b>
+                  <span class="d-md-none"><br></span>
+                  {{ item.date }}
+                </td>
+                <td class="phoneno">
+                  <a href="/calls/view/{{ item.call_no }}">
+                    <b>{{ item.phone_no }}</b>
+                  </a>
+                  <span class="d-md-none"><br></span>
+                  <span class="text-break pl-md-2 pl-lg-3"><i>{{ item.name }}</i></span>
+                </td>
+                <td>
+                  <span class="badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
+                  {{ item.action }}
+                    </span>
+                  <span>
+                  {% if item.msg_no is not none %}
+                    <img src={% if item.msg_played == 0 %}"../static/chat-left-text.svg"{% else %}"../static/chat-left.svg"{% endif %} alt="" width="16" height="16" title="Message available">
+                  {% endif %}
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="row">
+        <div id="calls-per-day" class="m-2 col-lg border border-info">
+
+          <h4 class="pt-2">Appels par jour</h4>
+
+          {% if calls_per_day %}
+          <div class="content">
+            <canvas id="bar-chart" width="800" height="400"></canvas>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="m-2 col-md border border-info">
+
+          <h4  class="pt-2">Classement appels autorisés</h4>
+
+          {% if top_permitted %}
+          <table id="top_permitted" class="table table-hover table-sm table-responsive-sm" width="100%">
+            <thead>
+              <tr>
+                <th>Numéro</th>
+                <th>Nombre</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for item in top_permitted %}
+                <td>
+                  <a href="/calls?search={{ item.phone_no }}&submit=phone"><b>{{ item.phone_no }}</b></a> -
+                  <span class="d-sm-none"><br></span>
+                  <i>{{ item.name }}</i>
+                </td>
+                <td >
+                    {{ item.count }}
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
+        </div>
+        <div class="m-2 col-md border border-info">
+
+          <h4 class="pt-2">Classement appels bloqués</h4>
+
+          {% if top_blocked %}
+          <table id="top_blocked" class="table table-hover table-sm table-responsive-sm" width="100%">
+            <thead>
+              <tr>
+                <th>Numéro</th>
+                <th>Nombre</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for item in top_blocked %}
+                <td>
+                  <a href="/calls?search={{ item.phone_no }}&submit=phone"><b>{{ item.phone_no }}</b></a> -
+                  <span class="d-sm-none"><br></span>
+                  <i>{{ item.name }}</i>
+                </td>
+                <td >
+                    {{ item.count }}
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
+        </div>
+      </div> <!-- row -->
+    </div> <!-- container -->
+  </div>
+</div>
+{% endblock %}
+
+
+{% block js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+
+<script type="text/javascript">
+  // Display the Blocked Calls per Day bar graph
+  $(function(){
+    // Get the bar chart canvas
+    var ctx = $("#bar-chart")
+    var dates = []
+    var blocked = []
+    var allowed = []
+    var screened = []
+    {% for item in calls_per_day %}
+        allowed.push({{ item.allowed }})
+        blocked.push({{ item.blocked }})
+        screened.push({{ item.screened }})
+        dates.push("{{ item.date }}".substring(5))
+    {% endfor %}
+    var barChartData = {
+        labels: dates,
+        datasets: [{
+            label: "Blocked",
+            backgroundColor: "#DC3545",
+            data: blocked
+        }, {
+            label: "Permitted",
+            backgroundColor: "#007BFF",
+            data: allowed
+        }, {
+            label: "Screened",
+            backgroundColor: "#17A2B8",
+            data: screened
+        }]
+    }
+
+    // Create the Bar chart
+    var chart = new Chart(ctx, {
+      type: 'bar',
+      data: barChartData,
+      options: {
+        legend: {
+          display: true,
+          labels: {
+            boxWidth: 20
+          }
+        },
+        title: {
+          display: false,
+          text: 'Calls per Day'
+        },
+        tooltips: {
+          mode: 'index',
+          intersect: false
+        },
+        responsive: true,
+        scales: {
+          xAxes: [{
+            stacked: true,
+          }],
+          yAxes: [{
+            stacked: true
+          }]
+        }
+      }
+    });
+  })
+
+
+  // Open the Messages page
+  $('#new-messages').on('click', function (event) {
+    window.location.href = "/messages"
+  });
+
+</script>
+{% endblock %}
