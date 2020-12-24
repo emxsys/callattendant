@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Journal d'appels{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2>Journal d'appels
+    <img src="../static/telephone-inbound.svg" alt="" width="32" height="32">
+    <a href="https://github.com/emxsys/callattendant/wiki/User-Guide#viewing-call-history">
+      <img class="float-right" src="../static/info-circle.svg" alt="" width="32" height="32">
+    </a>
+  </h2>
+  {% if search_criteria %}
+      <strong>Recherche : {{ search_criteria }}&nbsp;&nbsp;</strong>
+      <button id="cancel-search" type="button" class="btn btn-secondary btn-sm" aria-label="Cancel">Cancel</button>
+  {% endif %}
+  {% if not calls %}
+  <p><strong><i>Résultats : Aucuns</i></strong></p>
+  {% else %}
+  <div class="mb-2">
+    <div>
+    {{ pagination.info }}
+    {{ pagination.links }}
+    </div>
+    <table id="calls" class="table table-hover table-sm table-responsive-sm" width="100%">
+      <thead>
+        <tr>
+          <th>Date/Heure</th>
+          <th>Appelant</th>
+          <th>Actions</th>
+          <th>Raison</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for item in calls %}
+        <tr class="{% if item.whitelisted == 'Y' %} table-success {% elif item.blacklisted == 'Y' %} table-danger {% endif %}">
+          <td class="time">
+            <b>{{ item.time }}</b>
+            <span class="d-xl-none"><br></span>
+            <span class="text-break">{{ item.date }}</span>
+          </td>
+          <td>
+            <a href="/calls/view/{{ item.call_no }}"><b>{{ item.phone_no }}</b></a>
+            <span class="d-md-none"><br></span>
+            <span class="pl-md-2 pl-lg-3"><i>{{ item.name }}</i></span>
+          </td>
+          <td class="callno">
+            <span class="badge {% if item.action=='Permitted' %}badge-primary{% elif item.action=='Blocked' %}badge-danger{% else %}badge-info{% endif %}">
+              {{ item.action }}
+            </span>
+            <span>
+            {% if item.msg_no is not none %}
+              <button type="button" class="message-btn btn btn-sm btn-outline-light text-dark" data-toggle="modal" data-target="#modal-play-message"
+                  data-message-no="{{ item.msg_no }}"
+                  data-msg-played="{{ item.msg_played}}"
+                  data-call-no="{{ item.call_no }}"
+                  data-phone-no="{{ item.phone_no }}"
+                  data-wav-file="{{ item.wav_file }}"  >
+                <img src={% if item.msg_played == 0 %}"../static/chat-left-text.svg"{% else %}"../static/chat-left.svg"{% endif %} alt="" width="16" height="16" title="Message">
+              </button>
+            {% endif %}
+            </span>
+          </td>
+          <td>
+            {{ item.reason }}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {{ pagination.links }}
+    {% endif %}
+  </div>
+  <button id="back-button" type="button" class="btn btn-secondary">Back</button>
+</div>
+{% include 'modal_play_message.html' %}
+{% endblock %}
+
+{% block js %}
+<script>
+  // Go back to the original referrer
+  $('#back-button').on('click', function (event) {
+      history.back()
+  });
+
+  // Cancel call-log history display and revert to full log
+  $('#cancel-search').on('click', function (event) {
+    window.location.href = "/calls"
+  });
+
+  // Show the play voice message dialog
+  $('#modal-play-message').on('show.bs.modal', function (event) {
+    // Button that triggered the modal
+    var $button = $(event.relatedTarget)
+    // Extract info from data-* attributes
+    var msg_no = $button.data('message-no')
+    var msg_played = $button.data('msg-played')
+    var call_no = $button.data('call-no')
+    var phone_no = $button.data('phone-no')
+    var wav_file = $button.data('wav-file')
+    var $modal = $(this)
+    var $audio = $modal.find('audio')
+    $modal.find('.modal-title').text('Playing Message from ' + phone_no)
+    $modal.find('#call-no').text('Voice message from call #' + call_no)
+    $modal.find('audio source').attr("src", wav_file)
+    $modal.find('audio').trigger('load')
+    $modal.find('audio').trigger('play')
+    $modal.on('hidden.bs.modal', function () { $audio.trigger('pause') });
+    if (msg_played == 0) {
+      // Set the status to 1; "played"
+      var data = { msg_no: msg_no, status: 1 }
+      $.post("/messages/played", data, function(results) {
+        if (results.success) {
+          $('#msg-'+results.msg_no).remove()
+          $('#total-unplayed').text(results.unplayed_count)
+        }
+      });
+    }
+  });
+
+</script>
+{% endblock %}

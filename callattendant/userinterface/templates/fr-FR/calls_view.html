@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Appels #{{ caller.call_no }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card mb-2">
+    <div class="card-header">
+      <h5 class="mb-0">Numéro : <b>{{ caller.time }}</b><small class="text-muted"> le {{ caller.date }}</small></h6>
+    </div>
+    <div class="card-body">
+      <h4>
+        <span class="badge
+          {% if caller.action=='Permitted' %}badge-primary
+          {% elif caller.action=='Blocked' %}badge-danger
+          {% else %}badge-info
+          {% endif %}">
+          Appel le : {{ caller.action }}
+        </span>
+      </h4>
+      <p class="card-text">Raison : {{ caller.reason }}</p>
+    </div>
+  </div>
+
+  <div class="card mb-2">
+    <div class="card-header">
+      <h5 class="mb-0">Numéro : <b>{{ caller.phone_no }}</b><small class="text-muted"> -  {{caller.name }}</small></h5>
+    </div>
+    <div class="card-body">
+      <p class="card-text font-weight-bold
+      {% if caller.whitelisted=='Y' %}table-success
+      {% elif caller.blacklisted=='Y' %}alert-danger
+      {% else %}table-info
+      {% endif %}">
+        {% if caller.whitelisted == 'Y' %}Ce numéro est autorisé et ses appels ne seront pas filtrés ni bloqués
+        {% elif caller.blacklisted == 'Y' %}Ce numéro est bloqué et ses appels seront immédiatement interceptés.
+        {% else %}Ce numéro est autorisé mais ses appels seront filtrés en cas de prospection téléphonique, appels automatisés, robots, etc.
+        {% endif %}
+      </p>
+      <a href="/callers/manage/{{ caller.call_no }}" class="btn btn-primary">Modifier</a>
+      <a href="/calls?search={{ caller.phone_no }}&submit=phone" type="button" class="btn btn-primary">Historique</a>
+    </div>
+  </div>
+  {% if caller.msg_no is not none %}
+    <div class="card mb-2">
+      <div class="card-header">
+        <h5 class="mb-0">Message vocal</b></h5>
+      </div>
+      <div class="card-body">
+        <p>
+          <audio id="audio" controls preload="metadata" data-msg-no="{{ caller.msg_no }}" data-msg-played="{{ caller.msg_played }}">
+            <source src="{{ caller.wav_file }}" type="audio/wav">
+            Votre navigateur n'est pas compatible avec ce format audio.
+          </audio>
+        </p>
+        <button id="play-button" type="button" class="btn btn-primary">Lecture</button>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-delete-message">Supprimer</button>
+      </div>
+    </div>
+  {% endif %}
+  <button id="back-button" type="button" class="btn btn-secondary">Retour</button>
+
+</div>
+
+<!--
+  Delete Message Confirmation Modal
+-->
+<div class="modal fade" id="modal-delete-message" tabindex="-1" role="dialog" aria-labelledby="delete-message-label" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="delete-message-label">Confirmer suppression</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <h6>Supprimer message vocal du : {{ caller.phone_no }}?</h6>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+        <button id="delete-message" type="button" class="btn btn-primary" data-dismiss="modal">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block js %}
+<script>
+// Go back to the original referrer
+$('#back-button').on('click', function (event) {
+    history.back()
+});
+
+
+// Play the message
+$('#play-button').on('click', function (event) {
+  // It doesn't work with $("#audio").play() like you would expect. The official reason is that
+  // incorporating it into jQuery would add a play() to every element. So instead you have to refer
+  // to it by its position in the array of DOM elements
+  // https://stackoverflow.com/a/38547039/4797523
+  $("#audio")[0].play()
+});
+
+// Delete the messages
+$('#delete-message').on('click', function (event) {
+  window.location.href = "/messages/delete/{{ caller.msg_no }}"
+});
+
+// Change message played status when the audio is played
+$("audio").on('play', function(e) {
+  var $audio = $(e.currentTarget)
+  var message_no = $audio.data('msg-no')
+  var msg_played = $audio.data('msg-played')
+  if (msg_played == 0) {
+    // Set the status to 1; "played"
+    var data = { msg_no: message_no, status: 1 }
+    $.post("/messages/played", data, function(results) {
+        if (results.success) {
+          $('#msg-'+results.msg_no).remove()
+          $('#total-unplayed').text(results.unplayed_count)
+        }
+    });
+  }
+});
+</script>
+{% endblock %}
