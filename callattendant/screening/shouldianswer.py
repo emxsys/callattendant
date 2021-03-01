@@ -92,7 +92,4 @@ class ShouldIAnswer(object):
 
         self.spam_threshold = spam_threshold
 
-sia = ShouldIAnswer()
-#sia.lookup_number('0374280353'); #spam
-#sia.lookup_number('0384751548'); #ok
-sia.lookup_number('0615459737');
+
