@@ -30,7 +30,7 @@ import sys
 from screening.blacklist import Blacklist
 from screening.whitelist import Whitelist
 from screening.nomorobo import NomoroboService
-
+from screening.shouldianswer import ShouldIAnswer
 
 class CallScreener(object):
     '''The CallScreener provides provides blacklist and whitelist checks'''
@@ -94,6 +94,15 @@ class CallScreener(object):
                             print(">>> {}".format(reason))
                         self.blacklist_caller(callerid, reason)
                         return True, reason
+                if block["service"].upper() == "SHOULDIANSWER":
+                    print(">> Checking shouldianswer...")
+                    result = self._shouldianswer.lookup_number(number)
+                    if result["spam"]:
+                        reason = "{} with score {}".format(result["reason"], result["score"])
+                        if self.config["DEBUG"]:
+                            print(">>> {}".format(reason))
+                        self.blacklist_caller(callerid, reason)
+                        return True, reason
                 print("Caller has been screened")
                 return False, "Not found"
         finally:
@@ -113,6 +122,7 @@ class CallScreener(object):
 
         self._blacklist = Blacklist(db, config)
         self._whitelist = Whitelist(db, config)
+        self._shouldianswer = ShouldIAnswer()
         self._nomorobo = NomoroboService()
 
         if self.config["DEBUG"]:
