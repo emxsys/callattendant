@@ -32,7 +32,7 @@ default_config = {
     "PHONE_DISPLAY_FORMAT": "###-###-####",
 
     "BLOCK_ENABLED": True,
-    "BLOCK_SERVICE": "NOMOROBO",
+    "BLOCK_SERVICE": "SHOULDIANSWER",
 
     "BLOCK_NAME_PATTERNS": {"V[0-9]{15}": "Telemarketer Caller ID", },
     "BLOCK_NUMBER_PATTERNS": {},
