@@ -36,11 +36,12 @@ import pytest
 from callattendant.config import Config
 from callattendant.hardware.modem import Modem, RESET, \
     GET_MODEM_PRODUCT_CODE, GET_MODEM_SETTINGS, \
-    ENTER_VOICE_MODE, TELEPHONE_ANSWERING_DEVICE_OFF_HOOK, \
+    ENTER_VOICE_MODE, SET_COUNTRY_CODE, TELEPHONE_ANSWERING_DEVICE_OFF_HOOK, \
     ENTER_VOICE_TRANSMIT_DATA_STATE, DTE_END_VOICE_DATA_TX, \
     ENTER_VOICE_RECIEVE_DATA_STATE, DTE_END_VOICE_DATA_RX, \
     TERMINATE_CALL, ETX_CODE, DLE_CODE, \
-    SET_VOICE_COMPRESSION, SET_VOICE_COMPRESSION_CONEXANT
+    SET_VOICE_COMPRESSION, SET_VOICE_COMPRESSION_CONEXANT, \
+    SET_COUNTRY_CODE
 
 global SET_VOICE_COMPRESSION
 
@@ -70,6 +71,10 @@ def test_modem_online(modem):
 
 def test_profile_reset(modem):
     assert modem._send(RESET)
+
+
+def test_country_code(modem):
+    assert modem._send(SET_COUNTRY_CODE+"B5")
 
 
 def test_get_modem_settings(modem):
