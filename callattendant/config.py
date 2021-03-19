@@ -31,6 +31,8 @@ default_config = {
     "PHONE_DISPLAY_SEPARATOR": "-",
     "PHONE_DISPLAY_FORMAT": "###-###-####",
 
+    "COUNTRY_CODE": "B5",
+
     "BLOCK_ENABLED": True,
     "BLOCK_SERVICE": "NOMOROBO",
 
