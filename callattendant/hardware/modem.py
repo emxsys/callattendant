@@ -83,6 +83,7 @@ TELEPHONE_ANSWERING_DEVICE_ON_HOOK = "AT+VLS=0"   # TAD (DCE) on-hook
 GO_OFF_HOOK = "ATH1"
 GO_ON_HOOK = "ATH0"
 TERMINATE_CALL = "ATH"
+SET_COUNTRY_CODE = "AT+GCI="
 
 # Modem DLE shielded codes - DCE to DTE modem data
 DCE_ANSWER_TONE = (chr(16) + chr(97)).encode()          # <DLE>-a
@@ -824,6 +825,9 @@ class Modem(object):
                 print("Error: Failed to disable local echo mode")
             if not self._send(ENABLE_FORMATTED_CID):
                 print("Error: Failed to enable formatted caller report.")
+            if "COUNTRY_CODE" in self.config:
+                if not self._send(SET_COUNTRY_CODE + self.config["COUNTRY_CODE"]):
+                    print("Error: Failed to set country code.")
 
             # Save these settings to a profile
             if not self._send("AT&W0"):
