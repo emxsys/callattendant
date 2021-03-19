@@ -825,8 +825,9 @@ class Modem(object):
                 print("Error: Failed to disable local echo mode")
             if not self._send(ENABLE_FORMATTED_CID):
                 print("Error: Failed to enable formatted caller report.")
-            if not self._send(SET_COUNTRY_CODE + self.config["COUNTRY_CODE"]):
-                print("Error: Failed to set country code.")
+            if "COUNTRY_CODE" in self.config:
+                if not self._send(SET_COUNTRY_CODE + self.config["COUNTRY_CODE"]):
+                    print("Error: Failed to set country code.")
 
             # Save these settings to a profile
             if not self._send("AT&W0"):
