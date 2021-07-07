@@ -51,10 +51,12 @@ class VoiceMail:
         # Initialize the message indicators (LEDs)
         self.message_indicator = MessageIndicator(
                 self.config.get("GPIO_LED_MESSAGE_PIN", GPIO_MESSAGE),
-                self.config.get("GPIO_LED_MESSAGE_BRIGHTNESS", 100))
+                self.config.get("GPIO_LED_MESSAGE_BRIGHTNESS", 100),
+                self.config.get("GPIO_DISABLED", False)
+        )
         pins = self.config.get("GPIO_LED_MESSAGE_COUNT_PINS", GPIO_MESSAGE_COUNT_PINS)
         kwargs = self.config.get("GPIO_LED_MESSAGE_COUNT_KWARGS", GPIO_MESSAGE_COUNT_KWARGS)
-        self.message_count_indicator = MessageCountIndicator(*pins, **kwargs)
+        self.message_count_indicator = MessageCountIndicator(self.config.get("GPIO_DISABLED", False), *pins, **kwargs)
 
         # Create the Message object used to interface with the DB
         self.messages = Message(db, config)

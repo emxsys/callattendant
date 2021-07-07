@@ -195,6 +195,10 @@ VOICE_MAIL_MENU_FILE = "resources/voice_mail_menu.wav"
 #   This should not be changed/overridden except during development/testing
 #VOICE_MAIL_MESSAGE_FOLDER = "messages"
 
+# Disable use of GPIO pins for displaying indicators.  If custom board is not installed, this should be set to True
+# to prevent conflicts with other uses of GPIO pins.
+GPIO_DISABLED = False
+
 # GPIO_LED_..._PIN: These values are the GPIO pin numbers attached to the LED indicators
 # GPIO_LED_..._BRIGHTNESS: These values are a percentage of brightness for the LED indicators when on.
 GPIO_LED_RING_PIN = 14

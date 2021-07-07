@@ -26,7 +26,8 @@
 # See: https://gpiozero.readthedocs.io/en/stable/
 # See: https://gpiozero.readthedocs.io/en/stable/api_output.html#led
 
-from gpiozero import LED, PWMLED, LEDBoard, OutputDeviceError, LEDCollection
+from gpiozero import Device, LED, PWMLED, LEDBoard, OutputDeviceError, LEDCollection
+from gpiozero.pins.mock import MockFactory, MockPWMPin
 
 GPIO_RING = 14
 GPIO_APPROVED = 15
@@ -223,7 +224,7 @@ class PWMLEDIndicator(object):
     A pulse-width modulated LED.
     """
 
-    def __init__(self, gpio_pin, brightness=100):
+    def __init__(self, gpio_pin, brightness=100, gpio_disabled=False):
         """
         Constructor of a PWM LED.
             :param gpio_pin:
@@ -231,6 +232,10 @@ class PWMLEDIndicator(object):
             :param brightness:
                 Brightness percentage. Defaults to 100%.
         """
+        if gpio_disabled:
+            # Use 'fake' pins so rest of code can still be called, but with no hardware interaction
+            # https://gpiozero.readthedocs.io/en/stable/api_pins.html#mock-pins
+            Device.pin_factory = MockFactory(pin_class=MockPWMPin)
         self.led = PWMLED(gpio_pin)
         self.brightness = brightness / 100.0  # brightness value is from 0 to 1.0
 
@@ -258,8 +263,8 @@ class RingIndicator(PWMLEDIndicator):
     """
     The ring indicator, activated when an incoming call is being received.
     """
-    def __init__(self, gpio_pin=GPIO_RING, brightness=100):
-        super().__init__(gpio_pin, brightness)
+    def __init__(self, gpio_pin=GPIO_RING, brightness=100, gpio_disabled=False):
+        super().__init__(gpio_pin, brightness, gpio_disabled)
 
     def ring(self):
         self.blink()
@@ -270,8 +275,8 @@ class ApprovedIndicator(PWMLEDIndicator):
     """
     The approved indicator activated when a call from a permitted number is received.
     """
-    def __init__(self, gpio_pin=GPIO_APPROVED, brightness=100):
-        super().__init__(gpio_pin, brightness)
+    def __init__(self, gpio_pin=GPIO_APPROVED, brightness=100, gpio_disabled=False):
+        super().__init__(gpio_pin, brightness, gpio_disabled)
 
 
 class BlockedIndicator(PWMLEDIndicator):
@@ -279,8 +284,8 @@ class BlockedIndicator(PWMLEDIndicator):
     The blocked indicator activated when a call from a blocked number is received.
     """
 
-    def __init__(self, gpio_pin=GPIO_BLOCKED, brightness=100):
-        super().__init__(gpio_pin, brightness)
+    def __init__(self, gpio_pin=GPIO_BLOCKED, brightness=100, gpio_disabled=False):
+        super().__init__(gpio_pin, brightness, gpio_disabled)
 
 
 class MessageIndicator(PWMLEDIndicator):
@@ -288,8 +293,8 @@ class MessageIndicator(PWMLEDIndicator):
     The message indicator activated when the voice messaging features are used.
     """
 
-    def __init__(self, gpio_pin=GPIO_MESSAGE, brightness=100):
-        super().__init__(gpio_pin, brightness)
+    def __init__(self, gpio_pin=GPIO_MESSAGE, brightness=100, gpio_disabled=False):
+        super().__init__(gpio_pin, brightness, gpio_disabled)
 
     def turn_off(self):
         print("{MSG LED OFF}")
@@ -312,7 +317,11 @@ class MessageCountIndicator(object):
     """
     The message count indicator displays the number of unplayed messages in the system.
     """
-    def __init__(self, *pins, **kwargs):
+    def __init__(self, gpio_disabled, *pins, **kwargs):
+        if gpio_disabled:
+            # Use 'fake' pins so rest of code can still be called, but with no hardware interaction
+            # https://gpiozero.readthedocs.io/en/stable/api_pins.html#mock-pins
+            Device.pin_factory = MockFactory()
         if len(pins) > 0:
             self.seven_seg = SevenSegmentDisplay(*pins, **kwargs)
         else:
