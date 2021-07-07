@@ -37,7 +37,7 @@ class NomoroboService(object):
         headers = {}
         allowed_codes = [404]  # allow not found response
         content = self.http_get(url, headers, allowed_codes)
-        soup = BeautifulSoup(content, "lxml")  # lxml HTML parser: fast
+        soup = BeautifulSoup(content, "html.parser")
 
         score = 0  # = no spam
 

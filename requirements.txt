@@ -10,7 +10,6 @@ gpiozero==1.5.1
 iso8601==0.1.12
 itsdangerous==1.1.0
 Jinja2==2.11.2
-lxml==4.5.2
 MarkupSafe==1.1.1
 pigpio==1.46
 pygments
