@@ -149,7 +149,8 @@ class Modem(object):
         # Ring notifications
         self.ring_indicator = RingIndicator(
             self.config.get("GPIO_LED_RING_PIN"),
-            self.config.get("GPIO_LED_RING_BRIGHTNESS", 100))
+            self.config.get("GPIO_LED_RING_BRIGHTNESS", 100),
+            self.config.get("GPIO_DISABLED", False))
         self.ring_event = threading.Event()
 
         # Initialize the serial port attached to the physical modem

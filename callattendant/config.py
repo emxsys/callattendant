@@ -59,6 +59,7 @@ default_config = {
     "VOICE_MAIL_MENU_FILE": "resources/voice_mail_menu.wav",
     "VOICE_MAIL_MESSAGE_FOLDER": "messages",
 
+    "GPIO_DISABLED": False,
     "GPIO_LED_RING_PIN": 14,
     "GPIO_LED_RING_BRIGHTNESS": 100,
     "GPIO_LED_APPROVED_PIN": 15,
@@ -176,6 +177,8 @@ class Config(dict):
         if not isinstance(self["BLOCK_ENABLED"], bool):
             print("* BLOCK_ENABLED should be a bool: {}".format(type(self["BLOCK_ENABLED"])))
             success = False
+        if not isinstance(self["GPIO_DISABLED"], bool):
+            print("* GPIO_DISABLED should be a bool: {}".format(type(self["GPIO_DISABLED"])))
 
         for mode in self["SCREENING_MODE"]:
             if mode not in ("whitelist", "blacklist"):

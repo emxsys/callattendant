@@ -36,14 +36,14 @@ def test_multiple():
 
     config = Config()
 
-    ringer = RingIndicator(config["GPIO_LED_RING_PIN"], brightness=100, gpio_disabled=True)
-    approved = ApprovedIndicator(config["GPIO_LED_APPROVED_PIN"], brightness=25, gpio_disabled=True)
-    blocked = BlockedIndicator(config["GPIO_LED_BLOCKED_PIN"], brightness=25, gpio_disabled=True)
-    message = MessageIndicator(config["GPIO_LED_MESSAGE_PIN"], brightness=100, gpio_disabled=True)
+    ringer = RingIndicator(config["GPIO_LED_RING_PIN"], brightness=100, gpio_disabled=False)
+    approved = ApprovedIndicator(config["GPIO_LED_APPROVED_PIN"], brightness=25, gpio_disabled=False)
+    blocked = BlockedIndicator(config["GPIO_LED_BLOCKED_PIN"], brightness=25, gpio_disabled=False)
+    message = MessageIndicator(config["GPIO_LED_MESSAGE_PIN"], brightness=100, gpio_disabled=False)
 
     pins_tuple = config["GPIO_LED_MESSAGE_COUNT_PINS"]
     kwargs_dict = config["GPIO_LED_MESSAGE_COUNT_KWARGS"]
-    message_count = MessageCountIndicator(True, *pins_tuple, **kwargs_dict)
+    message_count = MessageCountIndicator(False, *pins_tuple, **kwargs_dict)
 
     # ~ ringer = RingIndicator()
     # ~ approved = ApprovedIndicator()
@@ -53,6 +53,7 @@ def test_multiple():
 
     for i in range(0, 16):
         message_count.display_hex(i)
+	time.sleep(.5)
 
     print("[Visual Tests]")
 
@@ -61,23 +62,30 @@ def test_multiple():
     approved.turn_on()
     blocked.turn_on()
     message.turn_on()
+    time.sleep(5)
 
     print("Blinking on all LEDs for 5 seconds...")
     ringer.blink()
+    time.sleep(.1)
     approved.blink()
+    time.sleep(.1)
     blocked.blink()
+    time.sleep(.1)
     message.blink()
+    time.sleep(5)
 
     print("Turning off all LEDs...")
     ringer.turn_off()
     approved.turn_off()
     blocked.turn_off()
     message.turn_off()
+    time.sleep(2)
 
     print("Test normal status")
     ringer.ring()
     message.pulse(),
     message_count.display(2)
+    time.sleep(10)
 
     # Release GPIO pins
     ringer.close()

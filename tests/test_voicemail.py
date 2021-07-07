@@ -28,6 +28,7 @@ import sqlite3
 from tempfile import gettempdir
 
 import pytest
+from unittest import mock
 
 from callattendant.config import Config
 from callattendant.hardware.modem import Modem
@@ -54,6 +55,7 @@ def config():
     config['DEBUG'] = True
     config['TESTING'] = True
     config['VOICE_MAIL_MESSAGE_FOLDER'] = gettempdir()
+    config['GPIO_DISABLED'] = True
 
     return config
 
@@ -68,7 +70,11 @@ def logger(db, config):
 @pytest.fixture(scope='module')
 def modem(db, config):
 
-    modem = Modem(config)
+    def _fake_record_audio(filename, detect_silence=True):
+        _ = open(filename, 'w')
+        return True
+    modem = mock.create_autospec(Modem)
+    modem.record_audio = mock.Mock(side_effect=_fake_record_audio)
     yield modem
     modem.stop()
 
@@ -81,8 +87,6 @@ def voicemail(db, config, modem):
     voicemail.stop()
 
 
-# Skip the test when running under continous integraion
-@pytest.mark.skipif(os.getenv("CI") == "true", reason="Hardware not installed")
 def test_multiple(voicemail, logger):
 
     call_no = logger.log_caller(caller)
