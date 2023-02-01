@@ -49,10 +49,12 @@ DLE_CODE = chr(16)      # Data Link Escape (DLE) code
 ETX_CODE = chr(3)       # End Transmission (ETX) code
 CR_CODE = chr(13)       # Carraige return
 LF_CODE = chr(10)       # Line feed
+ESCAPE_CODE = chr(27) # Escape key for use with MT9234MU commands with multi-page response
 
 # Supported modem product codes returned by ATI0
 USR_5637_PRODUCT_CODE = b'5601'
-CONEXANT_PROODUCT_CODE = b'56000'
+CONEXANT_PRODUCT_CODE = b'56000'
+MT9234MU_PRODUCT_CODE = b'MT9234MU'
 
 #  Modem AT commands:
 #  See http://support.usr.com/support/5637/5637-ug/ref_data.html
@@ -83,6 +85,7 @@ TELEPHONE_ANSWERING_DEVICE_ON_HOOK = "AT+VLS=0"   # TAD (DCE) on-hook
 GO_OFF_HOOK = "ATH1"
 GO_ON_HOOK = "ATH0"
 TERMINATE_CALL = "ATH"
+DISABLE_SPEAKER = "ATM0"
 
 # Modem DLE shielded codes - DCE to DTE modem data
 DCE_ANSWER_TONE = (chr(16) + chr(97)).encode()          # <DLE>-a
@@ -114,6 +117,10 @@ CRLF = (chr(13) + chr(10)).encode()
 # Record Voice Mail variables
 REC_VM_MAX_DURATION = 120  # Time in Seconds - TODO: make REC_VM_MAX_DURATION a config setting.
 
+# Serial Baud Rate 57600 for USR and CONEXANT, 115200 MT9234MU. 115200 could work for USR and CONEXANT based modem too. Hasn't been tested
+# MT9234MU has stretched out audio at lower baud rate. Indication of underrun buffer?
+SERIAL_BAUD_RATE = 57600
+
 TEST_DATA = [
     b"RING", b"DATE=0801", b"TIME=1801", b"NMBR=8055554567", b"NAME=Test1 - Permitted", b"RING", b"RING", b"RING", b"RING",
     b"RING", b"DATE=0802", b"TIME=1802", b"NMBR=5551234567", b"NAME=Test2 - Spammer",
@@ -137,9 +144,18 @@ class Modem(object):
                 application configuration dict
         """
         print("Initializing Modem")
+
+        global SERIAL_BAUD_RATE, REC_VM_MAX_DURATION
+
         self.config = config
         self.is_open = False
         self.model = None   # Model is set to USR, CONEXANT or UNKNOWN by _detect_modem
+
+        REC_VM_MAX_DURATION = REC_VM_MAX_DURATION if self.config['REC_VM_MAX_DURATION'] == None else self.config['REC_VM_MAX_DURATION']
+        SERIAL_BAUD_RATE = SERIAL_BAUD_RATE if self.config['SERIAL_BAUD_RATE'] == None else self.config['SERIAL_BAUD_RATE']
+
+        print("Serial baud rate: {}".format(SERIAL_BAUD_RATE))
+        print("Record duraction: {} seconds".format(REC_VM_MAX_DURATION))
 
         # Thread synchronization objects
         self._stop_event = threading.Event()
@@ -474,6 +490,9 @@ class Modem(object):
                 if (DCE_BUSY_TONE in audio_data):
                     print(">> Busy Tone... Stop recording.")
                     break
+                if (DCE_DIAL_TONE in audio_data):
+                    print(">> Dial tone... Stop recording.")
+                    break    
 
                 # Test for silence
                 if detect_silence:
@@ -517,7 +536,7 @@ class Modem(object):
             # Send End of Recieve Data state by passing "<DLE>!"
             # USR-5637 note: The command returns <DLE><ETX>, but the DLE is stripped
             # from the response during the test, so we only test for the ETX.
-            response = "OK" if self.model == "CONEXANT" else ETX_CODE
+            response = "OK" if self.model == "CONEXANT" else "OK" if self.model == "MT9234MU" else ETX_CODE
             if not self._send(DTE_END_VOICE_DATA_RX, response):
                 print("* Error: Unable to signal end of data receive state")
 
@@ -745,7 +764,7 @@ class Modem(object):
                 The OS com port
         """
         self._serial.port = com_port
-        self._serial.baudrate = 57600                   # bps
+        self._serial.baudrate = SERIAL_BAUD_RATE        # bps
         self._serial.bytesize = serial.EIGHTBITS        # number of bits per bytes
         self._serial.parity = serial.PARITY_NONE        # set parity check: no parity
         self._serial.stopbits = serial.STOPBITS_ONE     # number of stop bits
@@ -765,7 +784,8 @@ class Modem(object):
         global SET_VOICE_COMPRESSION, DISABLE_SILENCE_DETECTION, \
             ENABLE_SILENCE_DETECTION_5_SECS, ENABLE_SILENCE_DETECTION_10_SECS, \
             DTE_RAISE_VOLUME, DTE_LOWER_VOLUME, DTE_END_VOICE_DATA_TX, \
-            DTE_END_VOICE_DATA_RX, DTE_CLEAR_TRANSMIT_BUFFER
+            DTE_END_VOICE_DATA_RX, DTE_CLEAR_TRANSMIT_BUFFER, \
+            GET_MODEM_SETTINGS, ENTER_VOICE_MODE
 
         # Test if connected to a modem using basic AT command.
         if not self._send("AT"):
@@ -779,7 +799,7 @@ class Modem(object):
                 print("******* US Robotics Model 5637 detected **********")
                 self.model = "USR"
 
-            elif CONEXANT_PROODUCT_CODE in result:
+            elif CONEXANT_PRODUCT_CODE in result:
                 print("******* Conextant-based modem detected **********")
                 self.model = "CONEXANT"
                 # Define the settings for the Zoom3905 where they differ from the USR5637
@@ -793,6 +813,12 @@ class Modem(object):
                 DTE_END_VOICE_DATA_RX = (chr(16) + chr(16) + chr(16) + chr(33))  # <DLE><DLE><DLE>-!
                 DTE_END_VOICE_DATA_TX = (chr(16) + chr(16) + chr(16) + chr(3))   # <DLE><DLE><DLE><ETX>
                 DTE_CLEAR_TRANSMIT_BUFFER = (chr(16) + chr(16) + chr(16) + chr(24))  # <DLE><DLE><DLE><CAN>
+
+            elif MT9234MU_PRODUCT_CODE in result:
+                print("******* MT9234MU modem detected **********")
+                self.model = "MT9234MU"
+                GET_MODEM_SETTINGS = GET_MODEM_SETTINGS + '\r' + ESCAPE_CODE
+                ENTER_VOICE_MODE = ENTER_VOICE_MODE + '\r' + ESCAPE_CODE
 
             else:
                 print("******* Unknown modem detected **********")
@@ -824,6 +850,8 @@ class Modem(object):
                 print("Error: Failed to disable local echo mode")
             if not self._send(ENABLE_FORMATTED_CID):
                 print("Error: Failed to enable formatted caller report.")
+            if not self._send(DISABLE_SPEAKER):
+                print("Error: Failed to disable internal speaker.")
 
             # Save these settings to a profile
             if not self._send("AT&W0"):

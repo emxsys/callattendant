@@ -20,6 +20,14 @@ DEBUG = False
 # TESTING: If True function tests are executed in lieu of normal operation
 TESTING = False
 
+# REC_VM_MAX_DURATION: How long to record voicemail / message in seconds Default 120
+REC_VM_MAX_DURATION = 120
+
+# SERIAL_BAUD_RATE: # Serial Baud Rate 57600 for USR and CONEXANT, 115200 MT9234MU. 115200 could work for USR and CONEXANT based modem too.
+# MT9234MU seems to requrie 115200 baud rate to produce good audio quality.
+
+SERIAL_BAUD_RATE = 57600
+
 # DATABASE: Sqlite database for incoming call log, whitelist and blacklist
 #   This should not be changed/overrriden except during development/testing
 #DATABASE = "callattendant.db"

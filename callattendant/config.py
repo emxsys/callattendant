@@ -19,11 +19,14 @@ from werkzeug.utils import import_string
 # and screened callers through to the home phone.
 #
 default_config = {
-    "VERSION": '1.1.1',
+    "VERSION": '1.1.2',
 
     "ENV": 'production',
     "DEBUG": False,
     "TESTING": False,
+
+    "REC_VM_MAX_DURATION": 120,
+    "SERIAL_BAUD_RATE": 57600,
 
     "DATABASE": "callattendant.db",
     "SCREENING_MODE": ("whitelist", "blacklist"),
@@ -172,6 +175,12 @@ class Config(dict):
             success = False
         if not isinstance(self["TESTING"], bool):
             print("* TESTING should be bool: {}".format(type(self["TESTING"])))
+            success = False
+        if not isinstance(self["REC_VM_MAX_DURATION"], int):
+            print("* REC_VM_MAX_DURATION should be an integer: {}".format(type(self["REC_VM_MAX_DURATION"])))
+            success = False
+        if not isinstance(self["SERIAL_BAUD_RATE"], int):
+            print("* SERIAL_BAUD_RATE should be an integer: {}".format(type(self["SERIAL_BAUD_RATE"])))
             success = False
         if not isinstance(self["BLOCK_ENABLED"], bool):
             print("* BLOCK_ENABLED should be a bool: {}".format(type(self["BLOCK_ENABLED"])))
